@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cmd //c \"move d:\\\\11automation\\\\10-Collection_Inspection d:\\\\11automation\\\\02automation\\\\\")",
+      "Bash(git add:*)"
+    ]
+  }
+}
