@@ -1,0 +1,185 @@
+=== 4.组别层级: group_name -> case_bucket mapping ===
+  M4+-B-AJCAI: ['M3', 'M4']
+  Cluster A-Nocall: ['S0']
+  M1-A Module: ['M1']
+  M1-A-AJCAI: ['M1']
+  M1-C-MBA: ['M1']
+  M1-Large A: ['M1']
+  M1-Large B: ['M1']
+  M1-Large-A Group: ['M1']
+  M1-Small A: ['M1']
+  M1-Small-A Group: ['M1']
+  M2+-A-AJCAI: ['M2', 'M3', 'M4']
+  M2+-C-MBA: ['M2', 'M3', 'M4']
+  M2+-E-MCGA: ['M2', 'M3', 'M4']
+  M2+-G-Lauron: ['M2', 'M3', 'M4']
+  M2-A module: ['M2']
+  M2-Z Module: ['M2']
+  S0- A Module: ['S0']
+  S0- B Module: ['S0']
+  S0-C Module: ['S0']
+  S0-D Module: ['S0']
+  S0-E Module: ['S0']
+  S0-F Module: ['S0']
+  S0-G Module: ['S0']
+  S1-A-AJCAI: ['S1']
+  S1-B-AJCAI: ['S1']
+  S1-C-MBA: ['S1']
+  S1-D-MBA: ['S1']
+  S1-Large A: ['S1']
+  S1-Large B: ['S1']
+  S1-Large C: ['S1']
+  S1-Large D: ['S1']
+  S1-Large E: ['S1']
+  S1-Large F: ['S1']
+  S1-Large-A Module.: ['S1']
+  S1-Large-B Module.: ['S1']
+  S1-Large-C Module.: ['S1']
+  S1-Large-D Module.: ['S1']
+  S1-Large-E Module.: ['S1']
+  S1-Large-F Module.: ['S1']
+  S1-Small A: ['S1']
+  S1-Small B: ['S1']
+  S1-Small-A Module.: ['S1']
+  S1-Small-B Module: ['S1']
+  S2-A-AJCAI: ['S2']
+  S2-B Module: ['S2']
+  S2-C Module: ['S2']
+  S2-C-MBA: ['S2']
+  S2-Large A: ['S2']
+  S2-Large B: ['S2']
+  S2-Large C: ['S2']
+  S2-Large-A Group: ['S2']
+  S2-Small A: ['S2']
+  S2-Small-A Group: ['S2']
+  Target: ['M1', 'M1_Large', 'M1_Outsource', 'M1_Small', 'S0', 'S1', 'S1_Large', 'S1_Outsource', 'S1_Small', 'S2', 'S2_Large', 'S2_Outsource', 'S2_Small']
+
+=== 4.组别层级: group_name -> agent_bucket mapping ===
+  M4+-B-AJCAI: ['M3_Other', 'M4_Other']
+  Cluster A-Nocall: ['S0_Other']
+  M1-A Module: ['M1_Other']
+  M1-A-AJCAI: ['M1_Other']
+  M1-C-MBA: ['M1_Other']
+  M1-Large A: ['M1_Large']
+  M1-Large B: ['M1_Large']
+  M1-Large-A Group: ['M1_Large']
+  M1-Small A: ['M1_Small']
+  M1-Small-A Group: ['M1_Small']
+  M2+-A-AJCAI: ['M2_Other', 'M3_Other', 'M4_Other']
+  M2+-C-MBA: ['M2_Other', 'M3_Other', 'M4_Other']
+  M2+-E-MCGA: ['M2_Other', 'M3_Other', 'M4_Other']
+  M2+-G-Lauron: ['M2_Other', 'M3_Other', 'M4_Other']
+  M2-A module: ['M2_Other']
+  M2-Z Module: ['M2_Other']
+  S0- A Module: ['S0_Other']
+  S0- B Module: ['S0_Other']
+  S0-C Module: ['S0_Other']
+  S0-D Module: ['S0_Other']
+  S0-E Module: ['S0_Other']
+  S0-F Module: ['S0_Other']
+  S0-G Module: ['S0_Other']
+  S1-A-AJCAI: ['S1_Other']
+  S1-B-AJCAI: ['S1_Other']
+  S1-C-MBA: ['S1_Other']
+  S1-D-MBA: ['S1_Other']
+  S1-Large A: ['S1_Large']
+  S1-Large B: ['S1_Large']
+  S1-Large C: ['S1_Large']
+  S1-Large D: ['S1_Large']
+  S1-Large E: ['S1_Large']
+  S1-Large F: ['S1_Large']
+  S1-Large-A Module.: ['S1_Large']
+  S1-Large-B Module.: ['S1_Large']
+  S1-Large-C Module.: ['S1_Large']
+  S1-Large-D Module.: ['S1_Large']
+  S1-Large-E Module.: ['S1_Large']
+  S1-Large-F Module.: ['S1_Large']
+  S1-Small A: ['S1_Small']
+  S1-Small B: ['S1_Small']
+  S1-Small-A Module.: ['S1_Small']
+  S1-Small-B Module: ['S1_Small']
+  S2-A-AJCAI: ['S2_Other']
+  S2-B Module: ['S2_Other']
+  S2-C Module: ['S2_Other']
+  S2-C-MBA: ['S2_Other']
+  S2-Large A: ['S2_Large']
+  S2-Large B: ['S2_Large']
+  S2-Large C: ['S2_Large']
+  S2-Large-A Group: ['S2_Large']
+  S2-Small A: ['S2_Small']
+  S2-Small-A Group: ['S2_Small']
+  Target: ['M1', 'M1_Large', 'M1_Outsource', 'M1_Small', 'S0', 'S1', 'S1_Large', 'S1_Outsource', 'S1_Small', 'S2', 'S2_Large', 'S2_Outsource', 'S2_Small']
+
+=== 5.经办层级: group_name -> owner count ===
+  M2-Z Module: 38 agents
+  S1-Large E: 32 agents
+  S1-Large D: 29 agents
+  S0- B Module: 23 agents
+  S1-A-AJCAI: 22 agents
+  S1-B-AJCAI: 21 agents
+  S1-Large A: 21 agents
+  S0- A Module: 20 agents
+  S1-Large B: 20 agents
+  S1-D-MBA: 18 agents
+  S1-Large C: 18 agents
+  S1-Small B: 17 agents
+  S1-C-MBA: 17 agents
+  S1-Large F: 17 agents
+  S0-E Module: 17 agents
+  M1-Large B: 17 agents
+  S0-C Module: 17 agents
+  S0-D Module: 16 agents
+  S0-G Module: 16 agents
+  S0-F Module: 16 agents
+  S2-Large-A Group: 16 agents
+  M2-A module: 15 agents
+  S1-Large-D Module.: 15 agents
+  S1-Large-C Module.: 15 agents
+  S1-Large-B Module.: 15 agents
+  M1-A Module: 15 agents
+  M1-Large A: 15 agents
+  S1-Large-A Module.: 15 agents
+  S1-Small A: 14 agents
+  S1-Large-E Module.: 14 agents
+  S2-C-MBA: 14 agents
+  S2-Large A: 14 agents
+  S2-A-AJCAI: 14 agents
+  S1-Large-F Module.: 14 agents
+  S2-Large C: 13 agents
+  S2-Large B: 12 agents
+  M1-Large-A Group: 12 agents
+  M1-Small A: 12 agents
+  M1-A-AJCAI: 11 agents
+  S2-B Module: 11 agents
+  S1-Small-B Module: 11 agents
+  S1-Small-A Module.: 11 agents
+  S2-Small A: 11 agents
+  M4+-B-AJCAI: 10 agents
+  M2+-E-MCGA: 10 agents
+  M1-C-MBA: 9 agents
+  S2-C Module: 8 agents
+  M1-Small-A Group: 3 agents
+  S2-Small-A Group: 3 agents
+  Cluster A-Nocall: 2 agents
+  M2+-C-MBA: 1 agents
+  M2+-A-AJCAI: 1 agents
+  M2+-G-Lauron: 1 agents
+  Target: 0 agents
+
+=== Unique case_bucket at 4.组别层级 ===
+  M1: 9 groups -> ['M1-A Module', 'M1-A-AJCAI', 'M1-C-MBA', 'M1-Large A', 'M1-Large B']...
+  M1_Large: 1 groups -> ['Target']
+  M1_Outsource: 1 groups -> ['Target']
+  M1_Small: 1 groups -> ['Target']
+  M2: 6 groups -> ['M2+-A-AJCAI', 'M2+-C-MBA', 'M2+-E-MCGA', 'M2+-G-Lauron', 'M2-A module']...
+  M3: 5 groups -> ['M4+-B-AJCAI', 'M2+-A-AJCAI', 'M2+-C-MBA', 'M2+-E-MCGA', 'M2+-G-Lauron']
+  M4: 5 groups -> ['M4+-B-AJCAI', 'M2+-A-AJCAI', 'M2+-C-MBA', 'M2+-E-MCGA', 'M2+-G-Lauron']
+  S0: 9 groups -> ['Cluster A-Nocall', 'S0- A Module', 'S0- B Module', 'S0-C Module', 'S0-D Module']...
+  S1: 21 groups -> ['S1-A-AJCAI', 'S1-B-AJCAI', 'S1-C-MBA', 'S1-D-MBA', 'S1-Large A']...
+  S1_Large: 1 groups -> ['Target']
+  S1_Outsource: 1 groups -> ['Target']
+  S1_Small: 1 groups -> ['Target']
+  S2: 11 groups -> ['S2-A-AJCAI', 'S2-B Module', 'S2-C Module', 'S2-C-MBA', 'S2-Large A']...
+  S2_Large: 1 groups -> ['Target']
+  S2_Outsource: 1 groups -> ['Target']
+  S2_Small: 1 groups -> ['Target']
