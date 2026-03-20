@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>巡检日报 2026-02-02</title>
+    <style>
+        body { font-family: "Microsoft YaHei", Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 900px; margin: 0 auto; background: #fff; padding: 24px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1 { color: #333; border-bottom: 3px solid #4CAF50; padding-bottom: 8px; }
+        h2 { color: #555; margin-top: 24px; border-left: 4px solid #4CAF50; padding-left: 10px; }
+        table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }
+        th { background: #f0f0f0; }
+        .meta { color: #666; font-size: 14px; margin-top: 20px; }
+        .anomaly { color: #c62828; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>贷后数据巡检日报</h1>
+    <p class="meta">生成时间：2026-02-02 16:14:23 | 数据源：D:\0_phirisk\12-agent_finalize\10-Collection_Inspection\collection_inspection_data_local.xlsx</p>
+    <h2>一、风险概况</h2>
+    <p>初版覆盖：vintage 风险 + 回收率。数据来自本地 Excel，指标为分产品/分表汇总；异常采用简单阈值（逾期率&gt;0.5、回收率&lt;0.1）。</p>
+    <h2>二、分产品</h2>
+    <table>
+        <thead><tr><th>产品</th><th>记录数</th><th>逾期率/dpd30</th></tr></thead>
+        <tbody><tr><td colspan='3'>无数据</td></tr></tbody>
+    </table>
+    <h2>三、分批次回收</h2>
+    <table>
+        <thead><tr><th>批次/表</th><th>记录数</th><th>回收率</th></tr></thead>
+        <tbody><tr><td>repay_cl</td><td>0</td><td>-</td></tr>
+<tr><td>repay_tt</td><td>0</td><td>-</td></tr></tbody>
+    </table>
+    <h2>四、可联率</h2>
+    <p>初版待加维度；触达数据接入后在此展示可联率、发送量/成功率。</p>
+    <h2>五、异常与建议</h2>
+    <div class="anomaly">暂无异常。</div>
+</div>
+</body>
+</html>

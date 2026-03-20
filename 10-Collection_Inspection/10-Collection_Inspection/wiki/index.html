@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collection Inspection Project Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: '#2563EB',
+                        'brand-light': '#EFF6FF',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F8FAFC; }
+        .card { transition: all 0.2s; }
+        .card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <!-- Navbar -->
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <span class="text-xl font-bold text-brand">贷后数据巡检 (Collection Inspection)</span>
+                    <span class="ml-3 px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">Strategic Upgrade</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="00_Home.md" class="text-sm font-medium text-slate-500 hover:text-brand">Wiki Home (MD)</a>
+                    <span class="text-sm text-slate-300">|</span>
+                    <span class="text-sm text-slate-500">Maintainer: Mr. Yuan</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-slate-900">Project Dashboard</h1>
+            <p class="mt-2 text-slate-600">Central hub for Business Design, Technical Architecture, and Operations.</p>
+        </div>
+
+        <!-- Architecture Diagram -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-8">
+            <h2 class="text-lg font-semibold text-slate-900 mb-4 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+                Business Architecture
+            </h2>
+            <div class="mermaid flex justify-center bg-slate-50 rounded-lg p-4 overflow-x-auto">
+graph TD
+    %% 数据层
+    subgraph Data_Layer [ODPS 数据源层]
+        direction TB
+        T1[(vintage_risk<br>09表聚合)]
+        T2[(process_data<br>过程表聚合)]
+        T3[(natural_month_repay<br>回收表聚合)]
+    end
+
+    %% 业务逻辑层
+    subgraph Business_Logic [战略监控逻辑层]
+        direction TB
+        M1(<b>资产质量监控</b><br>Asset Quality)
+        M2(<b>客群细分验证</b><br>Segmentation)
+        M3(<b>策略执行监控</b><br>Strategy Execution)
+        M4(<b>回收结果监控</b><br>Collection Outcome)
+        
+        T1 --> M1
+        T1 --> M2
+        T2 --> M3
+        T3 --> M4
+        
+        %% 指标计算
+        M1 --计算--> K1[入催率 / dpd30]
+        M2 --计算--> K2[分模型逾期表现]
+        M3 --计算--> K3[覆盖率 / 接通率 / 强度]
+        M4 --计算--> K4[整体回收率 / 归因最差3段]
+    end
+
+    %% 输出层
+    subgraph Output_Layer [智能巡检输出]
+        direction TB
+        R1[<b>CashLoan 巡检日报</b><br>HTML Report]
+        A1[<b>异常智能预警</b><br>Anomalies]
+        
+        K1 & K2 & K3 & K4 --> R1
+        K1 & K2 & K3 & K4 --规则判定--> A1
+    end
+
+    %% 样式
+    style Data_Layer fill:#e3f2fd,stroke:#2196f3
+    style Business_Logic fill:#fff3e0,stroke:#ff9800
+    style Output_Layer fill:#e8f5e9,stroke:#4caf50
+    style M3 stroke-width:4px,stroke:#ff9800
+    style M2 stroke-width:4px,stroke:#ff9800
+            </div>
+        </div>
+
+        <!-- Navigation Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            
+            <!-- Business Design -->
+            <a href="01_Business_Design.md" class="card block bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:border-brand">
+                <div class="w-10 h-10 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center mb-4">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                </div>
+                <h3 class="font-semibold text-slate-900 mb-2">Business Design</h3>
+                <p class="text-sm text-slate-500">Project goals, 4 Strategic Dimensions, and Anomaly Rules.</p>
+            </a>
+
+            <!-- Report Spec -->
+            <a href="02_Report_Spec.md" class="card block bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:border-brand">
+                <div class="w-10 h-10 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center mb-4">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                </div>
+                <h3 class="font-semibold text-slate-900 mb-2">Report Spec</h3>
+                <p class="text-sm text-slate-500">HTML report structure, KPI definitions, and layout specs.</p>
+            </a>
+
+            <!-- Technical Arch -->
+            <a href="04_Technical_Arch.md" class="card block bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:border-brand">
+                <div class="w-10 h-10 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center mb-4">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+                </div>
+                <h3 class="font-semibold text-slate-900 mb-2">Technical Arch</h3>
+                <p class="text-sm text-slate-500">Script logic, Aggregation strategy, and Data Dictionary.</p>
+            </a>
+
+            <!-- Operations -->
+            <a href="03_Operations_Manual.md" class="card block bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:border-brand">
+                <div class="w-10 h-10 rounded-lg bg-green-100 text-green-600 flex items-center justify-center mb-4">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                </div>
+                <h3 class="font-semibold text-slate-900 mb-2">Operations</h3>
+                <p class="text-sm text-slate-500">How to download data, run scripts, and troubleshoot.</p>
+            </a>
+            
+        </div>
+
+        <!-- Roadmap & Status -->
+        <div class="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <h3 class="font-semibold text-slate-900 mb-4">Recent Updates</h3>
+                <ul class="space-y-3">
+                    <li class="flex items-start">
+                        <span class="flex-shrink-0 w-2 h-2 mt-2 rounded-full bg-green-500"></span>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium text-slate-900">Strategic Monitoring Upgrade</p>
+                            <p class="text-sm text-slate-500">Added Asset Quality, Strategy Execution, and Segmentation dimensions.</p>
+                        </div>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="flex-shrink-0 w-2 h-2 mt-2 rounded-full bg-green-500"></span>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium text-slate-900">Wiki Consolidation</p>
+                            <p class="text-sm text-slate-500">Centralized documentation and created this dashboard.</p>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            <div class="bg-brand-light rounded-xl border border-blue-100 p-6">
+                <h3 class="font-semibold text-brand mb-2">Quick Links</h3>
+                <ul class="space-y-2 text-sm">
+                    <li><a href="05_Roadmap.md" class="text-blue-600 hover:underline">→ View Full Roadmap</a></li>
+                    <li><a href="06_Data_Dictionary.md" class="text-blue-600 hover:underline">→ Data Dictionary</a></li>
+                    <li><a href="../reports/" class="text-blue-600 hover:underline">→ Open Reports Folder</a></li>
+                </ul>
+            </div>
+        </div>
+
+    </main>
+</body>
+</html>
