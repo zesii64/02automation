@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collection Operations Report v2.0 (JSON Data)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        :root {
+            --primary: #1e3a5f;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; }
+        .tab-btn { padding: 12px 24px; font-weight: 600; border: none; background: none; cursor: pointer; transition: all 0.2s; border-bottom: 3px solid transparent; color: #94a3b8; }
+        .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+        .tab-btn:hover { color: var(--primary); }
+        .subtab-btn { padding: 8px 16px; font-size: 14px; font-weight: 500; border: none; background: #e2e8f0; cursor: pointer; border-radius: 6px 6px 0 0; transition: all 0.2s; }
+        .subtab-btn.active { background: white; color: var(--primary); }
+        .card { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 20px; margin-bottom: 20px; }
+        .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .status-success { background: #dcfce7; color: #166534; }
+        .status-danger { background: #fee2e2; color: #991b1b; }
+        .metric-card { background: #f8fafc; border-radius: 8px; padding: 16px; text-align: center; }
+        .metric-value { font-size: 24px; font-weight: 700; color: #1e293b; }
+        .metric-label { font-size: 12px; color: #64748b; text-transform: uppercase; }
+        .drilldown-row { cursor: pointer; transition: background 0.2s; }
+        .drilldown-row:hover { background: #f1f5f9; }
+        .red-row { background: #fef2f2 !important; }
+        .red-row:hover { background: #fee2e2 !important; }
+        .chart-container { width: 100%; height: 350px; }
+        .role-selector { display: flex; gap: 8px; padding: 8px; background: white; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .role-btn { padding: 8px 16px; border-radius: 6px; border: 1px solid #e2e8f0; background: white; cursor: pointer; font-weight: 500; transition: all 0.2s; }
+        .role-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .role-btn:hover:not(.active) { border-color: var(--primary); color: var(--primary); }
+        select { padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; background: white; font-size: 14px; }
+        select:focus { outline: none; border-color: var(--primary); ring: 2px var(--primary); }
+        .conclusion-box { background: #f0f9ff; border-left: 4px solid #0ea5e9; padding: 16px; border-radius: 0 8px 8px 0; margin-top: 16px; }
+        .conclusion-item { margin-bottom: 8px; padding-left: 20px; position: relative; }
+        .conclusion-item::before { content: "•"; position: absolute; left: 0; color: #0ea5e9; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div style="background: linear-gradient(135deg, #1e3a5f 0%, #2d4a6f 100%); color: white; padding: 20px 32px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; max-width: 1400px; margin: 0 auto;">
+            <div>
+                <h1 style="font-size: 24px; font-weight: 700;">Collection Operations Report</h1>
+                <p style="font-size: 14px; opacity: 0.9; margin-top: 4px;">Generated: <span id="report-date"></span> | Data Date: <span id="data-date"></span></p>
+            </div>
+            <div class="role-selector">
+                <button class="role-btn active" onclick="switchRole('TL')">TL View</button>
+                <button class="role-btn" onclick="switchRole('STL')">STL View</button>
+                <button class="role-btn" onclick="switchRole('Data')">Data View</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div style="max-width: 1400px; margin: 0 auto; padding: 24px 32px;">
+        <!-- TL Tab -->
+        <div id="tab-TL" class="tab-content">
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 style="font-size: 18px; font-weight: 700; color: #1e293b;">TL Daily Review</h2>
+                    <div style="display: flex; gap: 12px; align-items: center;">
+                        <label style="font-size: 14px; color: #64748b;">Select Group:</label>
+                        <select id="tl-group-select" onchange="loadTLData()">
+                            <option value="all">All Groups</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 12px; margin-bottom: 20px;">
+                    <div class="metric-card" style="flex: 1;">
+                        <div class="metric-value" id="tl-yesterday-target">--</div>
+                        <div class="metric-label">Yesterday Target</div>
+                    </div>
+                    <div class="metric-card" style="flex: 1;">
+                        <div class="metric-value" id="tl-yesterday-actual">--</div>
+                        <div class="metric-label">Yesterday Actual</div>
+                    </div>
+                    <div class="metric-card" style="flex: 1;">
+                        <div class="metric-value" id="tl-achievement-rate">--%</div>
+                        <div class="metric-label">Achievement Rate</div>
+                    </div>
+                    <div class="metric-card" style="flex: 1;">
+                        <div class="metric-value" id="tl-module-avg">--%</div>
+                        <div class="metric-label">vs Module Avg</div>
+                    </div>
+                </div>
+                <div id="tl-status-badge"></div>
+            </div>
+
+            <!-- TL Chart -->
+            <div class="card">
+                <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px;">Daily Recovery Trend (with Target)</h3>
+                <div id="tl-chart" class="chart-container"></div>
+            </div>
+
+            <!-- TL Unmet Detail -->
+            <div id="tl-unmet-section" style="display: none;">
+                <div class="card">
+                    <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #991b1b;">Unmet Target Detail Review</h3>
+                    <div style="display: flex; gap: 12px; margin-bottom: 20px;">
+                        <div class="metric-card" style="flex: 1;">
+                            <div class="metric-value" id="tl-gap-amount">--</div>
+                            <div class="metric-label">Gap to Target</div>
+                        </div>
+                        <div class="metric-card" style="flex: 1;">
+                            <div class="metric-value" id="tl-call-gap">--</div>
+                            <div class="metric-label">Call Volume Gap</div>
+                        </div>
+                        <div class="metric-card" style="flex: 1;">
+                            <div class="metric-value" id="tl-connect-gap">--</div>
+                            <div class="metric-label">Connect Rate Gap</div>
+                        </div>
+                    </div>
+                    <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">Agent Level Drill-down</h4>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                                <th style="padding: 12px; text-align: left; font-size: 12px; color: #64748b;">Agent</th>
+                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Target</th>
+                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Actual</th>
+                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Achievement</th>
+                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Calls</th>
+                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Conn. Rate</th>
+                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">PTP</th>
+                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Attendance</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tl-agent-table"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TL Conclusions -->
+            <div class="card">
+                <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 12px;">Automated Conclusions</h3>
+                <div class="conclusion-box" id="tl-conclusions">
+                    <div class="conclusion-item">Analyzing performance data...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STL Tab -->
+        <div id="tab-STL" class="tab-content" style="display: none;">
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 style="font-size: 18px; font-weight: 700; color: #1e293b;">STL Weekly Review</h2>
+                    <div style="display: flex; gap: 12px; align-items: center;">
+                        <label style="font-size: 14px; color: #64748b;">Select Module:</label>
+                        <select id="stl-module-select" onchange="loadSTLData()">
+                            <option value="all">All Modules</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 12px; margin-bottom: 20px;">
+                    <div class="metric-card" style="flex: 1;">
+                        <div class="metric-value" id="stl-week-target">--</div>
+                        <div class="metric-label">Week Target</div>
+                    </div>
+                    <div class="metric-card" style="flex: 1;">
+                        <div class="metric-value" id="stl-week-actual">--</div>
+                        <div class="metric-label">Week Actual</div>
+                    </div>
+                    <div class="metric-card" style="flex: 1;">
+                        <div class="metric-value" id="stl-achievement-rate">--%</div>
+                        <div class="metric-label">Achievement Rate</div>
+                    </div>
+                    <div class="metric-card" style="flex: 1;">
+                        <div class="metric-value" id="stl-trend">--</div>
+                        <div class="metric-label">vs Last Week</div>
+                    </div>
+                </div>
+                <div id="stl-status-badge"></div>
+            </div>
+
+            <!-- STL Chart -->
+            <div class="card">
+                <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px;">Weekly Recovery Trend (with Target)</h3>
+                <div id="stl-chart" class="chart-container"></div>
+            </div>
+
+            <!-- STL Unmet Detail -->
+            <div id="stl-unmet-section" style="display: none;">
+                <div class="card">
+                    <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #991b1b;">Unmet Target Detail Review</h3>
+                    <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">Group Level Drill-down</h4>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                                <th style="padding: 12px; text-align: left; font-size: 12px; color: #64748b;">Group</th>
+                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Target</th>
+                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Actual</th>
+                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Achievement</th>
+                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Calls/Agent</th>
+                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Conn. Rate</th>
+                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">PTP Rate</th>
+                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Attendance</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stl-group-table"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- STL Conclusions -->
+            <div class="card">
+                <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 12px;">Automated Conclusions</h3>
+                <div class="conclusion-box" id="stl-conclusions">
+                    <div class="conclusion-item">Analyzing performance data...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Tab -->
+        <div id="tab-Data" class="tab-content" style="display: none;">
+            <!-- Data Sub-tabs -->
+            <div style="display: flex; gap: 0; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0;">
+                <button class="subtab-btn active" id="subtab-anomaly" onclick="switchDataSubTab('anomaly')">Anomaly Detection</button>
+                <button class="subtab-btn" id="subtab-trend" onclick="switchDataSubTab('trend')">Recovery Trend</button>
+            </div>
+
+            <!-- Anomaly Detection Tab -->
+            <div id="data-anomaly" class="data-subtab-content">
+                <div class="card">
+                    <h2 style="font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 16px;">Continuous Unmet Target Alert</h2>
+                    <p style="color: #64748b; margin-bottom: 20px;">Agents or Groups with 3+ consecutive days below target are highlighted in red.</p>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                                <th style="padding: 12px; text-align: left; font-size: 12px; color: #64748b;">Type</th>
+                                <th style="padding: 12px; text-align: left; font-size: 12px; color: #64748b;">Name</th>
+                                <th style="padding: 12px; text-align: center; font-size: 12px; color: #64748b;">Module</th>
+                                <th style="padding: 12px; text-align: center; font-size: 12px; color: #64748b;">Consecutive Days</th>
+                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Target</th>
+                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Actual</th>
+                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Gap</th>
+                            </tr>
+                        </thead>
+                        <tbody id="anomaly-table"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Recovery Trend Tab -->
+            <div id="data-trend" class="data-subtab-content" style="display: none;">
+                <div class="card">
+                    <h2 style="font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 16px;">Recovery Trend by Module</h2>
+                    <div style="margin-bottom: 20px;">
+                        <label style="font-size: 14px; color: #64748b; margin-right: 12px;">Filter Module:</label>
+                        <select id="trend-module-select" onchange="loadTrendData()">
+                            <option value="all">All Modules</option>
+                        </select>
+                    </div>
+                    <div id="trend-chart" class="chart-container"></div>
+                </div>
+
+                <!-- Risk Module Review -->
+                <div id="risk-module-review" style="display: none;">
+                    <div class="card" style="border-left: 4px solid #ef4444;">
+                        <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #991b1b;">Risk Modules - Unmet Groups Review</h3>
+                        <p style="color: #64748b; margin-bottom: 16px;">The following modules are at risk of not achieving monthly targets. Below are the detailed reviews of all unmet groups.</p>
+                        <div id="risk-module-content"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===================== JSON DATA =====================
+        // 从外部 JSON 文件加载数据
+        let REPORT_DATA = null;
+        const JSON_URL = '../data/collection_report_data.json';
+
+        // 尝试加载外部 JSON
+        async function loadJSONData() {
+            try {
+                const response = await fetch(JSON_URL);
+                if (!response.ok) throw new Error('Network response was not ok');
+                const data = await response.json();
+                console.log('JSON data loaded:', data);
+
+                // 数据适配：将 JSON 数据转换为报告需要的格式
+                return adaptDataToReport(data);
+            } catch (error) {
+                console.warn('Failed to load JSON, using embedded data:', error.message);
+                return null;
+            }
+        }
+
+        // 数据适配函数：将真实数据转换为报告需要的格式
+        function adaptDataToReport(data) {
+            const adapted = { ...data };
+
+            // 为每个组的 tlData 添加 days 字段（从 moduleDailyTrends 获取）
+            if (adapted.tlData && adapted.moduleDailyTrends) {
+                Object.keys(adapted.tlData).forEach(group => {
+                    // 找到该组对应的 module
+                    const module = findModuleForGroup(group, adapted);
+                    if (module && adapted.moduleDailyTrends[module]) {
+                        const dailyData = adapted.moduleDailyTrends[module].daily || [];
+                        // 转换为日期格式
+                        adapted.tlData[group].days = dailyData.map(d => ({
+                            date: d.date,
+                            value: d.actual
+                        }));
+                    }
+                });
+            }
+
+            // 为每个模块的 stlData 添加 days 字段
+            if (adapted.stlData && adapted.moduleDailyTrends) {
+                Object.keys(adapted.stlData).forEach(module => {
+                    if (adapted.moduleDailyTrends[module]) {
+                        const dailyData = adapted.moduleDailyTrends[module].daily || [];
+                        adapted.stlData[module].days = dailyData.map(d => ({
+                            date: d.date,
+                            value: d.actual
+                        }));
+                    }
+                });
+            }
+
+            return adapted;
+        }
+
+        // 根据组名找到对应的模块
+        function findModuleForGroup(group, data) {
+            // 从 group 名称中提取模块前缀（如 "M1-Large A" -> "M1"）
+            const match = group.match(/^(S0|S1|S2|M1|M2|T2|T4|T5)/);
+            return match ? match[1] : null;
+        }
+
+        // ===================== MOCK DATA (Fallback) =====================
+        const MOCK_DATA = {
+            modules: ['S0', 'S1', 'S2', 'M1', 'M2', 'T2', 'T4', 'T5'],
+            groups: ['G-S1-01', 'G-S1-02', 'G-S1-03', 'G-M1-01', 'G-M1-02', 'G-M2-01', 'G-T2-01'],
+            agents: ['A001', 'A002', 'A003', 'A004', 'A005', 'A006', 'A007', 'A008', 'A009', 'A010'],
+            tlData: {
+                'G-S1-01': {
+                    target: 125000,
+                    actual: 118500,
+                    achievement: 94.8,
+                    moduleAvg: 96.2,
+                    gap: 6500,
+                    callGap: -12,
+                    connectGap: -2.3,
+                    days: generateDailyData(14, 100000, 140000, 120000)
+                },
+                'G-S1-02': {
+                    target: 98000,
+                    actual: 102500,
+                    achievement: 104.6,
+                    moduleAvg: 96.2,
+                    gap: 0,
+                    callGap: 0,
+                    connectGap: 0,
+                    days: generateDailyData(14, 80000, 110000, 100000)
+                },
+                'G-M1-01': {
+                    target: 85000,
+                    actual: 72300,
+                    achievement: 85.1,
+                    moduleAvg: 91.5,
+                    gap: 12700,
+                    callGap: -25,
+                    connectGap: -4.1,
+                    days: generateDailyData(14, 60000, 90000, 75000)
+                }
+            },
+            stlData: {
+                'S1': {
+                    target: 850000,
+                    actual: 798500,
+                    achievement: 93.9,
+                    lastWeek: 765000,
+                    trend: '+4.4%',
+                    gap: 51500,
+                    days: generateWeeklyData(4, 700000, 900000, 800000)
+                },
+                'M1': {
+                    target: 620000,
+                    actual: 658000,
+                    achievement: 106.1,
+                    lastWeek: 612000,
+                    trend: '+7.5%',
+                    gap: 0,
+                    days: generateWeeklyData(4, 550000, 680000, 620000)
+                },
+                'M2': {
+                    target: 450000,
+                    actual: 382500,
+                    achievement: 85.0,
+                    lastWeek: 395000,
+                    trend: '-3.2%',
+                    gap: 67500,
+                    days: generateWeeklyData(4, 350000, 480000, 400000)
+                }
+            },
+            anomalyData: [
+                { type: 'Agent', name: 'A003', module: 'M1', days: 5, target: 8500, actual: 6800, gap: 1700 },
+                { type: 'Agent', name: 'A007', module: 'M2', days: 4, target: 7200, actual: 5400, gap: 1800 },
+                { type: 'Agent', name: 'A009', module: 'S1', days: 3, target: 11000, actual: 8900, gap: 2100 },
+                { type: 'Group', name: 'G-M2-01', module: 'M2', days: 6, target: 45000, actual: 34200, gap: 10800 },
+                { type: 'Group', name: 'G-T2-01', module: 'T2', days: 4, target: 38000, actual: 30400, gap: 7600 },
+                { type: 'Agent', name: 'A001', module: 'S1', days: 2, target: 12500, actual: 11800, gap: 700 }
+            ],
+            riskModules: ['M2', 'T2'],
+            riskModuleGroups: {
+                'M2': [
+                    { group: 'G-M2-01', target: 45000, actual: 34200, achievement: 76.0, calls: 45, connectRate: 18.5, ptpRate: 8.2, attendance: 88 },
+                    { group: 'G-M2-02', target: 52000, actual: 46800, achievement: 90.0, calls: 52, connectRate: 21.2, ptpRate: 9.5, attendance: 92 }
+                ],
+                'T2': [
+                    { group: 'G-T2-01', target: 38000, actual: 30400, achievement: 80.0, calls: 38, connectRate: 15.8, ptpRate: 6.5, attendance: 85 }
+                ]
+            }
+        };
+
+        function generateDailyData(days, min, max, target) {
+            const data = [];
+            for (let i = 0; i < days; i++) {
+                const date = new Date();
+                date.setDate(date.getDate() - days + i + 1);
+                const actual = min + Math.random() * (max - min);
+                data.push({
+                    date: date.toISOString().split('T')[0],
+                    target: target + (Math.random() - 0.5) * 20000,
+                    actual: actual
+                });
+            }
+            return data;
+        }
+
+        function generateWeeklyData(weeks, min, max, target) {
+            const data = [];
+            for (let i = 0; i < weeks; i++) {
+                const date = new Date();
+                date.setDate(date.getDate() - (weeks - i - 1) * 7);
+                const weekStart = new Date(date);
+                weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 6);
+                data.push({
+                    week: `W${i + 1}`,
+                    weekLabel: `${formatDate(weekStart)}-${formatDate(date)}`,
+                    target: target,
+                    actual: min + Math.random() * (max - min)
+                });
+            }
+            return data;
+        }
+
+        function formatDate(date) {
+            return date.toISOString().split('T')[0];
+        }
+
+        // ===================== ROLE SWITCHING =====================
+        let currentRole = 'TL';
+
+        function switchRole(role) {
+            currentRole = role;
+            document.querySelectorAll('.role-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`.role-btn[onclick="switchRole('${role}')"]`).classList.add('active');
+
+            document.querySelectorAll('.tab-content').forEach(tab => tab.style.display = 'none');
+            document.getElementById(`tab-${role}`).style.display = 'block';
+
+            if (role === 'TL') initTLView();
+            else if (role === 'STL') initSTLView();
+            else if (role === 'Data') initDataView();
+        }
+
+        function switchDataSubTab(subtab) {
+            document.querySelectorAll('.subtab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`subtab-${subtab}`).classList.add('active');
+
+            document.querySelectorAll('.data-subtab-content').forEach(content => content.style.display = 'none');
+            document.getElementById(`data-${subtab}`).style.display = 'block';
+
+            if (subtab === 'trend') loadTrendChart();
+        }
+
+        // ===================== TL VIEW =====================
+        let tlChart = null;
+
+        function initTLView() {
+            const select = document.getElementById('tl-group-select');
+            select.innerHTML = '<option value="all">All Groups</option>';
+            Object.keys(REPORT_DATA.tlData).forEach(group => {
+                select.innerHTML += `<option value="${group}">${group}</option>`;
+            });
+            loadTLData();
+        }
+
+        function loadTLData() {
+            const group = document.getElementById('tl-group-select').value;
+            const data = group === 'all' ? REPORT_DATA.tlData['G-S1-01'] : REPORT_DATA.tlData[group];
+
+            if (!data) return;
+
+            document.getElementById('tl-yesterday-target').textContent = formatNumber(data.target);
+            document.getElementById('tl-yesterday-actual').textContent = formatNumber(data.actual);
+            document.getElementById('tl-achievement-rate').textContent = data.achievement.toFixed(1) + '%';
+            document.getElementById('tl-module-avg').textContent = (data.achievement - data.moduleAvg).toFixed(1) + '%';
+
+            const isMet = data.achievement >= 100;
+            const badge = document.getElementById('tl-status-badge');
+            if (isMet) {
+                badge.innerHTML = '<span class="status-badge status-success">Target Met</span>';
+                document.getElementById('tl-unmet-section').style.display = 'none';
+            } else {
+                badge.innerHTML = '<span class="status-badge status-danger">Target Not Met</span>';
+                document.getElementById('tl-unmet-section').style.display = 'block';
+                document.getElementById('tl-gap-amount').textContent = formatNumber(data.gap);
+                document.getElementById('tl-call-gap').textContent = data.callGap > 0 ? '+' + data.callGap : data.callGap;
+                document.getElementById('tl-connect-gap').textContent = (data.connectGap > 0 ? '+' : '') + data.connectGap.toFixed(1) + '%';
+
+                loadTLAgentTable(group);
+            }
+
+            generateTLConclusions(data, isMet);
+            renderTLChart(data.days);
+        }
+
+        function loadTLAgentTable(group) {
+            const tbody = document.getElementById('tl-agent-table');
+            tbody.innerHTML = '';
+            const agents = REPORT_DATA.agents.slice(0, 5);
+            agents.forEach((agent, i) => {
+                const isUnmet = i < 2;
+                const target = 25000 + Math.random() * 10000;
+                const actual = isUnmet ? target * (0.7 + Math.random() * 0.2) : target * (0.95 + Math.random() * 0.15);
+                const achievement = (actual / target * 100).toFixed(1);
+                const calls = Math.floor(30 + Math.random() * 40);
+                const connectRate = (15 + Math.random() * 15).toFixed(1);
+                const ptp = (5 + Math.random() * 10).toFixed(1);
+                const attendance = Math.floor(80 + Math.random() * 20);
+
+                tbody.innerHTML += `
+                    <tr class="drilldown-row ${isUnmet ? 'red-row' : ''}">
+                        <td style="padding: 12px; font-weight: 500;">${agent}</td>
+                        <td style="padding: 12px; text-align: right;">${formatNumber(target)}</td>
+                        <td style="padding: 12px; text-align: right;">${formatNumber(actual)}</td>
+                        <td style="padding: 12px; text-align: right; color: ${isUnmet ? '#ef4444' : '#22c55e'}; font-weight: 600;">${achievement}%</td>
+                        <td style="padding: 12px; text-align: right;">${calls}</td>
+                        <td style="padding: 12px; text-align: right;">${connectRate}%</td>
+                        <td style="padding: 12px; text-align: right;">${ptp}%</td>
+                        <td style="padding: 12px; text-align: right;">${attendance}%</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function renderTLChart(days) {
+            const chartDom = document.getElementById('tl-chart');
+            if (tlChart) tlChart.dispose();
+            tlChart = echarts.init(chartDom);
+
+            const dates = days.map(d => d.date.slice(5));
+            const actuals = days.map(d => d.actual);
+            const targets = days.map(d => d.target);
+
+            const option = {
+                tooltip: { trigger: 'axis' },
+                legend: { data: ['Actual', 'Target'], bottom: 0 },
+                grid: { left: '3%', right: '4%', bottom: '15%', top: '10%', containLabel: true },
+                xAxis: { type: 'category', data: dates },
+                yAxis: { type: 'value', name: 'Amount (PHP)', axisLabel: { formatter: (v) => (v / 1000) + 'k' } },
+                series: [
+                    {
+                        name: 'Actual',
+                        type: 'line',
+                        data: actuals,
+                        smooth: true,
+                        lineStyle: { color: '#1e3a5f', width: 3 },
+                        itemStyle: { color: '#1e3a5f' },
+                        areaStyle: { color: 'rgba(99,102,241,0.1)' }
+                    },
+                    {
+                        name: 'Target',
+                        type: 'line',
+                        data: targets,
+                        smooth: true,
+                        lineStyle: { color: '#ef4444', width: 2, type: 'dashed' },
+                        itemStyle: { color: '#ef4444' }
+                    }
+                ]
+            };
+            tlChart.setOption(option);
+        }
+
+        function generateTLConclusions(data, isMet) {
+            const conclusions = [];
+            if (isMet) {
+                conclusions.push(`Target achieved with ${data.achievement.toFixed(1)}% achievement rate.`);
+                conclusions.push(`Performance is ${(data.achievement - data.moduleAvg).toFixed(1)}% above module average.`);
+            } else {
+                conclusions.push(`Target gap of ${formatNumber(data.gap)} PHP (${(100 - data.achievement).toFixed(1)}% below target).`);
+                if (data.callGap < 0) conclusions.push(`Call volume decreased by ${Math.abs(data.callGap)} calls vs target.`);
+                if (data.connectGap < 0) conclusions.push(`Connect rate is ${Math.abs(data.connectGap).toFixed(1)}% below target.`);
+                conclusions.push(`Immediate action needed on 2 agents with lowest achievement.`);
+            }
+            document.getElementById('tl-conclusions').innerHTML = conclusions.map(c => `<div class="conclusion-item">${c}</div>`).join('');
+        }
+
+        // ===================== STL VIEW =====================
+        let stlChart = null;
+
+        function initSTLView() {
+            const select = document.getElementById('stl-module-select');
+            select.innerHTML = '<option value="all">All Modules</option>';
+            Object.keys(REPORT_DATA.stlData).forEach(module => {
+                select.innerHTML += `<option value="${module}">${module}</option>`;
+            });
+            loadSTLData();
+        }
+
+        function loadSTLData() {
+            const module = document.getElementById('stl-module-select').value;
+            const data = module === 'all' ? REPORT_DATA.stlData['S1'] : REPORT_DATA.stlData[module];
+
+            if (!data) return;
+
+            document.getElementById('stl-week-target').textContent = formatNumber(data.target);
+            document.getElementById('stl-week-actual').textContent = formatNumber(data.actual);
+            document.getElementById('stl-achievement-rate').textContent = data.achievement.toFixed(1) + '%';
+            document.getElementById('stl-trend').textContent = data.trend;
+
+            const isMet = data.achievement >= 100;
+            const badge = document.getElementById('stl-status-badge');
+            if (isMet) {
+                badge.innerHTML = '<span class="status-badge status-success">Weekly Target Met</span>';
+                document.getElementById('stl-unmet-section').style.display = 'none';
+            } else {
+                badge.innerHTML = '<span class="status-badge status-danger">Weekly Target Not Met</span>';
+                document.getElementById('stl-unmet-section').style.display = 'block';
+                loadSTLGroupTable(module);
+            }
+
+            generateSTLConclusions(data, isMet, module);
+            renderSTLChart(data.days);
+        }
+
+        function loadSTLGroupTable(module) {
+            const tbody = document.getElementById('stl-group-table');
+            tbody.innerHTML = '';
+            const groups = Object.keys(REPORT_DATA.tlData);
+            groups.forEach((group, i) => {
+                const isUnmet = i < 2;
+                const target = 80000 + Math.random() * 40000;
+                const actual = isUnmet ? target * (0.7 + Math.random() * 0.2) : target * (0.95 + Math.random() * 0.15);
+                const achievement = (actual / target * 100).toFixed(1);
+                const calls = Math.floor(40 + Math.random() * 30);
+                const connectRate = (15 + Math.random() * 15).toFixed(1);
+                const ptpRate = (5 + Math.random() * 10).toFixed(1);
+                const attendance = Math.floor(80 + Math.random() * 20);
+
+                tbody.innerHTML += `
+                    <tr class="drilldown-row ${isUnmet ? 'red-row' : ''}">
+                        <td style="padding: 12px; font-weight: 500;">${group}</td>
+                        <td style="padding: 12px; text-align: right;">${formatNumber(target)}</td>
+                        <td style="padding: 12px; text-align: right;">${formatNumber(actual)}</td>
+                        <td style="padding: 12px; text-align: right; color: ${isUnmet ? '#ef4444' : '#22c55e'}; font-weight: 600;">${achievement}%</td>
+                        <td style="padding: 12px; text-align: right;">${calls}</td>
+                        <td style="padding: 12px; text-align: right;">${connectRate}%</td>
+                        <td style="padding: 12px; text-align: right;">${ptpRate}%</td>
+                        <td style="padding: 12px; text-align: right;">${attendance}%</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function renderSTLChart(weeks) {
+            const chartDom = document.getElementById('stl-chart');
+            if (stlChart) stlChart.dispose();
+            stlChart = echarts.init(chartDom);
+
+            const weekLabels = weeks.map(d => d.weekLabel);
+            const actuals = weeks.map(d => d.actual);
+            const targets = weeks.map(d => d.target);
+
+            const option = {
+                tooltip: { trigger: 'axis' },
+                legend: { data: ['Actual', 'Target'], bottom: 0 },
+                grid: { left: '3%', right: '4%', bottom: '15%', top: '10%', containLabel: true },
+                xAxis: { type: 'category', data: weekLabels },
+                yAxis: { type: 'value', name: 'Amount (PHP)', axisLabel: { formatter: (v) => (v / 1000) + 'k' } },
+                series: [
+                    {
+                        name: 'Actual',
+                        type: 'bar',
+                        data: actuals,
+                        barWidth: '40%',
+                        itemStyle: { color: '#1e3a5f', borderRadius: [4, 4, 0, 0] }
+                    },
+                    {
+                        name: 'Target',
+                        type: 'line',
+                        data: targets,
+                        smooth: true,
+                        lineStyle: { color: '#ef4444', width: 2, type: 'dashed' },
+                        itemStyle: { color: '#ef4444' },
+                        symbol: 'none'
+                    }
+                ]
+            };
+            stlChart.setOption(option);
+        }
+
+        function generateSTLConclusions(data, isMet, module) {
+            const conclusions = [];
+            if (isMet) {
+                conclusions.push(`Weekly target achieved with ${data.achievement.toFixed(1)}% achievement.`);
+                conclusions.push(`Week-over-week growth is ${data.trend}.`);
+            } else {
+                conclusions.push(`Weekly gap of ${formatNumber(data.gap)} PHP (${(100 - data.achievement).toFixed(1)}% below target).`);
+                conclusions.push(`Week-over-week trend is ${data.trend}, need to improve.`);
+                conclusions.push(`Recommend focusing on groups with <90% achievement.`);
+            }
+            document.getElementById('stl-conclusions').innerHTML = conclusions.map(c => `<div class="conclusion-item">${c}</div>`).join('');
+        }
+
+        // ===================== DATA VIEW =====================
+        let trendChart = null;
+
+        function initDataView() {
+            const select = document.getElementById('trend-module-select');
+            select.innerHTML = '<option value="all">All Modules</option>';
+            REPORT_DATA.modules.forEach(module => {
+                select.innerHTML += `<option value="${module}">${module}</option>`;
+            });
+            loadAnomalyData();
+        }
+
+        function loadAnomalyData() {
+            const tbody = document.getElementById('anomaly-table');
+            tbody.innerHTML = '';
+            REPORT_DATA.anomalyData.forEach(item => {
+                const isHighRisk = item.days >= 3;
+                tbody.innerHTML += `
+                    <tr class="drilldown-row ${isHighRisk ? 'red-row' : ''}">
+                        <td style="padding: 12px; font-weight: 500;">${item.type}</td>
+                        <td style="padding: 12px; font-weight: 500;">${item.name}</td>
+                        <td style="padding: 12px; text-align: center;">${item.module}</td>
+                        <td style="padding: 12px; text-align: center; font-weight: 600; color: ${isHighRisk ? '#ef4444' : '#f59e0b'};">${item.days}</td>
+                        <td style="padding: 12px; text-align: right;">${formatNumber(item.target)}</td>
+                        <td style="padding: 12px; text-align: right;">${formatNumber(item.actual)}</td>
+                        <td style="padding: 12px; text-align: right; color: #ef4444;">-${formatNumber(item.gap)}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function loadTrendData() {
+            loadTrendChart();
+            loadRiskModuleReview();
+        }
+
+        function loadTrendChart() {
+            const chartDom = document.getElementById('trend-chart');
+            if (trendChart) trendChart.dispose();
+            trendChart = echarts.init(chartDom);
+
+            const modules = REPORT_DATA.modules.slice(0, 4);
+            const series = modules.map(module => ({
+                name: module,
+                type: 'line',
+                smooth: true,
+                data: generateTrendData(30)
+            }));
+
+            const option = {
+                tooltip: { trigger: 'axis' },
+                legend: { data: modules, bottom: 0 },
+                grid: { left: '3%', right: '4%', bottom: '15%', top: '10%', containLabel: true },
+                xAxis: { type: 'category', data: generateDateLabels(30) },
+                yAxis: { type: 'value', name: 'Recovery Rate (%)', min: 60, max: 100 },
+                series: series
+            };
+            trendChart.setOption(option);
+        }
+
+        function generateTrendData(days) {
+            const data = [];
+            for (let i = 0; i < days; i++) {
+                data.push((70 + Math.random() * 25).toFixed(1));
+            }
+            return data;
+        }
+
+        function generateDateLabels(days) {
+            const labels = [];
+            for (let i = days; i > 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                labels.push(date.toISOString().split('T')[0].slice(5));
+            }
+            return labels;
+        }
+
+        function loadRiskModuleReview() {
+            const reviewSection = document.getElementById('risk-module-review');
+            const content = document.getElementById('risk-module-content');
+
+            const riskModules = REPORT_DATA.riskModules;
+            if (riskModules.length === 0) {
+                reviewSection.style.display = 'none';
+                return;
+            }
+
+            reviewSection.style.display = 'block';
+            content.innerHTML = '';
+
+            riskModules.forEach(module => {
+                const groups = REPORT_DATA.riskModuleGroups[module] || [];
+                let html = `<div style="margin-bottom: 24px;"><h4 style="font-size: 14px; font-weight: 600; color: #991b1b; margin-bottom: 12px;">Module ${module} - ${groups.length} Unmet Groups</h4>`;
+                html += '<table style="width: 100%; border-collapse: collapse; font-size: 13px;">';
+                html += '<tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;"><th style="padding: 8px; text-align: left;">Group</th><th style="padding: 8px; text-align: right;">Target</th><th style="padding: 8px; text-align: right;">Actual</th><th style="padding: 8px; text-align: right;">Achieve</th><th style="padding: 8px; text-align: right;">Calls</th><th style="padding: 8px; text-align: right;">Conn%</th><th style="padding: 8px; text-align: right;">PTP%</th><th style="padding: 8px; text-align: right;">Attd%</th></tr>';
+
+                groups.forEach(g => {
+                    html += `<tr style="border-bottom: 1px solid #f1f5f9;">
+                        <td style="padding: 8px;">${g.group}</td>
+                        <td style="padding: 8px; text-align: right;">${formatNumber(g.target)}</td>
+                        <td style="padding: 8px; text-align: right;">${formatNumber(g.actual)}</td>
+                        <td style="padding: 8px; text-align: right; color: ${g.achievement < 90 ? '#ef4444' : '#22c55e'}; font-weight: 600;">${g.achievement.toFixed(1)}%</td>
+                        <td style="padding: 8px; text-align: right;">${g.calls}</td>
+                        <td style="padding: 8px; text-align: right;">${g.connectRate.toFixed(1)}%</td>
+                        <td style="padding: 8px; text-align: right;">${g.ptpRate.toFixed(1)}%</td>
+                        <td style="padding: 8px; text-align: right;">${g.attendance}%</td>
+                    </tr>`;
+                });
+                html += '</table></div>';
+                content.innerHTML += html;
+            });
+        }
+
+        // ===================== UTILITIES =====================
+        function formatNumber(num) {
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(0) + 'K';
+            return num.toFixed(0);
+        }
+
+        // ===================== INIT =====================
+        document.getElementById('report-date').textContent = new Date().toISOString().split('T')[0];
+        document.getElementById('data-date').textContent = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+
+        window.addEventListener('resize', () => {
+            if (tlChart) tlChart.resize();
+            if (stlChart) stlChart.resize();
+            if (trendChart) trendChart.resize();
+        });
+
+        // 异步加载 JSON 数据
+        loadJSONData().then(data => {
+            if (data) {
+                REPORT_DATA = data;
+                // 使用 JSON 数据，更新日期
+                if (REPORT_DATA.meta) {
+                    document.getElementById('report-date').textContent = REPORT_DATA.meta.reportDate;
+                    document.getElementById('data-date').textContent = REPORT_DATA.meta.dataDate;
+                }
+            } else {
+                // JSON 加载失败，使用 MOCK_DATA
+                REPORT_DATA = MOCK_DATA;
+            }
+            initTLView();
+        });
+    </script>
+</body>
+</html>

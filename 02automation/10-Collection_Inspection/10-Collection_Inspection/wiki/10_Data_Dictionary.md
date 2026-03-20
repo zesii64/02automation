@@ -91,6 +91,95 @@
 **抽取范围（Notebook 约定）**
 - 使用 `month` 直接过滤：`month >= substr(dt_start,1,7) AND month <= substr(dt_end,1,7)`。
 
+## 4. 日目标回款 (`daily_target_repay`)
+*源表: `phl_anls.rpt_coll_repay_target_dly4`*
+
+> **重要**：此表已包含日粒度的目标回款数据（target_repay_principal），可直接计算 achievement，无需再从月目标回款率 breakdown。
+
+| 字段名 | 类型 | 说明 | 备注 |
+|--------|------|------|------|
+| `dt` | String | 数据日期 | 格式：`yyyy-MM-dd` |
+| `owner_bucket` | String | 模块 | 例：S0, S1, S2, M1 |
+| `owner_group` | String | 组别 | |
+| `owing_principal` | Decimal | 在案本金 | 当日案件本金总额 |
+| `repay_principal` | Decimal | 实际回款本金 | 当日回款金额 |
+| `target_repay_principal` | Decimal | 目标回款本金 | 当日目标回款金额 |
+| `case_overdue_days` | Int | 案件逾期天数 | 用于分层 |
+| `case_owing_principal` | Decimal | 案件本金 | 单案本金，用于分箱 |
+
+**Achievement 计算公式**：
+```sql
+CASE WHEN SUM(target_repay_principal) <= 0 THEN 0
+     ELSE SUM(repay_principal) / SUM(target_repay_principal)
+END AS achieve_rate
+```
+
+**常用过滤条件**：
+- `owner_bucket IN ('S0', 'S1', 'S2', 'M1')`
+- `case_overdue_days > -99`  -- 排除无效数据
+
 ---
 
-**Last Updated**: 2026-03-17  
+## 5. EOM Target Data (`eom_target_data`)
+*源表: `module_eom_repay_target`*
+*源文件: `d:\97data\eom_target_data_202501_202602.csv`*
+
+| 字段名 | 类型 | 说明 | 备注 |
+|--------|------|------|------|
+| `product` | String | 产品线 | 例：cashloan、ttbnpl |
+| `module` | String | 模块/阶段 | 例：S0、S1、S2、M1、T2、T4、T5；也可能包含分层（如 `S1_Large`） |
+| `target_repayment_rate` | Decimal | 目标回款率 | 月度目标值 |
+| `month` | String | 月份 | 格式：`yyyy-MM` |
+
+**抽取范围（Notebook 约定）**
+- 使用 `month` 直接过滤：`month >= substr(dt_start,1,7) AND month <= substr(dt_end,1,7)`。
+
+---
+
+## 6. PTP 承诺还款 (`ptp_data`)
+*源表: `phl_anls.tmp_zyt_agent_ptp`*
+
+| 字段名 | 类型 | 说明 | 备注 |
+|--------|------|------|------|
+| `dt` | String | 数据日期 | 格式：`yyyy-MM-dd` |
+| `owner_name` | String | 催员名 | |
+| `owner_group` | String | 组别 | |
+| `ptp_case_cnt` | Decimal | PTP案件数 | 该催员名下所有PTP案件总数 |
+| `ptp_today_case` | Decimal | 今日PTP案件数 | 约定还款日为dt的案件数 |
+| `today_actual_repay_case` | Decimal | 今日实际还款案件数 | 约定还款日为dt且实际完成还款的案件数 |
+| `today_ptp_repay_rate` | Decimal | PTP履约率 | `today_actual_repay_case / ptp_today_case` |
+
+## 7. 呼损率 (`call_loss_rate`)
+*源表: `phl_anls.tmp_phl_zyt_20_lark_genesys_daily`*
+
+> **仅统计一键外呼**：筛选条件 `call_type = '3'`
+
+| 字段名 | 类型 | 说明 | 备注 |
+|--------|------|------|------|
+| `dt` | String | 数据日期 | 格式：`yyyy-MM-dd` |
+| `group_name` | String | 组别 | |
+| `call_type` | String | 拨打类型 | `3` = 一键外呼 |
+| `call_loss` | Decimal | 呼损数 | 客户接通但催员未接起（客户挂断）的次数 |
+| `connect_times` | Decimal | 接通次数 | 催员成功接起的次数 |
+| `call_loss_rate` | Decimal | 呼损率 | `call_loss / (call_loss + connect_times)` |
+
+**计算逻辑**：
+- 分子：呼损（客户挂断、催员未接起）
+- 分母：呼损 + 接通（所有客户已接通的电话）
+- 含义：一键外呼中，客户已接通但催员来不及接起的比例
+
+**dt 取值范围（Notebook 约定）**
+- 通过参数 `dt_start` / `dt_end` 控制
+
+**抽取说明**：
+- 输出粒度为 **催员日粒度**：`dt + owner_name`
+- `ptp_today_case` 表示"约定还款日 = dt"的案件（当日待履约）
+- `today_actual_repay_case` 表示上述案件中实际完成还款的数量
+- 履约率 = 实际还款数 / 约定还款数
+
+**dt 取值范围（Notebook 约定）**
+- 通过参数 `dt_start` / `dt_end` 控制
+
+---
+
+**Last Updated**: 2026-03-19  

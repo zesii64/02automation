@@ -1,0 +1,8639 @@
+{
+  "meta": {
+    "reportDate": "2026-03-18",
+    "dataDate": "2026-03-17",
+    "version": "1.1"
+  },
+  "modules": [
+    "M1",
+    "M2",
+    "S0",
+    "S1",
+    "S2"
+  ],
+  "groups": [
+    "M1-Large A",
+    "M1-Large B",
+    "M1-Small A ",
+    "M2-A module",
+    "S0- A Module",
+    "S0- B Module",
+    "S0-C Module",
+    "S0-D Module",
+    "S0-E Module",
+    "S0-F Module",
+    "S0-G Module",
+    "S1-Large A",
+    "S1-Large B",
+    "S1-Large C",
+    "S1-Large D",
+    "S1-Large E",
+    "S1-Small A ",
+    "S1-Small B ",
+    "S2-Large A",
+    "S2-Large B",
+    "S2-Large C",
+    "S2-Small A"
+  ],
+  "agents": [
+    "Ramos02",
+    "abalos01",
+    "abayajs",
+    "abellado",
+    "agostolc",
+    "aguilarjv",
+    "agustinll",
+    "albacea",
+    "alecjan",
+    "almario",
+    "althiche",
+    "amargo",
+    "ambacan",
+    "andes",
+    "angeline",
+    "antonette",
+    "apondarcr",
+    "arellano",
+    "arpon",
+    "balingasa",
+    "baptistara",
+    "barcelo",
+    "bardajeks",
+    "bardinasvd",
+    "bautista06",
+    "bayononja",
+    "benito",
+    "benitojm",
+    "bensal",
+    "bernabepr",
+    "besligjm",
+    "bituin",
+    "bogtongjs",
+    "bolante",
+    "bolechenp",
+    "boloseno",
+    "boniao",
+    "bonilla",
+    "borromeo",
+    "bueno01",
+    "bumanlag",
+    "bunagan",
+    "caacbayjo",
+    "callamangp",
+    "calzado",
+    "camo",
+    "canedo",
+    "canizares",
+    "cantre",
+    "carsola",
+    "castrolf",
+    "causon",
+    "cernechezan",
+    "chavez",
+    "christinejoie",
+    "cinco",
+    "colagbangjc",
+    "colotja",
+    "conchadaap",
+    "condes",
+    "constantinojr",
+    "cortelap",
+    "crepa",
+    "cruz05",
+    "cruzad",
+    "cruzsd",
+    "dagarat",
+    "daplinra",
+    "decastro",
+    "degrano01",
+    "delacruzkc",
+    "delacruzmq",
+    "delapenajd",
+    "delavega",
+    "delcastillo",
+    "delossantos01",
+    "delrosario01",
+    "delrosariode",
+    "desor",
+    "diaz03",
+    "dolorzoms",
+    "edlenmae",
+    "esguerrart",
+    "espejo",
+    "espejonrt",
+    "estomocj",
+    "esturk",
+    "ethanjohn",
+    "evangeline",
+    "evardoni",
+    "fenequitoja",
+    "fernandez03",
+    "ferrer01",
+    "fillartossm",
+    "fillomena",
+    "gabriel",
+    "galero",
+    "garcia06",
+    "garcia08",
+    "garcia09",
+    "gayanilo",
+    "gerald01",
+    "gilbuenasv",
+    "gontridascg",
+    "granada01",
+    "guevarra",
+    "guintoas",
+    "gultia",
+    "harvey",
+    "homerez",
+    "ibalar",
+    "ilag",
+    "infante",
+    "isagani",
+    "isip01",
+    "jamen01",
+    "jatulan",
+    "jennelyn01",
+    "jessamay",
+    "jhonpoul",
+    "jimenezjg",
+    "jiro01",
+    "justolme",
+    "kamilla",
+    "laganas01",
+    "lagos",
+    "lamoste01",
+    "lanuzamt",
+    "lapuz",
+    "larionjb",
+    "lauron",
+    "lavaresmj",
+    "leece",
+    "leona01",
+    "lerona",
+    "leynescc",
+    "lopezcj",
+    "lorenzo02",
+    "lozano01",
+    "lozantazv",
+    "lubrico",
+    "madarangpm",
+    "madelyn",
+    "madriagamo",
+    "magno01",
+    "magsombolnl",
+    "mainarmp",
+    "malopingjc",
+    "manlunas",
+    "manorinamt",
+    "manuel02",
+    "manuel04",
+    "manzanero",
+    "marasigan02",
+    "marconjm",
+    "mariajessicaflorence",
+    "marianojb",
+    "marinaa",
+    "martillano",
+    "marvinrey",
+    "matenciocq",
+    "matilac",
+    "maylascv",
+    "melgar",
+    "michaeljade",
+    "militantejo",
+    "mina02",
+    "monchito",
+    "montana",
+    "moratalla01",
+    "myra",
+    "nergarakn",
+    "nicavera",
+    "norliedhane",
+    "noveda",
+    "nunezk",
+    "olivarj",
+    "oreiro",
+    "ortilano02",
+    "paderan",
+    "pagaoa",
+    "palaypayon",
+    "pamintuan",
+    "pamintuanap",
+    "panelo",
+    "paolo",
+    "papa",
+    "pascualjb",
+    "payno",
+    "pena03",
+    "penaranda",
+    "perez03",
+    "perin",
+    "phorcia",
+    "pradodj",
+    "princessann",
+    "quintocd",
+    "rabagodm",
+    "rabulan",
+    "racelis01",
+    "ramos06",
+    "razal",
+    "rebustillo",
+    "recopelacionrb",
+    "red01",
+    "regalado01",
+    "regalado02",
+    "reggiebabyboy",
+    "remorozoja",
+    "renolla",
+    "reposo",
+    "retilba01",
+    "reyes03",
+    "rodensebastian",
+    "rodolfoms",
+    "rondubioea",
+    "rosema",
+    "roy01",
+    "rugasjf",
+    "ruiz01",
+    "saja",
+    "salcedora",
+    "santosmb",
+    "se01",
+    "selasa",
+    "shanley",
+    "simoyro",
+    "sol01",
+    "solano01",
+    "soltura01",
+    "stephaniejoy",
+    "tabigue",
+    "tapalla",
+    "tapar",
+    "tenebro",
+    "torrescr",
+    "tronorv",
+    "tugekidaad",
+    "ulan",
+    "vallecer",
+    "vasquezrc",
+    "velezlb",
+    "veronajm",
+    "villaflormd",
+    "viorje",
+    "yanamo",
+    "yap01",
+    "zhedainemckarl",
+    "zorialls"
+  ],
+  "tlData": {
+    "M1-Large A": {
+      "target": 104173.03164085218,
+      "actual": 134196.0,
+      "achievement": 128.8,
+      "moduleAvg": 0,
+      "gap": -30022.968359147824,
+      "callGap": 0,
+      "connectGap": 0
+    },
+    "M1-Large B": {
+      "target": 122195.40141179912,
+      "actual": 124885.0,
+      "achievement": 102.2,
+      "moduleAvg": 0,
+      "gap": -2689.5985882008827,
+      "callGap": 0,
+      "connectGap": 0
+    },
+    "M1-Small A ": {
+      "target": 55725.76773985335,
+      "actual": 31770.04,
+      "achievement": 57.0,
+      "moduleAvg": 0,
+      "gap": 23955.727739853348,
+      "callGap": 0,
+      "connectGap": 0
+    },
+    "M2-A module": {
+      "target": NaN,
+      "actual": NaN,
+      "achievement": 0,
+      "moduleAvg": 0,
+      "gap": NaN,
+      "callGap": 0,
+      "connectGap": 0
+    },
+    "S0- A Module": {
+      "target": NaN,
+      "actual": NaN,
+      "achievement": 0,
+      "moduleAvg": 0,
+      "gap": NaN,
+      "callGap": 0,
+      "connectGap": 0
+    },
+    "S0- B Module": {
+      "target": NaN,
+      "actual": NaN,
+      "achievement": 0,
+      "moduleAvg": 0,
+      "gap": NaN,
+      "callGap": 0,
+      "connectGap": 0
+    },
+    "S0-C Module": {
+      "target": NaN,
+      "actual": NaN,
+      "achievement": 0,
+      "moduleAvg": 0,
+      "gap": NaN,
+      "callGap": 0,
+      "connectGap": 0
+    },
+    "S0-D Module": {
+      "target": NaN,
+      "actual": NaN,
+      "achievement": 0,
+      "moduleAvg": 0,
+      "gap": NaN,
+      "callGap": 0,
+      "connectGap": 0
+    },
+    "S0-E Module": {
+      "target": NaN,
+      "actual": NaN,
+      "achievement": 0,
+      "moduleAvg": 0,
+      "gap": NaN,
+      "callGap": 0,
+      "connectGap": 0
+    },
+    "S0-F Module": {
+      "target": NaN,
+      "actual": NaN,
+      "achievement": 0,
+      "moduleAvg": 0,
+      "gap": NaN,
+      "callGap": 0,
+      "connectGap": 0
+    },
+    "S0-G Module": {
+      "target": NaN,
+      "actual": NaN,
+      "achievement": 0,
+      "moduleAvg": 0,
+      "gap": NaN,
+      "callGap": 0,
+      "connectGap": 0
+    },
+    "S1-Large A": {
+      "target": 399622.60300123383,
+      "actual": 388270.0,
+      "achievement": 97.2,
+      "moduleAvg": 0,
+      "gap": 11352.60300123383,
+      "callGap": 0,
+      "connectGap": 0
+    },
+    "S1-Large B": {
+      "target": 453719.69860019174,
+      "actual": 317559.0,
+      "achievement": 70.0,
+      "moduleAvg": 0,
+      "gap": 136160.69860019174,
+      "callGap": 0,
+      "connectGap": 0
+    },
+    "S1-Large C": {
+      "target": 350432.5255021237,
+      "actual": 355852.0,
+      "achievement": 101.5,
+      "moduleAvg": 0,
+      "gap": -5419.474497876305,
+      "callGap": 0,
+      "connectGap": 0
+    },
+    "S1-Large D": {
+      "target": 403803.7634621337,
+      "actual": 474455.0,
+      "achievement": 117.5,
+      "moduleAvg": 0,
+      "gap": -70651.2365378663,
+      "callGap": 0,
+      "connectGap": 0
+    },
+    "S1-Large E": {
+      "target": 323488.02510240325,
+      "actual": 256397.0,
+      "achievement": 79.3,
+      "moduleAvg": 0,
+      "gap": 67091.02510240325,
+      "callGap": 0,
+      "connectGap": 0
+    },
+    "S1-Small A ": {
+      "target": 95688.86910184546,
+      "actual": 91427.08,
+      "achievement": 95.5,
+      "moduleAvg": 0,
+      "gap": 4261.789101845454,
+      "callGap": 0,
+      "connectGap": 0
+    },
+    "S1-Small B ": {
+      "target": 98588.21682715965,
+      "actual": 97615.36,
+      "achievement": 99.0,
+      "moduleAvg": 0,
+      "gap": 972.856827159645,
+      "callGap": 0,
+      "connectGap": 0
+    },
+    "S2-Large A": {
+      "target": 95117.7233837389,
+      "actual": 42001.0,
+      "achievement": 44.2,
+      "moduleAvg": 0,
+      "gap": 53116.72338373891,
+      "callGap": 0,
+      "connectGap": 0
+    },
+    "S2-Large B": {
+      "target": 85316.25482562225,
+      "actual": 67073.0,
+      "achievement": 78.6,
+      "moduleAvg": 0,
+      "gap": 18243.25482562225,
+      "callGap": 0,
+      "connectGap": 0
+    },
+    "S2-Large C": {
+      "target": 93277.1073621084,
+      "actual": 68484.0,
+      "achievement": 73.4,
+      "moduleAvg": 0,
+      "gap": 24793.107362108407,
+      "callGap": 0,
+      "connectGap": 0
+    },
+    "S2-Small A": {
+      "target": 31918.833504194503,
+      "actual": 22167.0,
+      "achievement": 69.4,
+      "moduleAvg": 0,
+      "gap": 9751.833504194503,
+      "callGap": 0,
+      "connectGap": 0
+    }
+  },
+  "stlData": {
+    "M1": {
+      "target": 6867490.215966947,
+      "actual": 5164015.98,
+      "achievement": 75.2,
+      "lastWeek": 0,
+      "trend": "0%",
+      "gap": 1703474.235966947
+    },
+    "M2": {
+      "target": 0.0,
+      "actual": 0.0,
+      "achievement": 0,
+      "lastWeek": 0,
+      "trend": "0%",
+      "gap": 0.0
+    },
+    "S0": {
+      "target": 153944933.97659516,
+      "actual": 159028446.82000002,
+      "achievement": 103.3,
+      "lastWeek": 0,
+      "trend": "0%",
+      "gap": -5083512.843404859
+    },
+    "S1": {
+      "target": 66590574.24436883,
+      "actual": 68627529.49,
+      "achievement": 103.1,
+      "lastWeek": 0,
+      "trend": "0%",
+      "gap": -2036955.2456311658
+    },
+    "S2": {
+      "target": 9696870.952267962,
+      "actual": 9142093.17,
+      "achievement": 94.3,
+      "lastWeek": 0,
+      "trend": "0%",
+      "gap": 554777.7822679617
+    }
+  },
+  "agentPerformance": {
+    "M1-Large A": [
+      {
+        "name": "Ramos02",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 888,
+        "connectRate": 2.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "Ramos02",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 609,
+        "connectRate": 3.8,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "balingasa",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 743,
+        "connectRate": 2.8,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "balingasa",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 1020,
+        "connectRate": 2.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "boniao",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 447,
+        "connectRate": 2.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "boniao",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 702,
+        "connectRate": 3.8,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "cinco",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 566,
+        "connectRate": 3.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "cinco",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 831,
+        "connectRate": 2.8,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "delavega",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 443,
+        "connectRate": 3.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "delavega",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 735,
+        "connectRate": 2.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "harvey",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 782,
+        "connectRate": 1.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "harvey",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 606,
+        "connectRate": 4.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "jiro01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "jiro01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "jiro01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 788,
+        "connectRate": 1.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "jiro01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 520,
+        "connectRate": 5.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "lauron",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 4,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "lauron",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 743,
+        "connectRate": 2.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "lauron",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 678,
+        "connectRate": 3.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "palaypayon",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 2,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "palaypayon",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 16,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "palaypayon",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 535,
+        "connectRate": 5.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "palaypayon",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 546,
+        "connectRate": 2.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "pascualjb",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 2,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "pascualjb",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 655,
+        "connectRate": 2.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "pascualjb",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 435,
+        "connectRate": 4.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "retilba01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 6,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "retilba01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 857,
+        "connectRate": 1.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "retilba01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "retilba01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 623,
+        "connectRate": 5.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "saja",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 671,
+        "connectRate": 4.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "saja",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 5,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "saja",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 641,
+        "connectRate": 1.4,
+        "ptp": 0,
+        "attendance": 100
+      }
+    ],
+    "M1-Large B": [
+      {
+        "name": "abellado",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 398,
+        "connectRate": 5.0,
+        "ptp": 0,
+        "attendance": 0
+      },
+      {
+        "name": "abellado",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 516,
+        "connectRate": 0.8,
+        "ptp": 0,
+        "attendance": 0
+      },
+      {
+        "name": "althiche",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 621,
+        "connectRate": 1.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "althiche",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 11,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "althiche",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 734,
+        "connectRate": 1.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "canedo",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 11,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "canedo",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 689,
+        "connectRate": 4.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "canedo",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 643,
+        "connectRate": 3.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "canedo",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 4,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "constantinojr",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 937,
+        "connectRate": 2.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "constantinojr",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 607,
+        "connectRate": 2.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "delapenajd",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 689,
+        "connectRate": 3.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "delapenajd",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 834,
+        "connectRate": 2.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "esguerrart",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 491,
+        "connectRate": 4.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "esguerrart",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "esguerrart",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 532,
+        "connectRate": 4.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "esguerrart",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 9,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "guevarra",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 777,
+        "connectRate": 2.8,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "guevarra",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 383,
+        "connectRate": 5.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "madelyn",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 3,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "madelyn",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 863,
+        "connectRate": 2.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "madelyn",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 393,
+        "connectRate": 4.1,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "marconjm",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 5,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "marconjm",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "marconjm",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 227,
+        "connectRate": 5.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "marconjm",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 1145,
+        "connectRate": 2.1,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "matenciocq",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 741,
+        "connectRate": 3.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "matenciocq",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 645,
+        "connectRate": 0.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "perez03",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 703,
+        "connectRate": 2.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "perez03",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 700,
+        "connectRate": 3.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "rugasjf",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 889,
+        "connectRate": 1.8,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "rugasjf",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 693,
+        "connectRate": 3.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "rugasjf",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptp": 0,
+        "attendance": 100
+      }
+    ],
+    "M1-Small A ": [
+      {
+        "name": "aguilarjv",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 116,
+        "connectRate": 6.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "aguilarjv",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 858,
+        "connectRate": 4.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "aguilarjv",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 8,
+        "connectRate": 12.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "besligjm",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 1379,
+        "connectRate": 3.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "besligjm",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 10,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "besligjm",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 110,
+        "connectRate": 1.8,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "delacruzmq",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 1044,
+        "connectRate": 4.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "delacruzmq",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "delacruzmq",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 71,
+        "connectRate": 4.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "delacruzmq",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "estomocj",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 1203,
+        "connectRate": 4.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "estomocj",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 4,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "estomocj",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "estomocj",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 97,
+        "connectRate": 3.1,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "racelis01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 135,
+        "connectRate": 3.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "racelis01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 68,
+        "connectRate": 5.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "racelis01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 971,
+        "connectRate": 3.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "zhedainemckarl",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 29,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "zhedainemckarl",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 232,
+        "connectRate": 2.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "zhedainemckarl",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 1368,
+        "connectRate": 2.6,
+        "ptp": 0,
+        "attendance": 100
+      }
+    ],
+    "M2-A module": [
+      {
+        "name": "callamangp",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 1218,
+        "connectRate": 3.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "christinejoie",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 1554,
+        "connectRate": 3.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "evangeline",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 4,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "evangeline",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 1340,
+        "connectRate": 3.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "princessann",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "princessann",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 1325,
+        "connectRate": 3.5,
+        "ptp": 0,
+        "attendance": 100
+      }
+    ],
+    "S0- A Module": [
+      {
+        "name": "abalos01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 871,
+        "connectRate": 4.1,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "apondarcr",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 875,
+        "connectRate": 4.8,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "bernabepr",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 1038,
+        "connectRate": 3.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "bumanlag",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 844,
+        "connectRate": 5.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "camo",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 1124,
+        "connectRate": 5.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "delrosario01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 772,
+        "connectRate": 4.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "evardoni",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 938,
+        "connectRate": 3.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "penaranda",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 960,
+        "connectRate": 6.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "pradodj",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 896,
+        "connectRate": 4.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "pradodj",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "renolla",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 1100,
+        "connectRate": 2.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "yanamo",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 763,
+        "connectRate": 4.5,
+        "ptp": 0,
+        "attendance": 100
+      }
+    ],
+    "S0- B Module": [
+      {
+        "name": "ambacan",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 737,
+        "connectRate": 4.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "ambacan",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "condes",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 651,
+        "connectRate": 5.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "espejo",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "espejo",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 701,
+        "connectRate": 5.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "lubrico",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 906,
+        "connectRate": 3.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "magsombolnl",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 621,
+        "connectRate": 6.1,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "malopingjc",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 937,
+        "connectRate": 6.8,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "nergarakn",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 702,
+        "connectRate": 3.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "pamintuan",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 882,
+        "connectRate": 4.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "remorozoja",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 1109,
+        "connectRate": 2.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "rodensebastian",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 997,
+        "connectRate": 4.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "simoyro",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 788,
+        "connectRate": 2.7,
+        "ptp": 0,
+        "attendance": 100
+      }
+    ],
+    "S0-C Module": [
+      {
+        "name": "andes",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 704,
+        "connectRate": 5.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "borromeo",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 770,
+        "connectRate": 6.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "gilbuenasv",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "gilbuenasv",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 419,
+        "connectRate": 7.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "justolme",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 657,
+        "connectRate": 6.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "monchito",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 1047,
+        "connectRate": 3.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "myra",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 778,
+        "connectRate": 5.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "noveda",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 1006,
+        "connectRate": 5.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "reggiebabyboy",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 621,
+        "connectRate": 9.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "reyes03",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 598,
+        "connectRate": 6.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "sol01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 1110,
+        "connectRate": 5.8,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "torrescr",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "torrescr",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 567,
+        "connectRate": 5.5,
+        "ptp": 0,
+        "attendance": 100
+      }
+    ],
+    "S0-D Module": [
+      {
+        "name": "albacea",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 796,
+        "connectRate": 6.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "causon",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 859,
+        "connectRate": 6.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "galero",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 1097,
+        "connectRate": 3.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "lagos",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 954,
+        "connectRate": 3.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "lopezcj",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 1010,
+        "connectRate": 5.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "mina02",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 994,
+        "connectRate": 3.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "moratalla01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 978,
+        "connectRate": 4.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "moratalla01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "nicavera",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 888,
+        "connectRate": 4.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "panelo",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 879,
+        "connectRate": 6.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "tabigue",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 1164,
+        "connectRate": 2.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "tapalla",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 1019,
+        "connectRate": 3.8,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "tugekidaad",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "tugekidaad",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 741,
+        "connectRate": 4.7,
+        "ptp": 0,
+        "attendance": 100
+      }
+    ],
+    "S0-E Module": [
+      {
+        "name": "alecjan",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 850,
+        "connectRate": 7.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "antonette",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 1141,
+        "connectRate": 3.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "decastro",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 816,
+        "connectRate": 5.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "degrano01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 739,
+        "connectRate": 5.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "delcastillo",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 1191,
+        "connectRate": 3.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "lorenzo02",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "lorenzo02",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 980,
+        "connectRate": 4.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "manzanero",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 1227,
+        "connectRate": 3.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "matilac",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 822,
+        "connectRate": 5.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "maylascv",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 882,
+        "connectRate": 4.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "ortilano02",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 980,
+        "connectRate": 6.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "paderan",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 1177,
+        "connectRate": 4.2,
+        "ptp": 0,
+        "attendance": 100
+      }
+    ],
+    "S0-F Module": [
+      {
+        "name": "barcelo",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 544,
+        "connectRate": 9.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "bogtongjs",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 532,
+        "connectRate": 6.8,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "desor",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 803,
+        "connectRate": 3.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "desor",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 4,
+        "connectRate": 25.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "ethanjohn",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 952,
+        "connectRate": 7.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "jatulan",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 734,
+        "connectRate": 5.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "manlunas",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 791,
+        "connectRate": 6.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "pena03",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "pena03",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 1025,
+        "connectRate": 2.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "perin",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 713,
+        "connectRate": 6.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "regalado02",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "regalado02",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 837,
+        "connectRate": 5.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "reposo",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 685,
+        "connectRate": 5.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "yap01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 755,
+        "connectRate": 3.8,
+        "ptp": 0,
+        "attendance": 100
+      }
+    ],
+    "S0-G Module": [
+      {
+        "name": "bensal",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 733,
+        "connectRate": 4.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "bolechenp",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 843,
+        "connectRate": 4.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "carsola",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 895,
+        "connectRate": 6.8,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "daplinra",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 884,
+        "connectRate": 3.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "edlenmae",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 714,
+        "connectRate": 8.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "fenequitoja",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 1090,
+        "connectRate": 4.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "garcia08",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 899,
+        "connectRate": 5.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "gerald01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 931,
+        "connectRate": 5.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "gontridascg",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 689,
+        "connectRate": 6.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "lozantazv",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 902,
+        "connectRate": 4.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "se01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 786,
+        "connectRate": 3.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "vasquezrc",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 1024,
+        "connectRate": 4.0,
+        "ptp": 0,
+        "attendance": 100
+      }
+    ],
+    "S1-Large A": [
+      {
+        "name": "abayajs",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 338,
+        "connectRate": 0.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "abayajs",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 554,
+        "connectRate": 1.8,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "abayajs",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 700,
+        "connectRate": 1.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "almario",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 589,
+        "connectRate": 2.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "almario",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 250,
+        "connectRate": 1.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "almario",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 486,
+        "connectRate": 1.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "bardajeks",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 334,
+        "connectRate": 1.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "bardajeks",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 387,
+        "connectRate": 1.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "bardajeks",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 407,
+        "connectRate": 4.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "bayononja",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 454,
+        "connectRate": 2.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "bayononja",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 542,
+        "connectRate": 4.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "bayononja",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 476,
+        "connectRate": 2.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "conchadaap",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 320,
+        "connectRate": 0.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "conchadaap",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 577,
+        "connectRate": 2.1,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "conchadaap",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 387,
+        "connectRate": 1.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "fernandez03",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 541,
+        "connectRate": 0.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "fernandez03",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 388,
+        "connectRate": 3.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "fernandez03",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 527,
+        "connectRate": 1.1,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "isagani",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 580,
+        "connectRate": 2.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "isagani",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 798,
+        "connectRate": 1.1,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "isagani",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 110,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "isagani",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 12,
+        "connectRate": 8.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "lanuzamt",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 314,
+        "connectRate": 3.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "lanuzamt",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 485,
+        "connectRate": 1.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "lanuzamt",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 766,
+        "connectRate": 4.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "madriagamo",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 503,
+        "connectRate": 3.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "madriagamo",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 511,
+        "connectRate": 2.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "madriagamo",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 403,
+        "connectRate": 0.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "manorinamt",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 761,
+        "connectRate": 2.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "manorinamt",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 442,
+        "connectRate": 3.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "manorinamt",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 104,
+        "connectRate": 3.8,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "manorinamt",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "martillano",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 187,
+        "connectRate": 2.1,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "martillano",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 388,
+        "connectRate": 3.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "martillano",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 904,
+        "connectRate": 2.1,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "oreiro",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 416,
+        "connectRate": 3.1,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "oreiro",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 564,
+        "connectRate": 0.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "oreiro",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 337,
+        "connectRate": 1.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "payno",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 470,
+        "connectRate": 2.1,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "payno",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 559,
+        "connectRate": 1.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "payno",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 537,
+        "connectRate": 2.8,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "recopelacionrb",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 292,
+        "connectRate": 0.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "recopelacionrb",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 607,
+        "connectRate": 2.1,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "recopelacionrb",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 363,
+        "connectRate": 3.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "stephaniejoy",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 491,
+        "connectRate": 1.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "stephaniejoy",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 288,
+        "connectRate": 1.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "stephaniejoy",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 473,
+        "connectRate": 0.4,
+        "ptp": 0,
+        "attendance": 100
+      }
+    ],
+    "S1-Large B": [
+      {
+        "name": "bautista06",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 162,
+        "connectRate": 1.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "bautista06",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 1,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "bautista06",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 469,
+        "connectRate": 4.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "bautista06",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 710,
+        "connectRate": 1.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "boloseno",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 835,
+        "connectRate": 1.1,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "boloseno",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 314,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "boloseno",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 645,
+        "connectRate": 0.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "calzado",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 584,
+        "connectRate": 1.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "calzado",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 639,
+        "connectRate": 2.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "calzado",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 190,
+        "connectRate": 1.1,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "canizares",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 672,
+        "connectRate": 2.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "canizares",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 313,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "canizares",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 12,
+        "connectRate": 8.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "canizares",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 438,
+        "connectRate": 3.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "gayanilo",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 491,
+        "connectRate": 4.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "gayanilo",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 381,
+        "connectRate": 0.8,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "gayanilo",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 789,
+        "connectRate": 1.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "ibalar",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 408,
+        "connectRate": 3.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "ibalar",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 494,
+        "connectRate": 1.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "ibalar",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 295,
+        "connectRate": 1.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "kamilla",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 638,
+        "connectRate": 1.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "kamilla",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 751,
+        "connectRate": 2.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "kamilla",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 140,
+        "connectRate": 0.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "lapuz",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 400,
+        "connectRate": 0.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "lapuz",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 352,
+        "connectRate": 1.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "lapuz",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 247,
+        "connectRate": 1.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "lapuz",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 18,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "lavaresmj",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 314,
+        "connectRate": 3.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "lavaresmj",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 407,
+        "connectRate": 1.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "lavaresmj",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 15,
+        "connectRate": 13.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "lavaresmj",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 535,
+        "connectRate": 2.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "marianojb",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 656,
+        "connectRate": 0.8,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "marianojb",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 445,
+        "connectRate": 0.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "marianojb",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 321,
+        "connectRate": 1.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "marianojb",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 36,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "marvinrey",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 315,
+        "connectRate": 2.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "marvinrey",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 212,
+        "connectRate": 2.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "marvinrey",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 745,
+        "connectRate": 1.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "olivarj",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 501,
+        "connectRate": 1.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "olivarj",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 126,
+        "connectRate": 4.8,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "olivarj",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 860,
+        "connectRate": 2.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "quintocd",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "quintocd",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 402,
+        "connectRate": 2.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "quintocd",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 987,
+        "connectRate": 1.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "quintocd",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 123,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "rodolfoms",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 227,
+        "connectRate": 1.8,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "rodolfoms",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 683,
+        "connectRate": 2.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "rodolfoms",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 781,
+        "connectRate": 2.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "rodolfoms",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptp": 0,
+        "attendance": 100
+      }
+    ],
+    "S1-Large C": [
+      {
+        "name": "bituin",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 264,
+        "connectRate": 2.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "bituin",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 298,
+        "connectRate": 3.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "bituin",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 437,
+        "connectRate": 3.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "cruzad",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 273,
+        "connectRate": 1.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "cruzad",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 298,
+        "connectRate": 8.1,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "cruzad",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 371,
+        "connectRate": 0.8,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "gabriel",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 341,
+        "connectRate": 1.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "gabriel",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 419,
+        "connectRate": 1.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "gabriel",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 527,
+        "connectRate": 0.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "madarangpm",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 271,
+        "connectRate": 4.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "madarangpm",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 447,
+        "connectRate": 2.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "madarangpm",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 401,
+        "connectRate": 1.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "magno01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 443,
+        "connectRate": 0.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "magno01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 306,
+        "connectRate": 0.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "magno01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 636,
+        "connectRate": 1.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "mainarmp",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 11,
+        "connectRate": 9.1,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "mainarmp",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 287,
+        "connectRate": 4.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "mainarmp",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 322,
+        "connectRate": 0.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "mainarmp",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 624,
+        "connectRate": 1.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "mariajessicaflorence",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 351,
+        "connectRate": 0.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "mariajessicaflorence",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 548,
+        "connectRate": 0.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "mariajessicaflorence",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 338,
+        "connectRate": 1.8,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "mariajessicaflorence",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "militantejo",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 338,
+        "connectRate": 0.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "militantejo",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 524,
+        "connectRate": 1.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "militantejo",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 749,
+        "connectRate": 2.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "norliedhane",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 322,
+        "connectRate": 2.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "norliedhane",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 366,
+        "connectRate": 4.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "norliedhane",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 399,
+        "connectRate": 4.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "nunezk",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 337,
+        "connectRate": 2.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "nunezk",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 288,
+        "connectRate": 1.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "nunezk",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 522,
+        "connectRate": 1.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "phorcia",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 251,
+        "connectRate": 1.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "phorcia",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 600,
+        "connectRate": 1.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "phorcia",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 236,
+        "connectRate": 5.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "rosema",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 191,
+        "connectRate": 2.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "rosema",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 451,
+        "connectRate": 2.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "rosema",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 370,
+        "connectRate": 1.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "ruiz01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 366,
+        "connectRate": 2.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "ruiz01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 441,
+        "connectRate": 1.1,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "ruiz01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 228,
+        "connectRate": 4.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "velezlb",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 363,
+        "connectRate": 0.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "velezlb",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 203,
+        "connectRate": 3.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "velezlb",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 477,
+        "connectRate": 2.1,
+        "ptp": 0,
+        "attendance": 100
+      }
+    ],
+    "S1-Large D": [
+      {
+        "name": "cantre",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 479,
+        "connectRate": 3.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "cantre",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 455,
+        "connectRate": 4.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "cantre",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 418,
+        "connectRate": 2.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "cantre",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 18,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "colotja",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 4,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "colotja",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 310,
+        "connectRate": 2.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "colotja",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 361,
+        "connectRate": 4.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "colotja",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 144,
+        "connectRate": 5.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "dagarat",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 986,
+        "connectRate": 1.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "dagarat",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 331,
+        "connectRate": 1.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "dagarat",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 332,
+        "connectRate": 2.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "guintoas",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 149,
+        "connectRate": 1.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "guintoas",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 448,
+        "connectRate": 0.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "guintoas",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 18,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "guintoas",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 301,
+        "connectRate": 1.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "jamen01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 205,
+        "connectRate": 2.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "jamen01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 721,
+        "connectRate": 0.8,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "jamen01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 433,
+        "connectRate": 3.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "larionjb",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 504,
+        "connectRate": 0.8,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "larionjb",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 424,
+        "connectRate": 1.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "larionjb",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 513,
+        "connectRate": 2.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "leona01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 360,
+        "connectRate": 1.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "leona01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 691,
+        "connectRate": 0.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "leona01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 23,
+        "connectRate": 8.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "melgar",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 516,
+        "connectRate": 5.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "melgar",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 489,
+        "connectRate": 1.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "melgar",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 219,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "pagaoa",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 194,
+        "connectRate": 2.1,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "pagaoa",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 410,
+        "connectRate": 3.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "pagaoa",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 449,
+        "connectRate": 3.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "pamintuanap",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 265,
+        "connectRate": 1.1,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "pamintuanap",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 837,
+        "connectRate": 1.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "pamintuanap",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 228,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "rabulan",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 375,
+        "connectRate": 1.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "rabulan",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 500,
+        "connectRate": 2.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "rabulan",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 474,
+        "connectRate": 1.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "rebustillo",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 465,
+        "connectRate": 1.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "rebustillo",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 360,
+        "connectRate": 0.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "rebustillo",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 588,
+        "connectRate": 0.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "solano01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 323,
+        "connectRate": 0.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "solano01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 511,
+        "connectRate": 0.8,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "solano01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 725,
+        "connectRate": 2.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "solano01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "tronorv",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 263,
+        "connectRate": 0.8,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "tronorv",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 542,
+        "connectRate": 1.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "tronorv",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 206,
+        "connectRate": 5.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "villaflormd",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 617,
+        "connectRate": 2.1,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "villaflormd",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 461,
+        "connectRate": 3.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "villaflormd",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 132,
+        "connectRate": 0.8,
+        "ptp": 0,
+        "attendance": 100
+      }
+    ],
+    "S1-Large E": [
+      {
+        "name": "agustinll",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 598,
+        "connectRate": 0.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "agustinll",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 397,
+        "connectRate": 0.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "agustinll",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 449,
+        "connectRate": 1.8,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "bardinasvd",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 417,
+        "connectRate": 2.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "bardinasvd",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 336,
+        "connectRate": 0.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "bardinasvd",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 347,
+        "connectRate": 1.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "bonilla",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 365,
+        "connectRate": 1.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "bonilla",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 322,
+        "connectRate": 0.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "bonilla",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 510,
+        "connectRate": 4.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "cortelap",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 478,
+        "connectRate": 2.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "cortelap",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 229,
+        "connectRate": 1.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "cortelap",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 525,
+        "connectRate": 2.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "crepa",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 633,
+        "connectRate": 1.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "crepa",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 775,
+        "connectRate": 1.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "crepa",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 313,
+        "connectRate": 1.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "delossantos01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 172,
+        "connectRate": 1.7,
+        "ptp": 0,
+        "attendance": 0
+      },
+      {
+        "name": "delossantos01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 240,
+        "connectRate": 0.8,
+        "ptp": 0,
+        "attendance": 0
+      },
+      {
+        "name": "delossantos01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 269,
+        "connectRate": 2.2,
+        "ptp": 0,
+        "attendance": 0
+      },
+      {
+        "name": "esturk",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 213,
+        "connectRate": 1.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "esturk",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 304,
+        "connectRate": 1.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "esturk",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 497,
+        "connectRate": 2.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "garcia09",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 649,
+        "connectRate": 2.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "garcia09",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 255,
+        "connectRate": 1.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "garcia09",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "granada01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 379,
+        "connectRate": 2.4,
+        "ptp": 0,
+        "attendance": 0
+      },
+      {
+        "name": "granada01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 122,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 0
+      },
+      {
+        "name": "granada01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 326,
+        "connectRate": 2.5,
+        "ptp": 0,
+        "attendance": 0
+      },
+      {
+        "name": "jimenezjg",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 376,
+        "connectRate": 1.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "jimenezjg",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 360,
+        "connectRate": 0.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "jimenezjg",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 804,
+        "connectRate": 2.1,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "manuel04",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 516,
+        "connectRate": 4.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "manuel04",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 342,
+        "connectRate": 3.8,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "manuel04",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 316,
+        "connectRate": 1.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "red01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 475,
+        "connectRate": 2.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "red01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 440,
+        "connectRate": 3.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "red01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 389,
+        "connectRate": 0.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "selasa",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 561,
+        "connectRate": 2.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "selasa",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 632,
+        "connectRate": 1.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "selasa",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 1,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "selasa",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 246,
+        "connectRate": 1.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "viorje",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 539,
+        "connectRate": 1.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "viorje",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 461,
+        "connectRate": 3.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "viorje",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 367,
+        "connectRate": 0.8,
+        "ptp": 0,
+        "attendance": 100
+      }
+    ],
+    "S1-Small A ": [
+      {
+        "name": "benito",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 211,
+        "connectRate": 3.8,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "benito",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 1165,
+        "connectRate": 3.1,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "benito",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 53,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "benito",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 23,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "bolante",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 785,
+        "connectRate": 0.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "bolante",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 91,
+        "connectRate": 3.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "bolante",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 212,
+        "connectRate": 1.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "dolorzoms",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 226,
+        "connectRate": 2.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "dolorzoms",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 82,
+        "connectRate": 1.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "dolorzoms",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 888,
+        "connectRate": 1.1,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "espejonrt",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 1132,
+        "connectRate": 2.1,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "espejonrt",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 189,
+        "connectRate": 1.1,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "espejonrt",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 106,
+        "connectRate": 0.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "ferrer01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 832,
+        "connectRate": 2.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "ferrer01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 217,
+        "connectRate": 1.8,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "laganas01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 1198,
+        "connectRate": 1.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "laganas01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 322,
+        "connectRate": 2.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "laganas01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 62,
+        "connectRate": 1.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "lamoste01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 981,
+        "connectRate": 3.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "lamoste01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 125,
+        "connectRate": 0.8,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "lamoste01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 144,
+        "connectRate": 4.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "manuel02",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 141,
+        "connectRate": 3.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "manuel02",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 1232,
+        "connectRate": 1.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "manuel02",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 219,
+        "connectRate": 3.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "montana",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 974,
+        "connectRate": 2.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "montana",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 37,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "montana",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 74,
+        "connectRate": 1.4,
+        "ptp": 0,
+        "attendance": 100
+      }
+    ],
+    "S1-Small B ": [
+      {
+        "name": "amargo",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 22,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "amargo",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 969,
+        "connectRate": 3.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "amargo",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 22,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "amargo",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 166,
+        "connectRate": 1.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "caacbayjo",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 199,
+        "connectRate": 2.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "caacbayjo",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 79,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "caacbayjo",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 1293,
+        "connectRate": 2.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "chavez",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 115,
+        "connectRate": 4.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "chavez",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 1180,
+        "connectRate": 2.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "chavez",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 45,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "delacruzkc",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 133,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "delacruzkc",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 1207,
+        "connectRate": 2.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "delacruzkc",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 197,
+        "connectRate": 4.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "fillartossm",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 1092,
+        "connectRate": 2.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "fillartossm",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 57,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "fillartossm",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 263,
+        "connectRate": 0.8,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "gultia",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 822,
+        "connectRate": 3.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "gultia",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 290,
+        "connectRate": 1.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "gultia",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 79,
+        "connectRate": 1.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "infante",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 41,
+        "connectRate": 2.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "infante",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 1007,
+        "connectRate": 3.1,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "infante",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 306,
+        "connectRate": 2.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "leynescc",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 290,
+        "connectRate": 1.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "leynescc",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 91,
+        "connectRate": 1.1,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "leynescc",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 718,
+        "connectRate": 4.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "tenebro",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 192,
+        "connectRate": 4.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "tenebro",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 900,
+        "connectRate": 2.8,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "tenebro",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 70,
+        "connectRate": 5.7,
+        "ptp": 0,
+        "attendance": 100
+      }
+    ],
+    "S2-Large A": [
+      {
+        "name": "agostolc",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 11,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "agostolc",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 619,
+        "connectRate": 3.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "agostolc",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 608,
+        "connectRate": 1.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "agostolc",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 306,
+        "connectRate": 3.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "arellano",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 306,
+        "connectRate": 5.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "arellano",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 408,
+        "connectRate": 2.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "arellano",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 369,
+        "connectRate": 3.8,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "arellano",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 9,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "baptistara",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 383,
+        "connectRate": 1.8,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "baptistara",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 515,
+        "connectRate": 2.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "baptistara",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 350,
+        "connectRate": 6.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "baptistara",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 2,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "bunagan",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 451,
+        "connectRate": 2.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "bunagan",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 450,
+        "connectRate": 1.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "bunagan",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 573,
+        "connectRate": 2.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "garcia06",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 526,
+        "connectRate": 2.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "garcia06",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 398,
+        "connectRate": 2.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "garcia06",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 5,
+        "connectRate": 20.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "garcia06",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 449,
+        "connectRate": 4.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "jhonpoul",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 427,
+        "connectRate": 3.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "jhonpoul",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 497,
+        "connectRate": 2.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "jhonpoul",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 597,
+        "connectRate": 2.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "leece",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 534,
+        "connectRate": 3.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "leece",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 594,
+        "connectRate": 2.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "leece",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 323,
+        "connectRate": 3.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "paolo",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 342,
+        "connectRate": 2.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "paolo",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 668,
+        "connectRate": 4.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "paolo",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 353,
+        "connectRate": 2.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "papa",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 403,
+        "connectRate": 3.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "papa",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 4,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "papa",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 10,
+        "connectRate": 10.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "papa",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 386,
+        "connectRate": 1.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "papa",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 405,
+        "connectRate": 4.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "roy01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 5,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "roy01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 327,
+        "connectRate": 2.8,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "roy01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 790,
+        "connectRate": 2.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "roy01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 632,
+        "connectRate": 1.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "vallecer",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 523,
+        "connectRate": 4.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "vallecer",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 490,
+        "connectRate": 2.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "vallecer",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 652,
+        "connectRate": 0.8,
+        "ptp": 0,
+        "attendance": 100
+      }
+    ],
+    "S2-Large B": [
+      {
+        "name": "arpon",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 491,
+        "connectRate": 3.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "arpon",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 294,
+        "connectRate": 0.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "arpon",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 495,
+        "connectRate": 3.8,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "bueno01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 674,
+        "connectRate": 4.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "bueno01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 314,
+        "connectRate": 1.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "bueno01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 547,
+        "connectRate": 2.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "castrolf",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 889,
+        "connectRate": 1.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "castrolf",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 143,
+        "connectRate": 7.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "castrolf",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 89,
+        "connectRate": 5.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "cruzsd",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 299,
+        "connectRate": 1.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "cruzsd",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 583,
+        "connectRate": 0.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "cruzsd",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 261,
+        "connectRate": 3.8,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "ilag",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 492,
+        "connectRate": 2.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "ilag",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 284,
+        "connectRate": 2.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "ilag",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 396,
+        "connectRate": 4.8,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "jennelyn01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 471,
+        "connectRate": 1.1,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "jennelyn01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 365,
+        "connectRate": 2.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "jennelyn01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 461,
+        "connectRate": 3.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "jessamay",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 161,
+        "connectRate": 7.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "jessamay",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 317,
+        "connectRate": 3.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "jessamay",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 492,
+        "connectRate": 4.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "lozano01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 533,
+        "connectRate": 1.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "lozano01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 519,
+        "connectRate": 4.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "lozano01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 381,
+        "connectRate": 2.1,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "lozano01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 9,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "regalado01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 1,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "regalado01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 455,
+        "connectRate": 1.1,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "regalado01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 619,
+        "connectRate": 3.1,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "regalado01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 390,
+        "connectRate": 3.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "soltura01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "soltura01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 634,
+        "connectRate": 2.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "soltura01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 525,
+        "connectRate": 1.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "soltura01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 247,
+        "connectRate": 6.1,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "soltura01",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 24,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      }
+    ],
+    "S2-Large C": [
+      {
+        "name": "benitojm",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 225,
+        "connectRate": 6.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "benitojm",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 465,
+        "connectRate": 2.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "benitojm",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 588,
+        "connectRate": 1.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "fillomena",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 369,
+        "connectRate": 4.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "fillomena",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 3,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "fillomena",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 23,
+        "connectRate": 4.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "fillomena",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 353,
+        "connectRate": 3.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "fillomena",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 383,
+        "connectRate": 3.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "lerona",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 427,
+        "connectRate": 2.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "lerona",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 722,
+        "connectRate": 2.1,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "lerona",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 485,
+        "connectRate": 4.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "marasigan02",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 340,
+        "connectRate": 3.8,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "marasigan02",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 499,
+        "connectRate": 3.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "marasigan02",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 566,
+        "connectRate": 2.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "marinaa",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 391,
+        "connectRate": 5.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "marinaa",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 344,
+        "connectRate": 0.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "marinaa",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 495,
+        "connectRate": 2.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "michaeljade",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 380,
+        "connectRate": 1.8,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "michaeljade",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 700,
+        "connectRate": 1.7,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "michaeljade",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 284,
+        "connectRate": 5.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "rabagodm",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 391,
+        "connectRate": 1.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "rabagodm",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 364,
+        "connectRate": 5.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "rabagodm",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 579,
+        "connectRate": 2.1,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "razal",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 276,
+        "connectRate": 6.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "razal",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 6,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "razal",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 345,
+        "connectRate": 1.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "razal",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 488,
+        "connectRate": 2.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "santosmb",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 240,
+        "connectRate": 9.2,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "santosmb",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 680,
+        "connectRate": 1.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "santosmb",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 4,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "santosmb",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 230,
+        "connectRate": 3.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "tapar",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 52,
+        "connectRate": 1.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "tapar",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 504,
+        "connectRate": 3.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "tapar",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 372,
+        "connectRate": 5.1,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "tapar",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 726,
+        "connectRate": 1.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "tapar",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 4,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "ulan",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 319,
+        "connectRate": 2.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "ulan",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 499,
+        "connectRate": 2.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "ulan",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 609,
+        "connectRate": 3.3,
+        "ptp": 0,
+        "attendance": 100
+      }
+    ],
+    "S2-Small A": [
+      {
+        "name": "angeline",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 794,
+        "connectRate": 4.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "angeline",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 3,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "angeline",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 278,
+        "connectRate": 2.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "angeline",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 3,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "cernechezan",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 34,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "cernechezan",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 943,
+        "connectRate": 4.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "cernechezan",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 64,
+        "connectRate": 1.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "cernechezan",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 4,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "cernechezan",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 5,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "delrosariode",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 7,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "delrosariode",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 1459,
+        "connectRate": 3.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "delrosariode",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 64,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "homerez",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 3,
+        "connectRate": 33.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "homerez",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 7,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "homerez",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 148,
+        "connectRate": 1.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "homerez",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 51,
+        "connectRate": 3.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "homerez",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 1086,
+        "connectRate": 3.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "rondubioea",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 771,
+        "connectRate": 5.6,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "rondubioea",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 7,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "rondubioea",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 51,
+        "connectRate": 3.9,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "rondubioea",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 14,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "shanley",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 45,
+        "connectRate": 4.4,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "shanley",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 25,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "shanley",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 1361,
+        "connectRate": 3.3,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "shanley",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 54,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "veronajm",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 8,
+        "connectRate": 12.5,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "veronajm",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 3,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "veronajm",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 24,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "veronajm",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 31,
+        "connectRate": 0.0,
+        "ptp": 0,
+        "attendance": 100
+      },
+      {
+        "name": "veronajm",
+        "consecutiveDays": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 1160,
+        "connectRate": 4.1,
+        "ptp": 0,
+        "attendance": 100
+      }
+    ]
+  },
+  "groupPerformance": {
+    "M1": [
+      {
+        "name": "M1-Large A",
+        "consecutiveWeeks": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptpRate": 0,
+        "attendance": 0
+      },
+      {
+        "name": "M1-Large B",
+        "consecutiveWeeks": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptpRate": 0,
+        "attendance": 0
+      },
+      {
+        "name": "M1-Small A ",
+        "consecutiveWeeks": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptpRate": 0,
+        "attendance": 0
+      }
+    ],
+    "M2": [
+      {
+        "name": "M2-A module",
+        "consecutiveWeeks": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptpRate": 0,
+        "attendance": 0
+      }
+    ],
+    "S0": [
+      {
+        "name": "S0- A Module",
+        "consecutiveWeeks": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptpRate": 0,
+        "attendance": 0
+      },
+      {
+        "name": "S0- B Module",
+        "consecutiveWeeks": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptpRate": 0,
+        "attendance": 0
+      },
+      {
+        "name": "S0-C Module",
+        "consecutiveWeeks": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptpRate": 0,
+        "attendance": 0
+      },
+      {
+        "name": "S0-D Module",
+        "consecutiveWeeks": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptpRate": 0,
+        "attendance": 0
+      },
+      {
+        "name": "S0-E Module",
+        "consecutiveWeeks": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptpRate": 0,
+        "attendance": 0
+      },
+      {
+        "name": "S0-F Module",
+        "consecutiveWeeks": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptpRate": 0,
+        "attendance": 0
+      },
+      {
+        "name": "S0-G Module",
+        "consecutiveWeeks": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptpRate": 0,
+        "attendance": 0
+      }
+    ],
+    "S1": [
+      {
+        "name": "S1-Large A",
+        "consecutiveWeeks": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptpRate": 0,
+        "attendance": 0
+      },
+      {
+        "name": "S1-Large B",
+        "consecutiveWeeks": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptpRate": 0,
+        "attendance": 0
+      },
+      {
+        "name": "S1-Large C",
+        "consecutiveWeeks": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptpRate": 0,
+        "attendance": 0
+      },
+      {
+        "name": "S1-Large D",
+        "consecutiveWeeks": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptpRate": 0,
+        "attendance": 0
+      },
+      {
+        "name": "S1-Large E",
+        "consecutiveWeeks": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptpRate": 0,
+        "attendance": 0
+      },
+      {
+        "name": "S1-Small A ",
+        "consecutiveWeeks": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptpRate": 0,
+        "attendance": 0
+      },
+      {
+        "name": "S1-Small B ",
+        "consecutiveWeeks": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptpRate": 0,
+        "attendance": 0
+      }
+    ],
+    "S2": [
+      {
+        "name": "S2-Large A",
+        "consecutiveWeeks": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptpRate": 0,
+        "attendance": 0
+      },
+      {
+        "name": "S2-Large B",
+        "consecutiveWeeks": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptpRate": 0,
+        "attendance": 0
+      },
+      {
+        "name": "S2-Large C",
+        "consecutiveWeeks": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptpRate": 0,
+        "attendance": 0
+      },
+      {
+        "name": "S2-Small A",
+        "consecutiveWeeks": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptpRate": 0,
+        "attendance": 0
+      }
+    ],
+    "T2": [
+      {
+        "name": "T2-A Module",
+        "consecutiveWeeks": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptpRate": 0,
+        "attendance": 0
+      },
+      {
+        "name": "T2-B Module",
+        "consecutiveWeeks": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptpRate": 0,
+        "attendance": 0
+      },
+      {
+        "name": "T2-C Module",
+        "consecutiveWeeks": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptpRate": 0,
+        "attendance": 0
+      },
+      {
+        "name": "T2-D Module",
+        "consecutiveWeeks": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptpRate": 0,
+        "attendance": 0
+      },
+      {
+        "name": "T2-E Module",
+        "consecutiveWeeks": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptpRate": 0,
+        "attendance": 0
+      },
+      {
+        "name": "T2-F Module",
+        "consecutiveWeeks": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptpRate": 0,
+        "attendance": 0
+      },
+      {
+        "name": "T2-G Module",
+        "consecutiveWeeks": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptpRate": 0,
+        "attendance": 0
+      },
+      {
+        "name": "T2-H Module",
+        "consecutiveWeeks": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptpRate": 0,
+        "attendance": 0
+      },
+      {
+        "name": "T2-I Module",
+        "consecutiveWeeks": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptpRate": 0,
+        "attendance": 0
+      },
+      {
+        "name": "T2-J Module",
+        "consecutiveWeeks": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptpRate": 0,
+        "attendance": 0
+      },
+      {
+        "name": "T2-K Module",
+        "consecutiveWeeks": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptpRate": 0,
+        "attendance": 0
+      }
+    ],
+    "T4": [
+      {
+        "name": "T4-F Module",
+        "consecutiveWeeks": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptpRate": 0,
+        "attendance": 0
+      }
+    ],
+    "T5": [
+      {
+        "name": "T5-F Module",
+        "consecutiveWeeks": 0,
+        "target": 0,
+        "actual": 0,
+        "achievement": 0,
+        "calls": 0,
+        "connectRate": 0,
+        "ptpRate": 0,
+        "attendance": 0
+      }
+    ]
+  },
+  "anomalyData": [],
+  "riskModules": [],
+  "riskModuleGroups": {},
+  "moduleDailyTrends": {
+    "M1_Large": {
+      "target": [],
+      "daily": [
+        {
+          "date": "2026-03-01",
+          "actual": 98716.0,
+          "cum_rate": 0.37
+        },
+        {
+          "date": "2026-03-02",
+          "actual": 282234.0,
+          "cum_rate": 0.7
+        },
+        {
+          "date": "2026-03-03",
+          "actual": 424263.6,
+          "cum_rate": 0.94
+        },
+        {
+          "date": "2026-03-04",
+          "actual": 588307.6799999999,
+          "cum_rate": 1.16
+        },
+        {
+          "date": "2026-03-05",
+          "actual": 895200.6799999999,
+          "cum_rate": 1.47
+        },
+        {
+          "date": "2026-03-06",
+          "actual": 1065743.6800000002,
+          "cum_rate": 1.73
+        },
+        {
+          "date": "2026-03-07",
+          "actual": 1182869.6800000002,
+          "cum_rate": 1.94
+        },
+        {
+          "date": "2026-03-08",
+          "actual": 1268367.6800000002,
+          "cum_rate": 2.11
+        },
+        {
+          "date": "2026-03-09",
+          "actual": 1390552.6800000002,
+          "cum_rate": 2.25
+        },
+        {
+          "date": "2026-03-10",
+          "actual": 1539296.6800000002,
+          "cum_rate": 2.39
+        },
+        {
+          "date": "2026-03-11",
+          "actual": 1697761.6800000002,
+          "cum_rate": 2.52
+        },
+        {
+          "date": "2026-03-12",
+          "actual": 1831106.6800000002,
+          "cum_rate": 2.64
+        },
+        {
+          "date": "2026-03-13",
+          "actual": 2003548.68,
+          "cum_rate": 2.76
+        },
+        {
+          "date": "2026-03-14",
+          "actual": 2185133.6799999997,
+          "cum_rate": 2.88
+        },
+        {
+          "date": "2026-03-15",
+          "actual": 2253183.6799999997,
+          "cum_rate": 2.98
+        },
+        {
+          "date": "2026-03-16",
+          "actual": 2368734.6799999997,
+          "cum_rate": 3.05
+        },
+        {
+          "date": "2026-03-17",
+          "actual": 2627815.6799999997,
+          "cum_rate": 3.13
+        }
+      ]
+    },
+    "M1_Other": {
+      "target": [
+        {
+          "date": "2026-03-01",
+          "actual": 252.0
+        },
+        {
+          "date": "2026-03-02",
+          "actual": 337.0
+        },
+        {
+          "date": "2026-03-03",
+          "actual": 1151.0
+        },
+        {
+          "date": "2026-03-04",
+          "actual": 1151.0
+        },
+        {
+          "date": "2026-03-05",
+          "actual": 1151.0
+        },
+        {
+          "date": "2026-03-06",
+          "actual": 1151.0
+        },
+        {
+          "date": "2026-03-07",
+          "actual": 1151.0
+        },
+        {
+          "date": "2026-03-08",
+          "actual": 2553.0
+        },
+        {
+          "date": "2026-03-09",
+          "actual": 2553.0
+        },
+        {
+          "date": "2026-03-10",
+          "actual": 2553.0
+        },
+        {
+          "date": "2026-03-11",
+          "actual": 2553.0
+        },
+        {
+          "date": "2026-03-12",
+          "actual": 2553.0
+        },
+        {
+          "date": "2026-03-13",
+          "actual": 2553.0
+        },
+        {
+          "date": "2026-03-14",
+          "actual": 2553.0
+        },
+        {
+          "date": "2026-03-15",
+          "actual": 4885.0
+        },
+        {
+          "date": "2026-03-16",
+          "actual": 4885.0
+        },
+        {
+          "date": "2026-03-17",
+          "actual": 5455.0
+        }
+      ],
+      "daily": [],
+      "target_total": 6867490.215966947
+    },
+    "M1_Small": {
+      "target": [],
+      "daily": [
+        {
+          "date": "2026-03-01",
+          "actual": 15275.0,
+          "cum_rate": 0.58
+        },
+        {
+          "date": "2026-03-02",
+          "actual": 44525.0,
+          "cum_rate": 1.1
+        },
+        {
+          "date": "2026-03-03",
+          "actual": 66840.0,
+          "cum_rate": 1.47
+        },
+        {
+          "date": "2026-03-04",
+          "actual": 99593.0,
+          "cum_rate": 1.86
+        },
+        {
+          "date": "2026-03-05",
+          "actual": 137626.0,
+          "cum_rate": 2.27
+        },
+        {
+          "date": "2026-03-06",
+          "actual": 167810.0,
+          "cum_rate": 2.63
+        },
+        {
+          "date": "2026-03-07",
+          "actual": 188469.0,
+          "cum_rate": 2.91
+        },
+        {
+          "date": "2026-03-08",
+          "actual": 210825.0,
+          "cum_rate": 3.14
+        },
+        {
+          "date": "2026-03-09",
+          "actual": 229040.0,
+          "cum_rate": 3.33
+        },
+        {
+          "date": "2026-03-10",
+          "actual": 261311.04,
+          "cum_rate": 3.52
+        },
+        {
+          "date": "2026-03-11",
+          "actual": 286647.04,
+          "cum_rate": 3.69
+        },
+        {
+          "date": "2026-03-12",
+          "actual": 311293.04,
+          "cum_rate": 3.84
+        },
+        {
+          "date": "2026-03-13",
+          "actual": 342552.04,
+          "cum_rate": 4.0
+        },
+        {
+          "date": "2026-03-14",
+          "actual": 367785.04,
+          "cum_rate": 4.13
+        },
+        {
+          "date": "2026-03-15",
+          "actual": 393331.04,
+          "cum_rate": 4.26
+        },
+        {
+          "date": "2026-03-16",
+          "actual": 422085.21,
+          "cum_rate": 4.35
+        },
+        {
+          "date": "2026-03-17",
+          "actual": 453855.25,
+          "cum_rate": 4.43
+        }
+      ]
+    },
+    "S0_Other": {
+      "target": [
+        {
+          "date": "2026-03-01",
+          "actual": 54811.16
+        },
+        {
+          "date": "2026-03-02",
+          "actual": 109028.16
+        },
+        {
+          "date": "2026-03-03",
+          "actual": 160534.16
+        },
+        {
+          "date": "2026-03-04",
+          "actual": 220170.16
+        },
+        {
+          "date": "2026-03-05",
+          "actual": 276982.16
+        },
+        {
+          "date": "2026-03-06",
+          "actual": 310315.16
+        },
+        {
+          "date": "2026-03-07",
+          "actual": 346878.16
+        },
+        {
+          "date": "2026-03-08",
+          "actual": 400669.16
+        },
+        {
+          "date": "2026-03-09",
+          "actual": 439126.16
+        },
+        {
+          "date": "2026-03-10",
+          "actual": 497825.2
+        },
+        {
+          "date": "2026-03-11",
+          "actual": 544191.2
+        },
+        {
+          "date": "2026-03-12",
+          "actual": 605530.2
+        },
+        {
+          "date": "2026-03-13",
+          "actual": 643577.2
+        },
+        {
+          "date": "2026-03-14",
+          "actual": 691793.2
+        },
+        {
+          "date": "2026-03-15",
+          "actual": 757974.2
+        },
+        {
+          "date": "2026-03-16",
+          "actual": 801374.2
+        },
+        {
+          "date": "2026-03-17",
+          "actual": 872846.2
+        }
+      ],
+      "daily": [
+        {
+          "date": "2026-03-01",
+          "actual": 8954964.72,
+          "cum_rate": 46.12
+        },
+        {
+          "date": "2026-03-02",
+          "actual": 21172915.71,
+          "cum_rate": 53.83
+        },
+        {
+          "date": "2026-03-03",
+          "actual": 30689170.25,
+          "cum_rate": 58.5
+        },
+        {
+          "date": "2026-03-04",
+          "actual": 40087106.93,
+          "cum_rate": 61.53
+        },
+        {
+          "date": "2026-03-05",
+          "actual": 51494430.41,
+          "cum_rate": 64.47
+        },
+        {
+          "date": "2026-03-06",
+          "actual": 59785252.41,
+          "cum_rate": 66.53
+        },
+        {
+          "date": "2026-03-07",
+          "actual": 67306980.05,
+          "cum_rate": 67.94
+        },
+        {
+          "date": "2026-03-08",
+          "actual": 72023913.05,
+          "cum_rate": 69.21
+        },
+        {
+          "date": "2026-03-09",
+          "actual": 80878570.46,
+          "cum_rate": 69.71
+        },
+        {
+          "date": "2026-03-10",
+          "actual": 92475126.75,
+          "cum_rate": 70.4
+        },
+        {
+          "date": "2026-03-11",
+          "actual": 101418854.75,
+          "cum_rate": 71.02
+        },
+        {
+          "date": "2026-03-12",
+          "actual": 110308794.87,
+          "cum_rate": 71.5
+        },
+        {
+          "date": "2026-03-13",
+          "actual": 122414896.35,
+          "cum_rate": 72.0
+        },
+        {
+          "date": "2026-03-14",
+          "actual": 133062179.11,
+          "cum_rate": 72.36
+        },
+        {
+          "date": "2026-03-15",
+          "actual": 142849399.58,
+          "cum_rate": 72.95
+        },
+        {
+          "date": "2026-03-16",
+          "actual": 153325839.08,
+          "cum_rate": 73.37
+        },
+        {
+          "date": "2026-03-17",
+          "actual": 160811057.14000002,
+          "cum_rate": 73.74
+        }
+      ],
+      "target_total": 153944933.97659516
+    },
+    "S1_Large": {
+      "target": [],
+      "daily": [
+        {
+          "date": "2026-03-01",
+          "actual": 3864123.0,
+          "cum_rate": 15.59
+        },
+        {
+          "date": "2026-03-02",
+          "actual": 8297287.65,
+          "cum_rate": 22.83
+        },
+        {
+          "date": "2026-03-03",
+          "actual": 11068503.57,
+          "cum_rate": 27.09
+        },
+        {
+          "date": "2026-03-04",
+          "actual": 13461414.57,
+          "cum_rate": 30.17
+        },
+        {
+          "date": "2026-03-05",
+          "actual": 15578567.57,
+          "cum_rate": 32.53
+        },
+        {
+          "date": "2026-03-06",
+          "actual": 17708364.57,
+          "cum_rate": 34.42
+        },
+        {
+          "date": "2026-03-07",
+          "actual": 19438225.57,
+          "cum_rate": 35.91
+        },
+        {
+          "date": "2026-03-08",
+          "actual": 20431426.57,
+          "cum_rate": 36.94
+        },
+        {
+          "date": "2026-03-09",
+          "actual": 22482328.62,
+          "cum_rate": 37.92
+        },
+        {
+          "date": "2026-03-10",
+          "actual": 24556319.62,
+          "cum_rate": 38.85
+        },
+        {
+          "date": "2026-03-11",
+          "actual": 26518079.62,
+          "cum_rate": 39.71
+        },
+        {
+          "date": "2026-03-12",
+          "actual": 28280067.62,
+          "cum_rate": 40.49
+        },
+        {
+          "date": "2026-03-13",
+          "actual": 30531813.62,
+          "cum_rate": 41.28
+        },
+        {
+          "date": "2026-03-14",
+          "actual": 32169747.62,
+          "cum_rate": 41.95
+        },
+        {
+          "date": "2026-03-15",
+          "actual": 33393475.57,
+          "cum_rate": 42.49
+        },
+        {
+          "date": "2026-03-16",
+          "actual": 35803168.65,
+          "cum_rate": 43.01
+        },
+        {
+          "date": "2026-03-17",
+          "actual": 37595701.65,
+          "cum_rate": 43.47
+        }
+      ]
+    },
+    "S1_Other": {
+      "target": [
+        {
+          "date": "2026-03-01",
+          "actual": 14988.79
+        },
+        {
+          "date": "2026-03-02",
+          "actual": 21799.79
+        },
+        {
+          "date": "2026-03-03",
+          "actual": 22224.79
+        },
+        {
+          "date": "2026-03-04",
+          "actual": 24454.79
+        },
+        {
+          "date": "2026-03-05",
+          "actual": 24965.79
+        },
+        {
+          "date": "2026-03-06",
+          "actual": 30312.79
+        },
+        {
+          "date": "2026-03-07",
+          "actual": 31729.79
+        },
+        {
+          "date": "2026-03-08",
+          "actual": 37257.79
+        },
+        {
+          "date": "2026-03-09",
+          "actual": 48266.79
+        },
+        {
+          "date": "2026-03-10",
+          "actual": 54839.79
+        },
+        {
+          "date": "2026-03-11",
+          "actual": 57119.79
+        },
+        {
+          "date": "2026-03-12",
+          "actual": 63855.79
+        },
+        {
+          "date": "2026-03-13",
+          "actual": 63855.79
+        },
+        {
+          "date": "2026-03-14",
+          "actual": 65014.79
+        },
+        {
+          "date": "2026-03-15",
+          "actual": 69636.79
+        },
+        {
+          "date": "2026-03-16",
+          "actual": 79910.79
+        },
+        {
+          "date": "2026-03-17",
+          "actual": 82016.79
+        }
+      ],
+      "daily": [],
+      "target_total": 66590574.24436883
+    },
+    "S1_Small": {
+      "target": [],
+      "daily": [
+        {
+          "date": "2026-03-01",
+          "actual": 251521.0,
+          "cum_rate": 16.91
+        },
+        {
+          "date": "2026-03-02",
+          "actual": 551211.04,
+          "cum_rate": 24.53
+        },
+        {
+          "date": "2026-03-03",
+          "actual": 768244.0800000001,
+          "cum_rate": 28.86
+        },
+        {
+          "date": "2026-03-04",
+          "actual": 955952.6799999999,
+          "cum_rate": 31.82
+        },
+        {
+          "date": "2026-03-05",
+          "actual": 1181406.3199999998,
+          "cum_rate": 34.35
+        },
+        {
+          "date": "2026-03-06",
+          "actual": 1378516.6400000001,
+          "cum_rate": 36.17
+        },
+        {
+          "date": "2026-03-07",
+          "actual": 1556795.12,
+          "cum_rate": 37.51
+        },
+        {
+          "date": "2026-03-08",
+          "actual": 1693155.92,
+          "cum_rate": 38.42
+        },
+        {
+          "date": "2026-03-09",
+          "actual": 1885309.96,
+          "cum_rate": 39.23
+        },
+        {
+          "date": "2026-03-10",
+          "actual": 2085696.96,
+          "cum_rate": 40.02
+        },
+        {
+          "date": "2026-03-11",
+          "actual": 2256997.0,
+          "cum_rate": 40.67
+        },
+        {
+          "date": "2026-03-12",
+          "actual": 2469204.98,
+          "cum_rate": 41.34
+        },
+        {
+          "date": "2026-03-13",
+          "actual": 2724988.1,
+          "cum_rate": 42.11
+        },
+        {
+          "date": "2026-03-14",
+          "actual": 2903441.7,
+          "cum_rate": 42.8
+        },
+        {
+          "date": "2026-03-15",
+          "actual": 3048742.7,
+          "cum_rate": 43.35
+        },
+        {
+          "date": "2026-03-16",
+          "actual": 3259949.46,
+          "cum_rate": 43.84
+        },
+        {
+          "date": "2026-03-17",
+          "actual": 3448991.9,
+          "cum_rate": 44.27
+        }
+      ]
+    },
+    "S2_Large": {
+      "target": [],
+      "daily": [
+        {
+          "date": "2026-03-01",
+          "actual": 198908.03999999998,
+          "cum_rate": 1.43
+        },
+        {
+          "date": "2026-03-02",
+          "actual": 550655.54,
+          "cum_rate": 2.56
+        },
+        {
+          "date": "2026-03-03",
+          "actual": 770351.54,
+          "cum_rate": 3.27
+        },
+        {
+          "date": "2026-03-04",
+          "actual": 1012307.54,
+          "cum_rate": 3.88
+        },
+        {
+          "date": "2026-03-05",
+          "actual": 1282702.7,
+          "cum_rate": 4.44
+        },
+        {
+          "date": "2026-03-06",
+          "actual": 1473979.7,
+          "cum_rate": 4.87
+        },
+        {
+          "date": "2026-03-07",
+          "actual": 1731440.7,
+          "cum_rate": 5.29
+        },
+        {
+          "date": "2026-03-08",
+          "actual": 1970624.7,
+          "cum_rate": 5.48
+        },
+        {
+          "date": "2026-03-09",
+          "actual": 2373595.34,
+          "cum_rate": 5.75
+        },
+        {
+          "date": "2026-03-10",
+          "actual": 2698059.34,
+          "cum_rate": 6.03
+        },
+        {
+          "date": "2026-03-11",
+          "actual": 3082393.34,
+          "cum_rate": 6.34
+        },
+        {
+          "date": "2026-03-12",
+          "actual": 3611988.8499999996,
+          "cum_rate": 6.72
+        },
+        {
+          "date": "2026-03-13",
+          "actual": 3976830.8499999996,
+          "cum_rate": 7.07
+        },
+        {
+          "date": "2026-03-14",
+          "actual": 4267629.93,
+          "cum_rate": 7.4
+        },
+        {
+          "date": "2026-03-15",
+          "actual": 4503470.93,
+          "cum_rate": 7.69
+        },
+        {
+          "date": "2026-03-16",
+          "actual": 4766740.9399999995,
+          "cum_rate": 7.95
+        },
+        {
+          "date": "2026-03-17",
+          "actual": 4944298.9399999995,
+          "cum_rate": 8.18
+        }
+      ]
+    },
+    "S2_Other": {
+      "target": [
+        {
+          "date": "2026-03-01",
+          "actual": 0.0
+        },
+        {
+          "date": "2026-03-02",
+          "actual": 9394.0
+        },
+        {
+          "date": "2026-03-03",
+          "actual": 9394.0
+        },
+        {
+          "date": "2026-03-04",
+          "actual": 9394.0
+        },
+        {
+          "date": "2026-03-05",
+          "actual": 9967.0
+        },
+        {
+          "date": "2026-03-06",
+          "actual": 9967.0
+        },
+        {
+          "date": "2026-03-07",
+          "actual": 9967.0
+        },
+        {
+          "date": "2026-03-08",
+          "actual": 10459.0
+        },
+        {
+          "date": "2026-03-09",
+          "actual": 10459.0
+        },
+        {
+          "date": "2026-03-10",
+          "actual": 15489.0
+        },
+        {
+          "date": "2026-03-11",
+          "actual": 15489.0
+        },
+        {
+          "date": "2026-03-12",
+          "actual": 15803.0
+        },
+        {
+          "date": "2026-03-13",
+          "actual": 15803.0
+        },
+        {
+          "date": "2026-03-14",
+          "actual": 15803.0
+        },
+        {
+          "date": "2026-03-15",
+          "actual": 17184.0
+        },
+        {
+          "date": "2026-03-16",
+          "actual": 17184.0
+        },
+        {
+          "date": "2026-03-17",
+          "actual": 17184.0
+        }
+      ],
+      "daily": [],
+      "target_total": 9696870.952267962
+    },
+    "S2_Small": {
+      "target": [],
+      "daily": [
+        {
+          "date": "2026-03-01",
+          "actual": 29259.0,
+          "cum_rate": 3.61
+        },
+        {
+          "date": "2026-03-02",
+          "actual": 59752.71,
+          "cum_rate": 5.12
+        },
+        {
+          "date": "2026-03-03",
+          "actual": 80416.71,
+          "cum_rate": 6.0
+        },
+        {
+          "date": "2026-03-04",
+          "actual": 104609.71,
+          "cum_rate": 6.79
+        },
+        {
+          "date": "2026-03-05",
+          "actual": 125254.96,
+          "cum_rate": 7.4
+        },
+        {
+          "date": "2026-03-06",
+          "actual": 169811.46,
+          "cum_rate": 8.27
+        },
+        {
+          "date": "2026-03-07",
+          "actual": 198560.54,
+          "cum_rate": 9.02
+        },
+        {
+          "date": "2026-03-08",
+          "actual": 215900.54,
+          "cum_rate": 9.26
+        },
+        {
+          "date": "2026-03-09",
+          "actual": 252983.54,
+          "cum_rate": 9.55
+        },
+        {
+          "date": "2026-03-10",
+          "actual": 297582.54,
+          "cum_rate": 9.92
+        },
+        {
+          "date": "2026-03-11",
+          "actual": 332274.54,
+          "cum_rate": 10.3
+        },
+        {
+          "date": "2026-03-12",
+          "actual": 368753.54,
+          "cum_rate": 10.66
+        },
+        {
+          "date": "2026-03-13",
+          "actual": 428089.54,
+          "cum_rate": 11.1
+        },
+        {
+          "date": "2026-03-14",
+          "actual": 468905.54,
+          "cum_rate": 11.53
+        },
+        {
+          "date": "2026-03-15",
+          "actual": 492714.54,
+          "cum_rate": 11.88
+        },
+        {
+          "date": "2026-03-16",
+          "actual": 545687.54,
+          "cum_rate": 12.25
+        },
+        {
+          "date": "2026-03-17",
+          "actual": 567854.54,
+          "cum_rate": 12.56
+        }
+      ]
+    }
+  }
+}
