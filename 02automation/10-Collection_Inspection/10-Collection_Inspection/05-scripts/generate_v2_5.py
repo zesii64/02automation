@@ -112,20 +112,49 @@ ptp_group['week']   = ptp_group['week'].apply(normalize_week_label)
 cl_group['week']    = cl_group['week'].apply(normalize_week_label)
 group_perf['week']  = group_perf['week'].apply(normalize_week_label)
 
+# Core TL group list
+all_groups = sorted(tl_data['group_id'].unique().tolist())
+
 # ========================
 # Key dates
 # ========================
 # TL daily cutoff:
 # - keep data up to yesterday (exclude today)
 # - align with TL core daily sheets (repay/performance/ptp)
-# - do NOT let call_loss availability pull cutoff back one extra day
+# - choose latest complete date (avoid partial-load day)
 RUN_YESTERDAY_DT = (pd.Timestamp.now().normalize() - timedelta(days=1))
-TL_CORE_MAX_DT = min(
-    agent_perf['dt'].max(),
-    agent_repay['dt'].max(),
-    ptp_agent['dt'].max()
+agent_perf_dates = set(agent_perf.loc[agent_perf['dt'] <= RUN_YESTERDAY_DT, 'dt'].unique().tolist())
+agent_repay_dates = set(agent_repay.loc[agent_repay['dt'] <= RUN_YESTERDAY_DT, 'dt'].unique().tolist())
+ptp_agent_dates = set(ptp_agent.loc[ptp_agent['dt'] <= RUN_YESTERDAY_DT, 'dt'].unique().tolist())
+common_tl_dates = sorted(agent_perf_dates & agent_repay_dates & ptp_agent_dates)
+
+# Use agent_performance row completeness + PTP non-zero sanity check
+agent_perf_daily_rows = agent_perf[agent_perf['dt'] <= RUN_YESTERDAY_DT].groupby('dt').size()
+AP_REF_ROWS = float(agent_perf_daily_rows.median()) if len(agent_perf_daily_rows) > 0 else 0.0
+AP_MIN_ROWS = max(100, int(AP_REF_ROWS * 0.5))
+
+ptp_nonzero_daily = (
+    ptp_agent[ptp_agent['dt'] <= RUN_YESTERDAY_DT]
+    .groupby('dt')['today_ptp_repay_rate']
+    .apply(lambda s: int((pd.to_numeric(s, errors='coerce').fillna(0) != 0).sum()))
 )
-TL_LATEST_DT = min(TL_CORE_MAX_DT, RUN_YESTERDAY_DT)
+
+TL_LATEST_DT = None
+for dt in sorted(common_tl_dates, reverse=True):
+    ap_rows = int(agent_perf_daily_rows.get(dt, 0))
+    ptp_nonzero = int(ptp_nonzero_daily.get(dt, 0))
+    if ap_rows >= AP_MIN_ROWS and ptp_nonzero > 0:
+        TL_LATEST_DT = dt
+        break
+
+if TL_LATEST_DT is None:
+    TL_CORE_MAX_DT = min(
+        agent_perf['dt'].max(),
+        agent_repay['dt'].max(),
+        ptp_agent['dt'].max()
+    )
+    TL_LATEST_DT = min(TL_CORE_MAX_DT, RUN_YESTERDAY_DT)
+
 TL_LATEST_STR = TL_LATEST_DT.strftime('%Y-%m-%d')
 TL_LATEST_DAY = TL_LATEST_DT.day  # 21
 
@@ -133,6 +162,7 @@ TL_LATEST_DAY = TL_LATEST_DT.day  # 21
 all_weeks_sorted = sorted(group_repay['week'].unique(), key=week_start_dt)
 print(f"  TL latest date    : {TL_LATEST_STR}")
 print(f"  Daily cutoff date : {RUN_YESTERDAY_DT.strftime('%Y-%m-%d')}")
+print(f"  TL min AP rows    : {AP_MIN_ROWS}")
 print(f"  All weeks         : {all_weeks_sorted}")
 
 # Default STL week: most-recent complete week (skip 2026-03-22-2026-03-28 if partial)
@@ -183,7 +213,6 @@ def week_str_to_display(ws):
 # ========================
 # Build derived structures
 # ========================
-all_groups         = sorted(tl_data['group_id'].unique().tolist())
 tl_data['group_module'] = tl_data['group_id'].apply(extract_module_key)
 
 submodule_groups = {}
