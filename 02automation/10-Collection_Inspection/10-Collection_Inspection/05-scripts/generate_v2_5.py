@@ -128,26 +128,12 @@ agent_repay_dates = set(agent_repay.loc[agent_repay['dt'] <= RUN_YESTERDAY_DT, '
 ptp_agent_dates = set(ptp_agent.loc[ptp_agent['dt'] <= RUN_YESTERDAY_DT, 'dt'].unique().tolist())
 common_tl_dates = sorted(agent_perf_dates & agent_repay_dates & ptp_agent_dates)
 
-# Use agent_performance row completeness + PTP non-zero sanity check
-agent_perf_daily_rows = agent_perf[agent_perf['dt'] <= RUN_YESTERDAY_DT].groupby('dt').size()
-AP_REF_ROWS = float(agent_perf_daily_rows.median()) if len(agent_perf_daily_rows) > 0 else 0.0
-AP_MIN_ROWS = max(100, int(AP_REF_ROWS * 0.5))
-
-ptp_nonzero_daily = (
-    ptp_agent[ptp_agent['dt'] <= RUN_YESTERDAY_DT]
-    .groupby('dt')['today_ptp_repay_rate']
-    .apply(lambda s: int((pd.to_numeric(s, errors='coerce').fillna(0) != 0).sum()))
-)
-
-TL_LATEST_DT = None
-for dt in sorted(common_tl_dates, reverse=True):
-    ap_rows = int(agent_perf_daily_rows.get(dt, 0))
-    ptp_nonzero = int(ptp_nonzero_daily.get(dt, 0))
-    if ap_rows >= AP_MIN_ROWS and ptp_nonzero > 0:
-        TL_LATEST_DT = dt
-        break
-
-if TL_LATEST_DT is None:
+# TL daily cutoff:
+# - only exclude today (use <= yesterday)
+# - keep latest day that all three TL core sheets share
+if len(common_tl_dates) > 0:
+    TL_LATEST_DT = max(common_tl_dates)
+else:
     TL_CORE_MAX_DT = min(
         agent_perf['dt'].max(),
         agent_repay['dt'].max(),
@@ -162,7 +148,6 @@ TL_LATEST_DAY = TL_LATEST_DT.day  # 21
 all_weeks_sorted = sorted(group_repay['week'].unique(), key=week_start_dt)
 print(f"  TL latest date    : {TL_LATEST_STR}")
 print(f"  Daily cutoff date : {RUN_YESTERDAY_DT.strftime('%Y-%m-%d')}")
-print(f"  TL min AP rows    : {AP_MIN_ROWS}")
 print(f"  All weeks         : {all_weeks_sorted}")
 
 # Default STL week: most-recent complete week (skip 2026-03-22-2026-03-28 if partial)
