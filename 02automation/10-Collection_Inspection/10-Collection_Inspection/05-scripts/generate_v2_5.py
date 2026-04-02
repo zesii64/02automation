@@ -1,5 +1,5 @@
 """
-Collection Operations Report v2.5 - Real Data v3
+Collection Operations Report v3.1 - Real Data v3
 Base: Collection_Operations_Report_v2_2.html
 Data: 260318_output_automation_v3.xlsx
 Changes vs v2.4:
@@ -12,7 +12,7 @@ Changes vs v2.4:
   - Default TL date: 2026-03-21 (max common date across all agent sources)
   - Default STL week: most-recent complete week
   - Call Loss Rate column added to all agent/group tables
-Output: Collection_Operations_Report_v2_5.html
+Output: Collection_Operations_Report_v3_1.html
 """
 import pandas as pd
 import json
@@ -25,8 +25,9 @@ from datetime import timedelta
 # ========================
 BASE       = r'd:/11automation/02automation/10-Collection_Inspection/10-Collection_Inspection'
 EXCEL_PATH = BASE + r'/data/260318_output_automation_v3.xlsx'
+PROCESS_TARGET_PATH = BASE + r'/data/process_data_target.xlsx'
 HTML_IN    = BASE + r'/reports/Collection_Operations_Report_v2_2.html'
-HTML_OUT   = BASE + r'/reports/Collection_Operations_Report_v2_5.html'
+HTML_OUT   = BASE + r'/reports/Collection_Operations_Report_v3_1.html'
 
 # ========================
 # Load data
@@ -45,6 +46,12 @@ ptp_group    = pd.read_excel(xl, 'ptp_group_data',         index_col=0)
 cl_agent     = pd.read_excel(xl, 'call_loss_agent_data',   index_col=0)
 cl_group     = pd.read_excel(xl, 'call_loss_group_data',   index_col=0)
 nat_month    = pd.read_excel(xl, 'natural_month_repay',   index_col=0)
+
+try:
+    process_target_raw = pd.read_excel(PROCESS_TARGET_PATH, header=1)
+except Exception as e:
+    print(f"  WARN: process target file not loaded: {e}")
+    process_target_raw = pd.DataFrame(columns=['module_key', 'art_call_times', 'connect_billhr'])
 
 # Strip whitespace
 tl_data['group_id']       = tl_data['group_id'].str.strip()
@@ -121,7 +128,7 @@ all_groups = sorted(tl_data['group_id'].unique().tolist())
 # TL daily cutoff:
 # - keep data up to yesterday (exclude today)
 # - align with TL core daily sheets (repay/performance/ptp)
-# - choose latest complete date (avoid partial-load day)
+# - only require 3 core sheets share the date
 RUN_YESTERDAY_DT = (pd.Timestamp.now().normalize() - timedelta(days=1))
 agent_perf_dates = set(agent_perf.loc[agent_perf['dt'] <= RUN_YESTERDAY_DT, 'dt'].unique().tolist())
 agent_repay_dates = set(agent_repay.loc[agent_repay['dt'] <= RUN_YESTERDAY_DT, 'dt'].unique().tolist())
@@ -205,6 +212,84 @@ for g in all_groups:
     mk = extract_module_key(g)
     submodule_groups.setdefault(mk, []).append(g)
 modules_list = sorted(submodule_groups.keys())
+
+# Module process targets from process_data_target.xlsx
+process_target_js = {}
+if len(process_target_raw) > 0:
+    raw_cols_lower = {c: str(c).strip().lower() for c in process_target_raw.columns}
+
+    def pick_col(needles_any, needles_all=None):
+        """
+        needles_any: list[str] - return the first column whose name contains any of these needles
+        needles_all: optional list[str] - additionally require all needles to appear in the column name
+        """
+        needles_all = needles_all or []
+        for c, lc in raw_cols_lower.items():
+            if needles_all and not all(n in lc for n in needles_all):
+                continue
+            if any(n in lc for n in needles_any):
+                return c
+        return None
+
+    module_key_col = pick_col(['module_key', 'module'], needles_all=[])
+    if module_key_col is None:
+        module_key_col = process_target_raw.columns[0]
+
+    art_call_times_col = pick_col(['art_call_times', 'art_call'], needles_all=[])
+    if art_call_times_col is None and len(process_target_raw.columns) >= 2:
+        art_call_times_col = process_target_raw.columns[1]
+
+    call_billmin_col = pick_col(['call_billmin', 'connect_billmin', 'billmin'])
+    call_billhr_col = pick_col(['call_billhr', 'connect_billhr', 'billhr'])
+
+    # Build a slim dataframe with the columns we need
+    pt_keep = [module_key_col]
+    if art_call_times_col is not None:
+        pt_keep.append(art_call_times_col)
+    call_billmin_for_pt = call_billmin_col if call_billmin_col is not None else call_billhr_col
+    if call_billmin_for_pt is not None:
+        pt_keep.append(call_billmin_for_pt)
+
+    pt_df = process_target_raw[pt_keep].copy()
+    pt_df.columns = ['module_key'] + (['art_call_times'] if art_call_times_col is not None else []) + ['call_billmin_raw']
+
+    pt_df['module'] = pt_df['module_key'].astype(str).str.strip().str.replace('_', '-', regex=False)
+    pt_df['art_call_times'] = pd.to_numeric(pt_df['art_call_times'], errors='coerce') if 'art_call_times' in pt_df.columns else pd.Series(dtype=float)
+    pt_df['call_billmin_raw'] = pd.to_numeric(pt_df['call_billmin_raw'], errors='coerce')
+
+    # Optionally keep connect_billhr for backward compatibility (not used for process KPI after switching)
+    if call_billhr_col is not None:
+        pt_df['connect_billhr'] = pd.to_numeric(process_target_raw[call_billhr_col], errors='coerce')
+    else:
+        pt_df['connect_billhr'] = pd.Series([None] * len(pt_df), dtype=float)
+
+    for _, r in pt_df.iterrows():
+        mk = r['module']
+        if mk not in modules_list:
+            continue
+        art_call = int(round(float(r['art_call_times']))) if 'art_call_times' in r and pd.notna(r['art_call_times']) else None
+        # `call_billmin` in process_data_target.xlsx appears to be in hours; convert to minutes for raw comparison/display.
+        call_billmin_target = (float(r['call_billmin_raw']) * 60) if pd.notna(r['call_billmin_raw']) else None
+
+        connect_raw = float(r['connect_billhr']) if pd.notna(r['connect_billhr']) else None
+        connect_pct = (
+            round(connect_raw * 100, 1)
+            if connect_raw is not None and connect_raw <= 1.0
+            else (round(connect_raw, 1) if connect_raw is not None else None)
+        )
+
+        process_target_js[mk] = {
+            'artCallTimes': art_call,
+            # New standard for process KPI judgement
+            'callBillminRawTarget': call_billmin_target,
+            # Kept for compatibility with parts not yet migrated
+            'connectBillhrPct': connect_pct
+        }
+
+    target_modules = set(process_target_js.keys())
+    missing_targets = [m for m in modules_list if m not in target_modules]
+    if missing_targets:
+        data_warning_set.add(f"Missing process targets for modules: {missing_targets}")
 
 submodule_dtr_groups = {
     mk: {map_group_to_dtr(g) for g in groups}
@@ -451,19 +536,65 @@ for group in all_groups:
                              (agent_repay['name_norm'] == a_norm)]
         cd = compute_consecutive_days(ar_all, RUN_YESTERDAY_DT) if len(ar_all) > 0 else 0
 
+        # Process metrics (for drill-down)
+        cover_times_val = None
+        call_times_val = None
+        art_call_times_val = None
+        call_billmin_val = None
+        single_call_duration_val = None
+
         # Call metrics from agent_performance (same day)
         ap_a = agent_perf[(agent_perf['group_id'] == group) &
                           (agent_perf['dt'] == TL_LATEST_DT) &
                           (agent_perf['agent_id'] == agent_name)]
         if len(ap_a) > 0:
-            calls    = int(ap_a['call_times'].sum())
-            connects = int(ap_a['connect_times'].sum())
-            conn_r   = round(connects / calls * 100, 1) if calls > 0 else 0.0
-            wh       = float(ap_a['work_hours'].mean()) if pd.notna(ap_a['work_hours']).any() else 0.0
-            full_att = int(ap_a['is_full_attendance'].max()) if pd.notna(ap_a['is_full_attendance']).any() else 0
-            attd     = 100 if full_att == 1 else min(100, round(wh / 8 * 100))
+            # call_times / art_call_times can both exist; we must populate both.
+            if 'art_call_times' in ap_a.columns and pd.notna(ap_a['art_call_times']).any():
+                art_call_times_val = int(round(float(ap_a['art_call_times'].astype(float).sum())))
+            if 'call_times' in ap_a.columns and pd.notna(ap_a['call_times']).any():
+                call_times_val = int(round(float(ap_a['call_times'].astype(float).sum())))
+
+            # "calls" is only used for legacy connect-rate calculations in some templates.
+            if art_call_times_val is not None:
+                calls = art_call_times_val
+            elif call_times_val is not None:
+                calls = call_times_val
+            else:
+                calls = 0
+
+            if 'cover_times' in ap_a.columns and pd.notna(ap_a['cover_times']).any():
+                cover_times_val = int(round(float(ap_a['cover_times'].astype(float).sum())))
+
+            if 'call_billmin' in ap_a.columns and pd.notna(ap_a['call_billmin']).any():
+                call_billmin_val = float(ap_a['call_billmin'].astype(float).mean())
+            elif 'connect_billmin' in ap_a.columns and pd.notna(ap_a['connect_billmin']).any():
+                call_billmin_val = float(ap_a['connect_billmin'].astype(float).mean())
+
+            if 'single_call_duration' in ap_a.columns and pd.notna(ap_a['single_call_duration']).any():
+                single_call_duration_val = float(ap_a['single_call_duration'].astype(float).mean())
+
+            if 'call_billhr' in ap_a.columns:
+                conn_val = float(ap_a['call_billhr'].astype(float).mean())
+                conn_r = round(conn_val * 100, 1)
+            elif 'connect_times' in ap_a.columns:
+                connects = int(round(float(ap_a['connect_times'].astype(float).sum())))
+                conn_r = round(connects / calls * 100, 1) if calls > 0 else 0.0
+            else:
+                conn_r = 0.0
+
+            if 'is_full_attendance' in ap_a.columns:
+                full_att = int(ap_a['is_full_attendance'].max()) if pd.notna(ap_a['is_full_attendance']).any() else 0
+                if 'work_hours' in ap_a.columns:
+                    wh = float(ap_a['work_hours'].mean()) if pd.notna(ap_a['work_hours']).any() else 0.0
+                    attd = 100 if full_att == 1 else min(100, round(wh / 8 * 100))
+                else:
+                    attd = 100 if full_att == 1 else 0
+            elif 'headcount' in ap_a.columns:
+                attd = 100 if float(ap_a['headcount'].fillna(0).max()) > 0 else 0
+            else:
+                attd = 0
         else:
-            calls = connects = 0; conn_r = 0.0; attd = 0
+            calls = 0; conn_r = 0.0; attd = 0
 
         # PTP from ptp_agent_data
         ptp_row = ptp_agent[(ptp_agent['grp_norm'].isin(grp_norm_candidates)) &
@@ -490,12 +621,18 @@ for group in all_groups:
             'achievement':     ar_ach,
             'calls':           calls,
             'connectRate':     conn_r,
+            'coverTimes':      cover_times_val,
+            'callTimes':       call_times_val,
+            'artCallTimes':    art_call_times_val,
+            # Raw process KPI standard (call_billmin)
+            'callBillmin':     call_billmin_val,
+            'singleCallDuration': single_call_duration_val,
             'ptp':             ptp_val,
             'callLossRate':    cl_val,
             'attendance':       attd
         })
 
-        # Daily repay drill-down history (linked to TL date selector)
+        # Daily drill-down history (linked to TL date selector)
         ar_hist = agent_repay[(agent_repay['grp_norm'].isin(grp_norm_candidates)) &
                               (agent_repay['name_norm'] == a_norm)]
         hist_map = {}
@@ -512,6 +649,107 @@ for group in all_groups:
                     'actual': round(act),
                     'achievement': round(act / tgt * 100, 1) if tgt > 0 else 0.0
                 }
+
+        # Process metrics come from agent_performance by date
+        ap_hist = agent_perf[(agent_perf['group_id'] == group) &
+                             (agent_perf['agent_id'] == agent_name)]
+        if len(ap_hist) > 0:
+            agg_map = {}
+            # Keep legacy "calls" for connect-rate fallback, but also populate both raw metrics.
+            if 'art_call_times' in ap_hist.columns:
+                agg_map['calls'] = ('art_call_times', lambda x: x.astype(float).sum())
+                agg_map['artCallTimes'] = ('art_call_times', lambda x: x.astype(float).sum())
+            if 'call_times' in ap_hist.columns:
+                if 'calls' not in agg_map:
+                    agg_map['calls'] = ('call_times', lambda x: x.astype(float).sum())
+                agg_map['callTimes'] = ('call_times', lambda x: x.astype(float).sum())
+
+            if 'cover_times' in ap_hist.columns:
+                agg_map['coverTimes'] = ('cover_times', lambda x: x.astype(float).sum())
+
+            if 'call_billhr' in ap_hist.columns:
+                agg_map['call_billhr'] = ('call_billhr', 'mean')
+            elif 'connect_times' in ap_hist.columns:
+                agg_map['connects'] = ('connect_times', lambda x: x.astype(float).sum())
+
+            # Raw call duration standard for process KPI judgment (call_billmin)
+            if 'call_billmin' in ap_hist.columns:
+                agg_map['callBillmin'] = ('call_billmin', 'mean')
+            elif 'connect_billmin' in ap_hist.columns:
+                agg_map['callBillmin'] = ('connect_billmin', 'mean')
+
+            if 'single_call_duration' in ap_hist.columns:
+                agg_map['singleCallDuration'] = ('single_call_duration', 'mean')
+
+            if 'work_hours' in ap_hist.columns:
+                agg_map['work_hours'] = ('work_hours', 'mean')
+            if 'is_full_attendance' in ap_hist.columns:
+                agg_map['full_attendance'] = ('is_full_attendance', 'max')
+            if 'headcount' in ap_hist.columns:
+                agg_map['headcount'] = ('headcount', 'max')
+
+            ap_hist_daily = ap_hist.groupby('dt', as_index=False).agg(**agg_map)
+            for _, hr in ap_hist_daily.iterrows():
+                dt_str = pd.to_datetime(hr['dt']).strftime('%Y-%m-%d')
+                calls_d = int(round(float(hr['calls']))) if ('calls' in hr and pd.notna(hr['calls'])) else 0
+
+                if 'call_billhr' in hr and pd.notna(hr['call_billhr']):
+                    conn_r_d = round(float(hr['call_billhr']) * 100, 1)
+                else:
+                    connects_d = int(round(float(hr['connects']))) if ('connects' in hr and pd.notna(hr['connects'])) else 0
+                    conn_r_d = round(connects_d / calls_d * 100, 1) if calls_d > 0 else 0.0
+
+                coverTimes_d = int(round(float(hr['coverTimes']))) if ('coverTimes' in hr and pd.notna(hr['coverTimes'])) else None
+                callTimes_d = int(round(float(hr['callTimes']))) if ('callTimes' in hr and pd.notna(hr['callTimes'])) else None
+                artCallTimes_d = int(round(float(hr['artCallTimes']))) if ('artCallTimes' in hr and pd.notna(hr['artCallTimes'])) else None
+                callBillmin_d = round(float(hr['callBillmin']), 2) if ('callBillmin' in hr and pd.notna(hr['callBillmin'])) else None
+                singleCallDuration_d = round(float(hr['singleCallDuration']), 2) if ('singleCallDuration' in hr and pd.notna(hr['singleCallDuration'])) else None
+
+                if 'full_attendance' in hr and pd.notna(hr['full_attendance']):
+                    full_att_d = int(hr['full_attendance'])
+                    if 'work_hours' in hr and pd.notna(hr['work_hours']):
+                        wh_d = float(hr['work_hours'])
+                        attd_d = 100 if full_att_d == 1 else min(100, round(wh_d / 8 * 100))
+                    else:
+                        attd_d = 100 if full_att_d == 1 else 0
+                elif 'headcount' in hr and pd.notna(hr['headcount']):
+                    attd_d = 100 if float(hr['headcount']) > 0 else 0
+                else:
+                    attd_d = 0
+
+                hist_map.setdefault(dt_str, {})
+                hist_map[dt_str].update({
+                    'calls': calls_d,
+                    'connectRate': conn_r_d,
+                    'coverTimes': coverTimes_d,
+                    'callTimes': callTimes_d,
+                    'artCallTimes': artCallTimes_d,
+                    'callBillmin': callBillmin_d,
+                    'singleCallDuration': singleCallDuration_d,
+                    'attendance': attd_d
+                })
+
+        # Also align ptp/call-loss with selected date for drill-down display
+        ptp_hist = ptp_agent[(ptp_agent['grp_norm'].isin(grp_norm_candidates)) &
+                             (ptp_agent['name_norm'] == a_norm)]
+        if len(ptp_hist) > 0:
+            for dt, day_df in ptp_hist.groupby('dt'):
+                dt_str = pd.to_datetime(dt).strftime('%Y-%m-%d')
+                ptp_valid = day_df['today_ptp_repay_rate'].dropna()
+                ptp_d = round(float(ptp_valid.iloc[0]) * 100, 1) if len(ptp_valid) > 0 else None
+                hist_map.setdefault(dt_str, {})
+                hist_map[dt_str]['ptp'] = ptp_d
+
+        cl_hist = cl_agent[(cl_agent['grp_norm'].isin(grp_norm_candidates)) &
+                           (cl_agent['name_norm'] == a_norm)]
+        if len(cl_hist) > 0:
+            for dt, day_df in cl_hist.groupby('dt'):
+                dt_str = pd.to_datetime(dt).strftime('%Y-%m-%d')
+                cl_valid = day_df['call_loss_rate'].dropna()
+                cl_d = round(float(cl_valid.iloc[0]) * 100, 1) if len(cl_valid) > 0 else None
+                hist_map.setdefault(dt_str, {})
+                hist_map[dt_str]['callLossRate'] = cl_d
+
         agent_perf_by_date_js[group][agent_key] = hist_map
 
 # ========================
@@ -560,12 +798,49 @@ for mk in modules_list:
         # Call metrics from group_performance
         gp_lw = group_perf[(group_perf['group_id'] == group) &
                            (group_perf['week'] == DEFAULT_STL_WEEK)]
+        cover_times_pa = None
+        call_times_pa = None
+        art_call_times_pa = None
+        call_billmin_pa = None
+        single_call_duration_pa = None
         if len(gp_lw) > 0:
-            tot_calls = float(gp_lw['total_calls'].iloc[0])
-            tot_conn  = float(gp_lw['total_connect'].iloc[0])
-            headcount = float(gp_lw['headcount'].iloc[0])
-            calls_pa  = round(tot_calls / headcount) if headcount > 0 else 0
-            conn_r    = round(tot_conn / tot_calls * 100, 1) if tot_calls > 0 else 0.0
+            if 'art_call_times' in gp_lw.columns and pd.notna(gp_lw['art_call_times']).any():
+                calls_pa = round(float(gp_lw['art_call_times'].iloc[0]))
+                art_call_times_pa = int(round(float(gp_lw['art_call_times'].iloc[0])))
+            elif 'call_times' in gp_lw.columns and pd.notna(gp_lw['call_times']).any():
+                calls_pa = round(float(gp_lw['call_times'].iloc[0]))
+                call_times_pa = int(round(float(gp_lw['call_times'].iloc[0])))
+            else:
+                tot_calls = float(gp_lw['total_calls'].iloc[0]) if 'total_calls' in gp_lw.columns else 0.0
+                headcount = float(gp_lw['headcount'].iloc[0]) if 'headcount' in gp_lw.columns else 0.0
+                calls_pa  = round(tot_calls / headcount) if headcount > 0 else 0
+
+            if 'cover_times' in gp_lw.columns and pd.notna(gp_lw['cover_times']).any():
+                cover_times_pa = int(round(float(gp_lw['cover_times'].iloc[0])))
+            if 'call_times' in gp_lw.columns and pd.notna(gp_lw['call_times']).any():
+                call_times_pa = int(round(float(gp_lw['call_times'].iloc[0])))
+            if 'art_call_times' in gp_lw.columns and pd.notna(gp_lw['art_call_times']).any():
+                art_call_times_pa = int(round(float(gp_lw['art_call_times'].iloc[0])))
+
+            if 'call_billhr' in gp_lw.columns and pd.notna(gp_lw['call_billhr']).any():
+                conn_r = round(float(gp_lw['call_billhr'].iloc[0]) * 100, 1)
+            elif 'total_connect' in gp_lw.columns and 'total_calls' in gp_lw.columns:
+                tot_calls = float(gp_lw['total_calls'].iloc[0])
+                tot_conn = float(gp_lw['total_connect'].iloc[0])
+                conn_r = round(tot_conn / tot_calls * 100, 1) if tot_calls > 0 else 0.0
+            elif 'connect_rate' in gp_lw.columns:
+                conn_r = round(float(gp_lw['connect_rate'].iloc[0]) * 100, 1)
+            else:
+                conn_r = 0.0
+
+            # Raw call duration standards for process KPI judgment (call_billmin)
+            if 'call_billmin' in gp_lw.columns and pd.notna(gp_lw['call_billmin']).any():
+                call_billmin_pa = float(gp_lw['call_billmin'].iloc[0])
+            elif 'connect_billmin' in gp_lw.columns and pd.notna(gp_lw['connect_billmin']).any():
+                call_billmin_pa = float(gp_lw['connect_billmin'].iloc[0])
+            if 'single_call_duration' in gp_lw.columns and pd.notna(gp_lw['single_call_duration']).any():
+                single_call_duration_pa = float(gp_lw['single_call_duration'].iloc[0])
+
             gtl = tl_data[(tl_data['group_id'] == group) & (tl_data['dt'] == TL_LATEST_DT)]
             if len(gtl) > 0:
                 owner = float(gtl['ownercount'].iloc[0])
@@ -592,6 +867,54 @@ for mk in modules_list:
                     'actual': round(act),
                     'achievement': round(act / tgt * 100, 1) if tgt > 0 else 0.0
                 }
+
+        # Weekly process metrics history from group_performance (for STL selected week)
+        gp_hist = group_perf[group_perf['group_id'] == group]
+        if len(gp_hist) > 0:
+            gp_hist_weekly = gp_hist.groupby('week', as_index=False).first()
+            for _, gwr in gp_hist_weekly.iterrows():
+                wk = str(gwr['week'])
+                wk_label = week_str_to_display(wk)
+                coverTimes_w = int(round(float(gwr.get('cover_times')))) if 'cover_times' in gp_hist_weekly.columns and pd.notna(gwr.get('cover_times')) else None
+                callTimes_w = int(round(float(gwr.get('call_times')))) if 'call_times' in gp_hist_weekly.columns and pd.notna(gwr.get('call_times')) else None
+                artCallTimes_w = int(round(float(gwr.get('art_call_times')))) if 'art_call_times' in gp_hist_weekly.columns and pd.notna(gwr.get('art_call_times')) else None
+                callBillmin_w = float(gwr.get('call_billmin')) if 'call_billmin' in gp_hist_weekly.columns and pd.notna(gwr.get('call_billmin')) else (
+                    float(gwr.get('connect_billmin')) if 'connect_billmin' in gp_hist_weekly.columns and pd.notna(gwr.get('connect_billmin')) else None
+                )
+                singleCallDuration_w = float(gwr.get('single_call_duration')) if 'single_call_duration' in gp_hist_weekly.columns and pd.notna(gwr.get('single_call_duration')) else None
+
+                if 'art_call_times' in gp_hist_weekly.columns and pd.notna(gwr.get('art_call_times')):
+                    calls_w = round(float(gwr.get('art_call_times')))
+                else:
+                    tot_calls_w = float(gwr.get('total_calls', 0.0))
+                    headcount_w = float(gwr.get('headcount', 0.0))
+                    calls_w = round(tot_calls_w / headcount_w) if headcount_w > 0 else 0
+
+                if 'call_billhr' in gp_hist_weekly.columns and pd.notna(gwr.get('call_billhr')):
+                    conn_w = round(float(gwr.get('call_billhr')) * 100, 1)
+                elif 'connect_rate' in gp_hist_weekly.columns and pd.notna(gwr.get('connect_rate')):
+                    conn_w = round(float(gwr.get('connect_rate')) * 100, 1)
+                elif pd.notna(gwr.get('total_connect')) and pd.notna(gwr.get('total_calls')) and float(gwr.get('total_calls', 0.0)) > 0:
+                    conn_w = round(float(gwr.get('total_connect')) / float(gwr.get('total_calls')) * 100, 1)
+                else:
+                    conn_w = 0.0
+
+                week_map.setdefault(wk_label, {})
+                week_map[wk_label]['calls'] = calls_w
+                week_map[wk_label]['connectRate'] = conn_w
+                week_map[wk_label]['coverTimes'] = coverTimes_w
+                week_map[wk_label]['callTimes'] = callTimes_w
+                week_map[wk_label]['artCallTimes'] = artCallTimes_w if artCallTimes_w is not None else calls_w
+                week_map[wk_label]['callBillmin'] = callBillmin_w
+                week_map[wk_label]['singleCallDuration'] = singleCallDuration_w
+
+        cl_hist_week = cl_group[cl_group['grp_norm'].isin(grp_norm_candidates)]
+        if len(cl_hist_week) > 0:
+            for _, cr in cl_hist_week.iterrows():
+                wk_label = week_str_to_display(str(cr['week']))
+                clv = pd.to_numeric(cr['call_loss_rate'], errors='coerce')
+                week_map.setdefault(wk_label, {})
+                week_map[wk_label]['callLossRate'] = round(float(clv) * 100, 1) if pd.notna(clv) else None
         consecutive_map = build_consecutive_weeks_map(week_map)
         cw_default = int(consecutive_map.get(week_str_to_display(DEFAULT_STL_WEEK), 0))
 
@@ -603,6 +926,11 @@ for mk in modules_list:
             'achievement':      w_ach,
             'calls':            calls_pa,
             'connectRate':      conn_r,
+            'coverTimes':       cover_times_pa,
+            'callTimes':        call_times_pa,
+            'artCallTimes':     art_call_times_pa if art_call_times_pa is not None else calls_pa,
+            'callBillmin':      call_billmin_pa,
+            'singleCallDuration': single_call_duration_pa,
             'ptpRate':          ptp_rate,
             'callLossRate':     cl_rate,
             'attendance':       attd
@@ -782,6 +1110,7 @@ real_data = {
     'groupConsecutiveWeeksByWeek': group_consecutive_by_week_js,
     'anomalyGroups':     anomaly_groups,
     'anomalyAgents':     [],
+    'processTargets':    process_target_js,
     'riskModuleGroups':  risk_module_groups,
     'moduleDailyTrends': module_daily_js,
     'moduleMonthly':     module_monthly_js
@@ -1166,6 +1495,30 @@ html = html.replace(
             const weekData = weeksArr[weeksArr.length - 1 - weekIdx] || weeksArr[weeksArr.length - 1];"""
 )
 
+# STL unmet section: add Call/Connect gap cards
+html = html.replace(
+    """                    <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #991b1b;">Unmet Target — Group Drill-down</h3>
+                    <p style="font-size: 12px; color: #64748b; margin-bottom: 12px;">
+                        <span style="display: inline-block; width: 12px; height: 12px; background: #fef2f2; border: 1px solid #fca5a5; border-radius: 2px; margin-right: 4px;"></span>3+ consecutive weeks &nbsp;
+                        <span style="display: inline-block; width: 12px; height: 12px; background: #fffbeb; border: 1px solid #fcd34d; border-radius: 2px; margin-right: 4px;"></span>1–2 consecutive weeks
+                    </p>""",
+    """                    <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #991b1b;">Unmet Target — Group Drill-down</h3>
+                    <p style="font-size: 12px; color: #64748b; margin-bottom: 12px;">
+                        <span style="display: inline-block; width: 12px; height: 12px; background: #fef2f2; border: 1px solid #fca5a5; border-radius: 2px; margin-right: 4px;"></span>3+ consecutive weeks &nbsp;
+                        <span style="display: inline-block; width: 12px; height: 12px; background: #fffbeb; border: 1px solid #fcd34d; border-radius: 2px; margin-right: 4px;"></span>1–2 consecutive weeks
+                    </p>
+                    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 12px;">
+                        <div class="metric-card">
+                            <div class="metric-value" id="stl-call-gap">--</div>
+                            <div class="metric-label">Call Volume Gap</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="stl-connect-gap">--</div>
+                            <div class="metric-label">Connect Rate Gap</div>
+                        </div>
+                    </div>"""
+)
+
 # Fix display metrics to use weekIdx
 html = html.replace(
     "            const displayTarget = data.weeks[data.weeks.length - 1 - selectedWeekIdx] ? data.weeks[data.weeks.length - 1 - selectedWeekIdx].target : 0;",
@@ -1190,11 +1543,91 @@ html = html.replace(
     "            const selectedWeek = weeks[weeks.length - 1 - weekIdx] || weeks[weeks.length - 1];"
 )
 
+# STL gap metrics in unmet section, aligned to module process targets
+html = html.replace(
+    "            generateSTLConclusions(data, isMet, displayAchievement, displayGap);",
+    "            const processTarget = REAL_DATA.processTargets && REAL_DATA.processTargets[module] ? REAL_DATA.processTargets[module] : {};\n            const callBenchmark = processTarget.artCallTimes !== null && processTarget.artCallTimes !== undefined ? processTarget.artCallTimes : null;\n            const callBillminBenchmark = processTarget.callBillminRawTarget !== null && processTarget.callBillminRawTarget !== undefined ? processTarget.callBillminRawTarget : null;\n            const groupsForGap = REAL_DATA.groupPerformance[module] || [];\n            const selectedWeekLabelForGap = document.getElementById('stl-week-select') ? document.getElementById('stl-week-select').value : REAL_DATA.defaultStlWeek;\n            const weekRows = groupsForGap.map(g => {\n                const wm = REAL_DATA.groupPerformanceByWeek && REAL_DATA.groupPerformanceByWeek[module] && REAL_DATA.groupPerformanceByWeek[module][g.name] ? REAL_DATA.groupPerformanceByWeek[module][g.name][selectedWeekLabelForGap] : null;\n                return { calls: wm && wm.calls !== undefined ? wm.calls : g.calls, callBillmin: wm && wm.callBillmin !== undefined ? wm.callBillmin : g.callBillmin };\n            });\n            const avgCalls = weekRows.length > 0 ? weekRows.reduce((sum, r) => sum + (r.calls || 0), 0) / weekRows.length : 0;\n            const avgCallBillmin = weekRows.length > 0 ? weekRows.reduce((sum, r) => sum + (r.callBillmin || 0), 0) / weekRows.length : 0;\n            const hasProcessTarget = callBenchmark !== null && callBillminBenchmark !== null;\n            const callGap = hasProcessTarget ? (avgCalls - callBenchmark) : 0;\n            const callBillminGap = hasProcessTarget ? (avgCallBillmin - callBillminBenchmark) : 0;\n            const groupProcessMet = hasProcessTarget ? (avgCalls >= callBenchmark) && (avgCallBillmin >= callBillminBenchmark) : null;\n            const moduleProcessMet = groupProcessMet;\n            const groupBadge = groupProcessMet === null ? '<span class=\"status-badge\" style=\"background:#f3f4f6;color:#6b7280;\">Group Avg: No Target</span>' : (groupProcessMet ? '<span class=\"status-badge status-success\">Group Avg: Met</span>' : '<span class=\"status-badge status-danger\">Group Avg: Unmet</span>');\n            const moduleBadge = moduleProcessMet === null ? '<span class=\"status-badge\" style=\"background:#f3f4f6;color:#6b7280;\">Module Avg: No Target</span>' : (moduleProcessMet ? '<span class=\"status-badge status-success\">Module Avg: Met</span>' : '<span class=\"status-badge status-danger\">Module Avg: Unmet</span>');\n            const processTargetMet = (groupProcessMet !== null && moduleProcessMet !== null) ? (groupProcessMet && moduleProcessMet) : null;\n            const processTargetBadge = processTargetMet === null ? '<span class=\"status-badge\" style=\"background:#f3f4f6;color:#6b7280;\">Process Target: No Target</span>' : (processTargetMet ? '<span class=\"status-badge status-success\">Process Target: Met</span>' : '<span class=\"status-badge status-danger\">Process Target: Unmet</span>');\n            badge.innerHTML += ' ' + groupBadge + ' ' + moduleBadge + ' <br>' + processTargetBadge;\n            const stlCallGapEl = document.getElementById('stl-call-gap');\n            if (stlCallGapEl) stlCallGapEl.textContent = hasProcessTarget ? ((callGap > 0 ? '+' : '') + callGap.toFixed(0)) : '--';\n            const stlConnectGapEl = document.getElementById('stl-connect-gap');\n            if (stlConnectGapEl) stlConnectGapEl.textContent = hasProcessTarget ? ((callBillminGap > 0 ? '+' : '') + callBillminGap.toFixed(1)) : '--';\n            generateSTLConclusions(data, isMet, displayAchievement, displayGap);"
+)
+
+# STL: only show process-target badges when repay target is NOT met
+html = html.replace(
+    "            badge.innerHTML += ' ' + groupBadge + ' ' + moduleBadge + ' <br>' + processTargetBadge;",
+    "            if (!isMet) { badge.innerHTML += ' ' + groupBadge + ' ' + moduleBadge + ' <br>' + processTargetBadge; }"
+)
+
+# TL: gap and status should compare against process targets (group/module means)
+html = html.replace(
+    """            const isMet = data.achievement >= 100;
+            const badge = document.getElementById('tl-status-badge');
+            if (isMet) {
+                badge.innerHTML = '<span class="status-badge status-success">Target Met</span>';
+                document.getElementById('tl-unmet-section').style.display = 'none';
+            } else {
+                badge.innerHTML = '<span class="status-badge status-danger">Target Not Met</span>';
+                document.getElementById('tl-unmet-section').style.display = 'block';
+                document.getElementById('tl-gap-amount').textContent = formatNumber(data.gap);
+                document.getElementById('tl-call-gap').textContent = (data.callGap > 0 ? '+' : '') + data.callGap;
+                document.getElementById('tl-connect-gap').textContent = (data.connectGap > 0 ? '+' : '') + data.connectGap.toFixed(1);
+                loadTLAgentTable(group);
+            }""",
+    """            const isMet = data.achievement >= 100;
+            const badge = document.getElementById('tl-status-badge');
+            const processTarget = REAL_DATA.processTargets && REAL_DATA.processTargets[data.groupModule] ? REAL_DATA.processTargets[data.groupModule] : null;
+            const callBenchmark = processTarget && processTarget.artCallTimes !== undefined && processTarget.artCallTimes !== null ? processTarget.artCallTimes : null;
+            const callBillminBenchmark = processTarget && processTarget.callBillminRawTarget !== undefined && processTarget.callBillminRawTarget !== null ? processTarget.callBillminRawTarget : null;
+
+            const getGroupDateAverages = (groupId, dateVal) => {
+                const rows = REAL_DATA.agentPerformance[groupId] || [];
+                let calls = 0, callBillmin = 0, cnt = 0;
+                rows.forEach(a => {
+                    const dm = REAL_DATA.agentPerformanceByDate && REAL_DATA.agentPerformanceByDate[groupId] && REAL_DATA.agentPerformanceByDate[groupId][a.name] ? REAL_DATA.agentPerformanceByDate[groupId][a.name][dateVal] : null;
+                const c = dm && dm.artCallTimes !== undefined ? dm.artCallTimes : a.artCallTimes;
+                    const r = dm && dm.callBillmin !== undefined ? dm.callBillmin : a.callBillmin;
+                    if (c !== null && c !== undefined && r !== null && r !== undefined) {
+                        calls += c; callBillmin += r; cnt += 1;
+                    }
+                });
+                return { callsAvg: cnt > 0 ? calls / cnt : 0, callBillminAvg: cnt > 0 ? callBillmin / cnt : 0 };
+            };
+
+            const groupAvg = getGroupDateAverages(group, selectedDate);
+            const moduleGroups = REAL_DATA.groups.filter(g => REAL_DATA.tlData[g] && REAL_DATA.tlData[g].groupModule === data.groupModule);
+            let moduleCalls = 0, moduleConn = 0, moduleCnt = 0;
+            moduleGroups.forEach(g => {
+                const ga = getGroupDateAverages(g, selectedDate);
+                if (ga.callsAvg !== null && ga.callsAvg !== undefined && ga.callBillminAvg !== null && ga.callBillminAvg !== undefined) {
+                    moduleCalls += ga.callsAvg; moduleConn += ga.callBillminAvg; moduleCnt += 1;
+                }
+            });
+            const moduleAvg = { callsAvg: moduleCnt > 0 ? moduleCalls / moduleCnt : 0, callBillminAvg: moduleCnt > 0 ? moduleConn / moduleCnt : 0 };
+
+            const groupProcessMet = (callBenchmark !== null && callBillminBenchmark !== null) ? (groupAvg.callsAvg >= callBenchmark && groupAvg.callBillminAvg >= callBillminBenchmark) : null;
+            const moduleProcessMet = (callBenchmark !== null && callBillminBenchmark !== null) ? (moduleAvg.callsAvg >= callBenchmark && moduleAvg.callBillminAvg >= callBillminBenchmark) : null;
+            const groupBadge = groupProcessMet === null ? '<span class=\"status-badge\" style=\"background:#f3f4f6;color:#6b7280;\">Group Avg: No Target</span>' : (groupProcessMet ? '<span class=\"status-badge status-success\">Group Avg: Met</span>' : '<span class=\"status-badge status-danger\">Group Avg: Unmet</span>');
+            const moduleBadge = moduleProcessMet === null ? '<span class=\"status-badge\" style=\"background:#f3f4f6;color:#6b7280;\">Module Avg: No Target</span>' : (moduleProcessMet ? '<span class=\"status-badge status-success\">Module Avg: Met</span>' : '<span class=\"status-badge status-danger\">Module Avg: Unmet</span>');
+            const processTargetMet = (groupProcessMet !== null && moduleProcessMet !== null) ? (groupProcessMet && moduleProcessMet) : null;
+            const processTargetBadge = processTargetMet === null ? '<span class="status-badge" style="background:#f3f4f6;color:#6b7280;">Process Target: No Target</span>' : (processTargetMet ? '<span class="status-badge status-success">Process Target: Met</span>' : '<span class="status-badge status-danger">Process Target: Unmet</span>');
+
+            if (isMet) {
+                badge.innerHTML = '<span class=\"status-badge status-success\">Repay Target: Met</span> <br>' + processTargetBadge;
+                document.getElementById('tl-unmet-section').style.display = 'none';
+            } else {
+                badge.innerHTML = '<span class=\"status-badge status-danger\">Repay Target: Unmet</span> <br>' + processTargetBadge;
+                document.getElementById('tl-unmet-section').style.display = 'block';
+                document.getElementById('tl-gap-amount').textContent = formatNumber(data.gap);
+                const callGap = callBenchmark !== null ? Math.round(groupAvg.callsAvg - callBenchmark) : data.callGap;
+                const connectGap = callBillminBenchmark !== null ? Math.round((groupAvg.callBillminAvg - callBillminBenchmark) * 10) / 10 : data.connectGap;
+                document.getElementById('tl-call-gap').textContent = (callGap > 0 ? '+' : '') + callGap;
+                document.getElementById('tl-connect-gap').textContent = (connectGap > 0 ? '+' : '') + connectGap.toFixed(1);
+                loadTLAgentTable(group);
+            }"""
+)
+
 # ---- 20. Agent TL table: PTP null-safe + Call Loss Rate column ----
 # TL drill-down metrics linked to selected date
 html = html.replace(
     "                const achColor = agent.achievement >= 100 ? '#22c55e' : '#ef4444';",
-    "                const selectedDate = document.getElementById('tl-date-select') ? document.getElementById('tl-date-select').value : REAL_DATA.dataDate;\n                const dateMetrics = REAL_DATA.agentPerformanceByDate && REAL_DATA.agentPerformanceByDate[group] && REAL_DATA.agentPerformanceByDate[group][agent.name] ? REAL_DATA.agentPerformanceByDate[group][agent.name][selectedDate] : null;\n                const displayTarget = dateMetrics && dateMetrics.target !== undefined ? dateMetrics.target : agent.target;\n                const displayActual = dateMetrics && dateMetrics.actual !== undefined ? dateMetrics.actual : agent.actual;\n                const displayAchievement = dateMetrics && dateMetrics.achievement !== undefined ? dateMetrics.achievement : agent.achievement;\n                const achColor = displayAchievement >= 100 ? '#22c55e' : '#ef4444';"
+    "                const selectedDate = document.getElementById('tl-date-select') ? document.getElementById('tl-date-select').value : REAL_DATA.dataDate;\n                const dateMetrics = REAL_DATA.agentPerformanceByDate && REAL_DATA.agentPerformanceByDate[group] && REAL_DATA.agentPerformanceByDate[group][agent.name] ? REAL_DATA.agentPerformanceByDate[group][agent.name][selectedDate] : null;\n                const displayTarget = dateMetrics && dateMetrics.target !== undefined ? dateMetrics.target : agent.target;\n                const displayActual = dateMetrics && dateMetrics.actual !== undefined ? dateMetrics.actual : agent.actual;\n                const displayAchievement = dateMetrics && dateMetrics.achievement !== undefined ? dateMetrics.achievement : agent.achievement;\n                const displayCalls = dateMetrics && dateMetrics.calls !== undefined ? dateMetrics.calls : agent.calls;\n                const displayConnectRate = dateMetrics && dateMetrics.connectRate !== undefined ? dateMetrics.connectRate : agent.connectRate;\n                const displayCoverTimes = dateMetrics && dateMetrics.coverTimes !== undefined ? dateMetrics.coverTimes : agent.coverTimes;\n                const displayCallTimes = dateMetrics && dateMetrics.callTimes !== undefined ? dateMetrics.callTimes : agent.callTimes;\n                const displayArtCallTimes = dateMetrics && dateMetrics.artCallTimes !== undefined ? dateMetrics.artCallTimes : agent.artCallTimes;\n                const displayCallBillmin = dateMetrics && dateMetrics.callBillmin !== undefined ? dateMetrics.callBillmin : agent.callBillmin;\n                const displaySingleCallDuration = dateMetrics && dateMetrics.singleCallDuration !== undefined ? dateMetrics.singleCallDuration : agent.singleCallDuration;\n                const displayPtp = dateMetrics && dateMetrics.ptp !== undefined ? dateMetrics.ptp : agent.ptp;\n                const displayAttendance = dateMetrics && dateMetrics.attendance !== undefined ? dateMetrics.attendance : agent.attendance;\n                const displayCallLossRate = dateMetrics && dateMetrics.callLossRate !== undefined ? dateMetrics.callLossRate : agent.callLossRate;\n                const processTarget = REAL_DATA.processTargets && REAL_DATA.processTargets[REAL_DATA.tlData[group].groupModule] ? REAL_DATA.processTargets[REAL_DATA.tlData[group].groupModule] : null;\n                const procCallTarget = processTarget && processTarget.artCallTimes !== undefined && processTarget.artCallTimes !== null ? processTarget.artCallTimes : null;\n                const procCallBillminTarget = processTarget && processTarget.callBillminRawTarget !== undefined && processTarget.callBillminRawTarget !== null ? processTarget.callBillminRawTarget : null;\n                const processMet = (procCallTarget !== null && procCallBillminTarget !== null) ? (displayCalls >= procCallTarget && displayCallBillmin >= procCallBillminTarget) : null;\n                const processBadge = processMet === null ? '<span style=\"color:#6b7280;\">No Target</span>' : (processMet ? '<span style=\"color:#16a34a;font-weight:600;\">Met</span>' : '<span style=\"color:#dc2626;font-weight:600;\">Unmet</span>');\n                const achColor = displayAchievement >= 100 ? '#22c55e' : '#ef4444';"
 )
 html = html.replace(
     "'<td style=\"padding: 12px; text-align: right;\">' + formatNumber(agent.target) + '</td>' +",
@@ -1208,19 +1641,45 @@ html = html.replace(
     "'<td style=\"padding: 12px; text-align: right; color: ' + achColor + '; font-weight: 600;\">' + agent.achievement.toFixed(1) + '%</td>' +",
     "'<td style=\"padding: 12px; text-align: right; color: ' + achColor + '; font-weight: 600;\">' + displayAchievement.toFixed(1) + '%</td>' +"
 )
+html = html.replace(
+    "'<td style=\"padding: 12px; text-align: right;\">' + agent.calls + '</td>' +",
+    "'' +"
+)
+html = html.replace(
+    "'<td style=\"padding: 12px; text-align: right;\">' + agent.connectRate.toFixed(1) + '%</td>' +",
+    "'<td style=\"padding: 12px; text-align: right;\">' + displayConnectRate.toFixed(1) + '%</td>' +\n                    '<td style=\"padding: 12px; text-align: right;\">' + (displayCoverTimes !== null && displayCoverTimes !== undefined ? formatNumber(displayCoverTimes) : '--') + '</td>' +\n                    '<td style=\"padding: 12px; text-align: right;\">' + (displayCallTimes !== null && displayCallTimes !== undefined ? formatNumber(displayCallTimes) : '--') + '</td>' +\n                    '<td style=\"padding: 12px; text-align: right;\">' + (displayArtCallTimes !== null && displayArtCallTimes !== undefined ? formatNumber(displayArtCallTimes) : '--') + '</td>' +\n                    '<td style=\"padding: 12px; text-align: right;\">' + (displayCallBillmin !== null && displayCallBillmin !== undefined ? displayCallBillmin.toFixed(2) : '--') + '</td>' +\n                    '<td style=\"padding: 12px; text-align: right;\">' + (displaySingleCallDuration !== null && displaySingleCallDuration !== undefined ? displaySingleCallDuration.toFixed(2) : '--') + '</td>' +"
+)
 # PTP null-safe
 html = html.replace(
     "agent.ptp.toFixed(1) + '%</td>' +",
-    "(agent.ptp !== null && agent.ptp !== undefined ? agent.ptp.toFixed(1) + '%' : '--') + '</td>' +"
+    "(displayPtp !== null && displayPtp !== undefined ? displayPtp.toFixed(1) + '%' : '--') + '</td>' +"
 )
 # Add Call Loss column header
 old_agent_header = "                    <th style=\"padding: 12px; text-align: right; background: #f1f5f9;\">Attendance</th>"
-new_agent_header = """                    <th style="padding: 12px; text-align: right; background: #f1f5f9;">Attendance</th>
-                    <th style="padding: 12px; text-align: right; background: #f1f5f9;">Call Loss</th>"""
+new_agent_header = """                    <th style="padding: 12px; text-align: right; background: #f1f5f9;">Call Loss</th>
+                    <th style="padding: 12px; text-align: right; background: #f1f5f9;">Attendance</th>
+                    <th style="padding: 12px; text-align: center; background: #f1f5f9;">Process KPI</th>"""
 html = html.replace(old_agent_header, new_agent_header)
+# Compatible with template variant using font-size/color styles
+old_agent_header_v2 = '                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Attendance</th>'
+new_agent_header_v2 = '''                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Call Loss</th>
+                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Attendance</th>
+                                <th style="padding: 12px; text-align: center; font-size: 12px; color: #64748b;">Process KPI</th>'''
+html = html.replace(old_agent_header_v2, new_agent_header_v2)
+
+# Remove TL Calls column (keep Conn. Rate + PTP for later drill-down injection)
+html = html.replace(
+    '                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Calls</th>\n                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Conn. Rate</th>\n                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">PTP</th>',
+    '                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Conn. Rate</th>\n                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">PTP</th>'
+)
+
+# Insert process KPI drill-down columns after Conn. Rate (TL)
+old_tl_conn_ptp_header = '                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Conn. Rate</th>\n                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">PTP</th>'
+new_tl_conn_ptp_header = '                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Conn. Rate</th>\n                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Cover Times</th>\n                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Call Times</th>\n                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Art Call Times</th>\n                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Call Billmin</th>\n                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Single Call Duration</th>\n                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">PTP</th>'
+html = html.replace(old_tl_conn_ptp_header, new_tl_conn_ptp_header)
 # Add Call Loss cell
 old_cl_td = "                    '<td style=\"padding: 12px; text-align: right;\">' + agent.attendance + '%</td>' +\n                    '</tr>';"
-new_cl_td = "                    '<td style=\"padding: 12px; text-align: right;\">' + agent.attendance + '%</td>' +\n                    '<td style=\"padding: 12px; text-align: right;\">' + (agent.callLossRate !== null && agent.callLossRate !== undefined ? agent.callLossRate.toFixed(1) + '%' : '--') + '</td>' +\n                    '</tr>';"
+new_cl_td = "                    '<td style=\"padding: 12px; text-align: right;\">' + (displayCallLossRate !== null && displayCallLossRate !== undefined ? displayCallLossRate.toFixed(1) + '%' : '--') + '</td>' +\n                    '<td style=\"padding: 12px; text-align: right;\">' + displayAttendance + '%</td>' +\n                    '<td style=\"padding: 12px; text-align: center;\">' + processBadge + '</td>' +\n                    '</tr>';"
 html = html.replace(old_cl_td, new_cl_td)
 
 # ---- 21. STL group table: PTP null-safe + Call Loss column ----
@@ -1230,7 +1689,7 @@ html = html.replace(
 )
 html = html.replace(
     "                const achColor = group.achievement >= 100 ? '#22c55e' : '#ef4444';",
-    "                const weekMetrics = REAL_DATA.groupPerformanceByWeek && REAL_DATA.groupPerformanceByWeek[module] && REAL_DATA.groupPerformanceByWeek[module][group.name] ? REAL_DATA.groupPerformanceByWeek[module][group.name][selectedWeekLabel] : null;\n                const displayTarget = weekMetrics && weekMetrics.target !== undefined ? weekMetrics.target : group.target;\n                const displayActual = weekMetrics && weekMetrics.actual !== undefined ? weekMetrics.actual : group.actual;\n                const displayAchievement = weekMetrics && weekMetrics.achievement !== undefined ? weekMetrics.achievement : group.achievement;\n                const achColor = displayAchievement >= 100 ? '#22c55e' : '#ef4444';"
+    "                const weekMetrics = REAL_DATA.groupPerformanceByWeek && REAL_DATA.groupPerformanceByWeek[module] && REAL_DATA.groupPerformanceByWeek[module][group.name] ? REAL_DATA.groupPerformanceByWeek[module][group.name][selectedWeekLabel] : null;\n                const displayTarget = weekMetrics && weekMetrics.target !== undefined ? weekMetrics.target : group.target;\n                const displayActual = weekMetrics && weekMetrics.actual !== undefined ? weekMetrics.actual : group.actual;\n                const displayAchievement = weekMetrics && weekMetrics.achievement !== undefined ? weekMetrics.achievement : group.achievement;\n                const displayCalls = weekMetrics && weekMetrics.calls !== undefined ? weekMetrics.calls : group.calls;\n                const displayConnectRate = weekMetrics && weekMetrics.connectRate !== undefined ? weekMetrics.connectRate : group.connectRate;\n                const displayCoverTimes = weekMetrics && weekMetrics.coverTimes !== undefined ? weekMetrics.coverTimes : group.coverTimes;\n                const displayCallTimes = weekMetrics && weekMetrics.callTimes !== undefined ? weekMetrics.callTimes : group.callTimes;\n                const displayArtCallTimes = weekMetrics && weekMetrics.artCallTimes !== undefined ? weekMetrics.artCallTimes : group.artCallTimes;\n                const displayCallBillmin = weekMetrics && weekMetrics.callBillmin !== undefined ? weekMetrics.callBillmin : group.callBillmin;\n                const displaySingleCallDuration = weekMetrics && weekMetrics.singleCallDuration !== undefined ? weekMetrics.singleCallDuration : group.singleCallDuration;\n                const displayCallLossRate = weekMetrics && weekMetrics.callLossRate !== undefined ? weekMetrics.callLossRate : group.callLossRate;\n                const displayAttendance = group.attendance;\n                const processTarget = REAL_DATA.processTargets && REAL_DATA.processTargets[module] ? REAL_DATA.processTargets[module] : null;\n                const procCallTarget = processTarget && processTarget.artCallTimes !== undefined && processTarget.artCallTimes !== null ? processTarget.artCallTimes : null;\n                const procCallBillminTarget = processTarget && processTarget.callBillminRawTarget !== undefined && processTarget.callBillminRawTarget !== null ? processTarget.callBillminRawTarget : null;\n                const processMet = (procCallTarget !== null && procCallBillminTarget !== null) ? (displayCalls >= procCallTarget && displayCallBillmin >= procCallBillminTarget) : null;\n                const processBadge = processMet === null ? '<span style=\"color:#6b7280;\">No Target</span>' : (processMet ? '<span style=\"color:#16a34a;font-weight:600;\">Met</span>' : '<span style=\"color:#dc2626;font-weight:600;\">Unmet</span>');\n                const achColor = displayAchievement >= 100 ? '#22c55e' : '#ef4444';"
 )
 html = html.replace(
     "'<td style=\"padding: 12px; text-align: right;\">' + formatNumber(group.target) + '</td>' +",
@@ -1245,16 +1704,82 @@ html = html.replace(
     "'<td style=\"padding: 12px; text-align: right; color: ' + achColor + '; font-weight: 600;\">' + displayAchievement.toFixed(1) + '%</td>' +"
 )
 html = html.replace(
+    "'<td style=\"padding: 12px; text-align: right;\">' + group.calls + '</td>' +",
+    "'' +"
+)
+html = html.replace(
+    "'<td style=\"padding: 12px; text-align: right;\">' + group.connectRate.toFixed(1) + '%</td>' +",
+    "'<td style=\"padding: 12px; text-align: right;\">' + displayConnectRate.toFixed(1) + '%</td>' +\n                    '<td style=\"padding: 12px; text-align: right;\">' + (displayCoverTimes !== null && displayCoverTimes !== undefined ? formatNumber(displayCoverTimes) : '--') + '</td>' +\n                    '<td style=\"padding: 12px; text-align: right;\">' + (displayCallTimes !== null && displayCallTimes !== undefined ? formatNumber(displayCallTimes) : '--') + '</td>' +\n                    '<td style=\"padding: 12px; text-align: right;\">' + (displayArtCallTimes !== null && displayArtCallTimes !== undefined ? formatNumber(displayArtCallTimes) : '--') + '</td>' +\n                    '<td style=\"padding: 12px; text-align: right;\">' + (displayCallBillmin !== null && displayCallBillmin !== undefined ? displayCallBillmin.toFixed(2) : '--') + '</td>' +\n                    '<td style=\"padding: 12px; text-align: right;\">' + (displaySingleCallDuration !== null && displaySingleCallDuration !== undefined ? displaySingleCallDuration.toFixed(2) : '--') + '</td>' +"
+)
+html = html.replace(
     "group.ptpRate.toFixed(1) + '%</td>' +",
     "(group.ptpRate !== null && group.ptpRate !== undefined ? group.ptpRate.toFixed(1) + '%' : '--') + '</td>' +"
 )
 old_stl_grp_header = "                    <th style=\"padding: 12px; text-align: right; background: #f1f5f9;\">Attendance</th>"
 new_stl_grp_header = """                    <th style="padding: 12px; text-align: right; background: #f1f5f9;">Call Loss</th>
-                    <th style="padding: 12px; text-align: right; background: #f1f5f9;">Attendance</th>"""
+                    <th style="padding: 12px; text-align: right; background: #f1f5f9;">Attendance</th>
+                    <th style="padding: 12px; text-align: center; background: #f1f5f9;">Process KPI</th>"""
 html = html.replace(old_stl_grp_header, new_stl_grp_header)
+# Compatible with template variant using font-size/color styles
+old_stl_grp_header_v2 = '                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Attendance</th>'
+new_stl_grp_header_v2 = '''                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Call Loss</th>
+                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Attendance</th>
+                                <th style="padding: 12px; text-align: center; font-size: 12px; color: #64748b;">Process KPI</th>'''
+html = html.replace(old_stl_grp_header_v2, new_stl_grp_header_v2)
+
+# Remove STL Calls/Agent column header (keep Conn. Rate + PTP Rate for later drill-down injection)
+html = html.replace(
+    '                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Calls/Agent</th>\n                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Conn. Rate</th>\n                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">PTP Rate</th>',
+    '                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Conn. Rate</th>\n                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">PTP Rate</th>'
+)
+
+# Insert process KPI drill-down columns after Conn. Rate (STL)
+old_stl_conn_ptp_header = '                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Conn. Rate</th>\n                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">PTP Rate</th>'
+new_stl_conn_ptp_header = '                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Conn. Rate</th>\n                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Cover Times</th>\n                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Call Times</th>\n                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Art Call Times</th>\n                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Call Billmin</th>\n                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Single Call Duration</th>\n                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">PTP Rate</th>'
+html = html.replace(old_stl_conn_ptp_header, new_stl_conn_ptp_header)
 old_stl_grp_footer = "                    '<td style=\"padding: 12px; text-align: right;\">' + group.attendance + '%</td>' +\n                    '</tr>';"
-new_stl_grp_footer = "                    '<td style=\"padding: 12px; text-align: right;\">' + (group.callLossRate !== null && group.callLossRate !== undefined ? group.callLossRate.toFixed(1) + '%' : '--') + '</td>' +\n                    '<td style=\"padding: 12px; text-align: right;\">' + group.attendance + '%</td>' +\n                    '</tr>';"
+new_stl_grp_footer = "                    '<td style=\"padding: 12px; text-align: right;\">' + (displayCallLossRate !== null && displayCallLossRate !== undefined ? displayCallLossRate.toFixed(1) + '%' : '--') + '</td>' +\n                    '<td style=\"padding: 12px; text-align: right;\">' + displayAttendance + '%</td>' +\n                    '<td style=\"padding: 12px; text-align: center;\">' + processBadge + '</td>' +\n                    '</tr>';"
 html = html.replace(old_stl_grp_footer, new_stl_grp_footer)
+# Deduplicate accidental repeated Call Loss headers after repeated runs
+html = html.replace(
+    '                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Call Loss</th>\n                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Attendance</th>\n                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Call Loss</th>',
+    '                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Call Loss</th>\n                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Attendance</th>'
+)
+html = html.replace(
+    '                    <th style="padding: 12px; text-align: right; background: #f1f5f9;">Call Loss</th>\n                    <th style="padding: 12px; text-align: right; background: #f1f5f9;">Attendance</th>\n                    <th style="padding: 12px; text-align: right; background: #f1f5f9;">Call Loss</th>',
+    '                    <th style="padding: 12px; text-align: right; background: #f1f5f9;">Call Loss</th>\n                    <th style="padding: 12px; text-align: right; background: #f1f5f9;">Attendance</th>'
+)
+html = html.replace(
+    '                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Call Loss</th>\n                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Call Loss</th>\n                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Attendance</th>',
+    '                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Call Loss</th>\n                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Attendance</th>'
+)
+html = html.replace(
+    '                    <th style="padding: 12px; text-align: right; background: #f1f5f9;">Call Loss</th>\n                    <th style="padding: 12px; text-align: right; background: #f1f5f9;">Call Loss</th>\n                    <th style="padding: 12px; text-align: right; background: #f1f5f9;">Attendance</th>',
+    '                    <th style="padding: 12px; text-align: right; background: #f1f5f9;">Call Loss</th>\n                    <th style="padding: 12px; text-align: right; background: #f1f5f9;">Attendance</th>'
+)
+# Deduplicate accidental repeated Process KPI headers after repeated runs
+html = html.replace(
+    '                                <th style="padding: 12px; text-align: center; font-size: 12px; color: #64748b;">Process KPI</th>\n                                <th style="padding: 12px; text-align: center; font-size: 12px; color: #64748b;">Process KPI</th>',
+    '                                <th style="padding: 12px; text-align: center; font-size: 12px; color: #64748b;">Process KPI</th>'
+)
+html = html.replace(
+    '                    <th style="padding: 12px; text-align: center; background: #f1f5f9;">Process KPI</th>\n                    <th style="padding: 12px; text-align: center; background: #f1f5f9;">Process KPI</th>',
+    '                    <th style="padding: 12px; text-align: center; background: #f1f5f9;">Process KPI</th>'
+)
+# Keep Process KPI only in TL/STL drill-down; remove from anomaly agent table
+html = html.replace(
+    '                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Call Loss</th>\n                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Attendance</th>\n                                <th style="padding: 12px; text-align: center; font-size: 12px; color: #64748b;">Process KPI</th>',
+    '                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Call Loss</th>\n                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Attendance</th>'
+)
+# Re-add Process KPI header only for TL/STL drill-down tables
+html = html.replace(
+    '                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">PTP</th>\n                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Call Loss</th>\n                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Attendance</th>',
+    '                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">PTP</th>\n                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Call Loss</th>\n                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Attendance</th>\n                                <th style="padding: 12px; text-align: center; font-size: 12px; color: #64748b;">Process KPI</th>'
+)
+html = html.replace(
+    '                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">PTP Rate</th>\n                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Call Loss</th>\n                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Attendance</th>',
+    '                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">PTP Rate</th>\n                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Call Loss</th>\n                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Attendance</th>\n                                <th style="padding: 12px; text-align: center; font-size: 12px; color: #64748b;">Process KPI</th>'
+)
 
 # ---- 22. riskModuleGroups table: PTP null-safe + Call Loss column ----
 html = html.replace(
@@ -1270,17 +1795,40 @@ html = html.replace(old_risk_header, new_risk_header)
 
 # ---- 23. generateSTLConclusions: avgPtpRate null-safe ----
 old_ptp_avg = """\
-                const avgCalls = groups.reduce((sum, g) => sum + g.calls, 0) / groups.length;
+                const avgCalls = groups.reduce((sum, g) => sum + g.artCallTimes, 0) / groups.length;
                 const avgConnectRate = groups.reduce((sum, g) => sum + g.connectRate, 0) / groups.length;
                 const avgPtpRate = groups.reduce((sum, g) => sum + g.ptpRate, 0) / groups.length;
                 const avgAttendance = groups.reduce((sum, g) => sum + g.attendance, 0) / groups.length;"""
 new_ptp_avg = """\
-                const avgCalls = groups.reduce((sum, g) => sum + g.calls, 0) / groups.length;
+                const avgCalls = groups.reduce((sum, g) => sum + g.artCallTimes, 0) / groups.length;
                 const avgConnectRate = groups.reduce((sum, g) => sum + g.connectRate, 0) / groups.length;
                 const validPtpGroups = groups.filter(g => g.ptpRate !== null && g.ptpRate !== undefined);
                 const avgPtpRate = validPtpGroups.length > 0 ? validPtpGroups.reduce((sum, g) => sum + g.ptpRate, 0) / validPtpGroups.length : 999;
                 const avgAttendance = groups.reduce((sum, g) => sum + g.attendance, 0) / groups.length;"""
 html = html.replace(old_ptp_avg, new_ptp_avg)
+
+# ---- 23.1 generateSTLConclusions: module-level process targets benchmark ----
+html = html.replace(
+    """                const callBenchmark = 50;
+                const connectRateBenchmark = 22;
+                const ptpRateBenchmark = 8;
+                const attendanceBenchmark = 95;""",
+    """                const processTarget = REAL_DATA.processTargets && REAL_DATA.processTargets[module] ? REAL_DATA.processTargets[module] : {};
+                const callBenchmark = processTarget.artCallTimes !== null && processTarget.artCallTimes !== undefined ? processTarget.artCallTimes : 50;
+                const connectRateBenchmark = processTarget.callBillminRawTarget !== null && processTarget.callBillminRawTarget !== undefined ? processTarget.callBillminRawTarget : 22;
+                const ptpRateBenchmark = 8;
+                const attendanceBenchmark = 95;"""
+)
+
+# ---- 23.2 generateSTLConclusions: use call_billmin for connect-gap analysis ----
+html = html.replace(
+    "                const avgConnectRate = groups.reduce((sum, g) => sum + g.connectRate, 0) / groups.length;",
+    "                const avgConnectRate = groups.reduce((sum, g) => sum + g.callBillmin, 0) / groups.length;"
+)
+html = html.replace(
+    "                    conclusions.push('Connect rate is ' + Math.abs(connectGap).toFixed(1) + '% below benchmark. Root cause: poor contact quality — either (a) outdated phone numbers, (b) customers unreachable during working hours, or (c) ineffective calling scripts.');",
+    "                    conclusions.push('Call billmin is ' + Math.abs(connectGap).toFixed(1) + ' minutes below benchmark. Root cause: poor contact quality — either (a) outdated phone numbers, (b) customers unreachable during working hours, or (c) ineffective calling scripts.');"
+)
 
 # ---- 24. calculateAtRisk: null-safe 7/3 day trend ----
 old_atrisk_pat = (
@@ -1314,6 +1862,34 @@ new_atrisk_trend = (
 )
 html = re.sub(old_atrisk_pat, new_atrisk_trend, html, flags=re.DOTALL)
 
+# ---- 24.1 TL/STL Target Met logic align to repay-rate target; remove VS module avg ----
+# TL: hide VS MODULE AVG metric card
+html = html.replace(
+    """            const vsAvg = data.achievement - data.moduleAvg;
+            document.getElementById('tl-module-avg').textContent = (vsAvg >= 0 ? '+' : '') + vsAvg.toFixed(1) + '%';
+            document.getElementById('tl-module-avg').style.color = vsAvg >= 0 ? '#059669' : '#dc2626';""",
+    """            const vsAvgCard = document.getElementById('tl-module-avg') ? document.getElementById('tl-module-avg').closest('.metric-card') : null;
+            if (vsAvgCard) vsAvgCard.style.display = 'none';"""
+)
+
+# TL: target met should compare selected-date repay rate vs target repay rate
+html = html.replace(
+    "            const isMet = data.achievement >= 100;",
+    "            const selectedDayData = data.days ? data.days.find(d => d.date === selectedDate) : null;\n            const selectedActualRate = selectedDayData ? (selectedDayData.nmRepayRate !== null && selectedDayData.nmRepayRate !== undefined ? selectedDayData.nmRepayRate : selectedDayData.repayRate) : null;\n            const selectedTargetRate = selectedDayData ? selectedDayData.targetRepayRate : null;\n            const isMet = (selectedActualRate !== null && selectedActualRate !== undefined && selectedTargetRate !== null && selectedTargetRate !== undefined) ? (selectedActualRate >= selectedTargetRate) : (data.achievement >= 100);"
+)
+
+# TL: process KPI gap cards should use call_billmin (remove %)
+html = html.replace(
+    "                document.getElementById('tl-call-gap').textContent = (data.callGap > 0 ? '+' : '') + data.callGap;\n                document.getElementById('tl-connect-gap').textContent = (data.connectGap > 0 ? '+' : '') + data.connectGap.toFixed(1) + '%';\n                loadTLAgentTable(group);",
+    "                const processTarget = REAL_DATA.processTargets && REAL_DATA.processTargets[data.groupModule] ? REAL_DATA.processTargets[data.groupModule] : null;\n                const callBenchmark = processTarget && processTarget.artCallTimes !== undefined && processTarget.artCallTimes !== null ? processTarget.artCallTimes : null;\n                const callBillminBenchmark = processTarget && processTarget.callBillminRawTarget !== undefined && processTarget.callBillminRawTarget !== null ? processTarget.callBillminRawTarget : null;\n                const agentsForAvg = REAL_DATA.agentPerformance[group] || [];\n                let callsSum = 0, billminSum = 0, cnt = 0;\n                agentsForAvg.forEach(agent => {\n                    const dm = REAL_DATA.agentPerformanceByDate && REAL_DATA.agentPerformanceByDate[group] && REAL_DATA.agentPerformanceByDate[group][agent.name] ? REAL_DATA.agentPerformanceByDate[group][agent.name][selectedDate] : null;\n                    const c = dm && dm.calls !== undefined ? dm.calls : agent.calls;\n                    const b = dm && dm.callBillmin !== undefined ? dm.callBillmin : agent.callBillmin;\n                    if (c !== null && c !== undefined && b !== null && b !== undefined) { callsSum += c; billminSum += b; cnt += 1; }\n                });\n                const groupAvgCalls = cnt > 0 ? callsSum / cnt : 0;\n                const groupAvgBillmin = cnt > 0 ? billminSum / cnt : 0;\n                const callGap = callBenchmark !== null ? Math.round(groupAvgCalls - callBenchmark) : null;\n                const callBillminGap = callBillminBenchmark !== null ? Math.round((groupAvgBillmin - callBillminBenchmark) * 10) / 10 : null;\n                document.getElementById('tl-call-gap').textContent = callGap !== null ? (callGap > 0 ? '+' : '') + callGap : '--';\n                document.getElementById('tl-connect-gap').textContent = callBillminGap !== null ? (callBillminGap > 0 ? '+' : '') + callBillminGap.toFixed(1) : '--';\n                loadTLAgentTable(group);"
+)
+
+# STL: target met should compare selected-week cutoff repay rate vs target repay rate
+html = html.replace(
+    "            const isMet = displayAchievement >= 100;",
+    "            const weekLabelParts = selectedWeekLabel ? selectedWeekLabel.split(' - ') : [];\n            const weekEndMmdd = weekLabelParts.length === 2 ? weekLabelParts[1] : null;\n            const dataYear = REAL_DATA.dataDate.slice(0, 4);\n            const weekEndDate = weekEndMmdd ? (dataYear + '-' + weekEndMmdd.replace('/', '-')) : REAL_DATA.dataDate;\n            const compareDate = weekEndDate <= REAL_DATA.dataDate ? weekEndDate : REAL_DATA.dataDate;\n            const trendDataForStatus = REAL_DATA.moduleDailyTrends[module];\n            const trendRows = trendDataForStatus && trendDataForStatus.daily ? trendDataForStatus.daily.filter(d => d.date <= compareDate) : [];\n            const lastTrend = trendRows.length > 0 ? trendRows[trendRows.length - 1] : null;\n            const selectedActualRate = lastTrend ? lastTrend.repayRate : null;\n            const selectedTargetRate = lastTrend ? lastTrend.targetRepayRate : null;\n            const isMet = (selectedActualRate !== null && selectedActualRate !== undefined && selectedTargetRate !== null && selectedTargetRate !== undefined) ? (selectedActualRate >= selectedTargetRate) : (displayAchievement >= 100);"
+)
+
 # ---- TL table/group sorting + selected line highlight ----
 # 1) TL agent drill-down table: sort by achievement (ascending, worst first)
 html = html.replace(
@@ -1339,14 +1915,43 @@ html = html.replace(
     "                const color = isSelected ? '#dc2626' : (idx % 2 === 0 ? '#3b82f6' : '#60a5fa');"
 )
 
-# ---- 25. Title ----
-html = html.replace('Collection Operations Report v2.2', 'Collection Operations Report v2.5')
+# ---- 25. Title + repay badge labels (STL base template still says Weekly Target) ----
+html = html.replace('Collection Operations Report v2.2', 'Collection Operations Report v3.1')
+html = html.replace(
+    "badge.innerHTML = '<span class=\"status-badge status-success\">Weekly Target Met</span>';",
+    "badge.innerHTML = '<span class=\"status-badge status-success\">Weekly Repay Target: Met</span>';",
+)
+html = html.replace(
+    "badge.innerHTML = '<span class=\"status-badge status-danger\">Weekly Target Not Met</span>';",
+    "badge.innerHTML = '<span class=\"status-badge status-danger\">Weekly Repay Target: Unmet</span>';",
+)
 
 # ---- 26. Data date ----
 html = html.replace(
     "document.getElementById('data-date').textContent = new Date(Date.now() - 86400000).toISOString().split('T')[0];",
     f"document.getElementById('data-date').textContent = REAL_DATA.dataDate;"
 )
+
+# Process KPI drill-down: use art_call_times for call volume comparisons
+html = html.replace("displayCalls >= procCallTarget", "displayArtCallTimes >= procCallTarget")
+
+# ---- TL: unify repay badge labels + show process badge only when repay not met ----
+html = html.replace(
+    "badge.innerHTML = '<span class=\"status-badge status-success\">Target Met</span>';",
+    "badge.innerHTML = '<span class=\"status-badge status-success\">Repay Target: Met</span>';")
+html = html.replace(
+    "badge.innerHTML = '<span class=\"status-badge status-danger\">Target Not Met</span>';",
+    "badge.innerHTML = '<span class=\"status-badge status-danger\">Repay Target: Unmet</span>';")
+
+# TL process badge should use art_call_times + call_billmin (raw minutes)
+html = html.replace(
+    "const c = dm && dm.calls !== undefined ? dm.calls : agent.calls;",
+    "const c = dm && dm.artCallTimes !== undefined ? dm.artCallTimes : agent.artCallTimes;")
+
+# When repay target is NOT met (TL else-branch), append process target badge to TL header
+html = html.replace(
+    "const callGap = callBenchmark !== null ? Math.round(groupAvgCalls - callBenchmark) : null;",
+    "const processTargetMet = (callBenchmark !== null && callBillminBenchmark !== null) ? (groupAvgCalls >= callBenchmark && groupAvgBillmin >= callBillminBenchmark) : null;\n                const processTargetBadge = processTargetMet === null ? '<span class=\"status-badge\" style=\"background:#f3f4f6;color:#6b7280;\">Process Target: No Target</span>' : (processTargetMet ? '<span class=\"status-badge status-success\">Process Target: Met</span>' : '<span class=\"status-badge status-danger\">Process Target: Unmet</span>');\n                badge.innerHTML += ' <br>' + processTargetBadge;\n                const callGap = callBenchmark !== null ? Math.round(groupAvgCalls - callBenchmark) : null;")
 
 # ========================
 # Write output
@@ -1383,7 +1988,7 @@ module_trend_cutoff_ok = (latest_module_trend_dt is None) or (latest_module_tren
 
 # Verification checks
 checks = [
-    ("Title v2.5",               'Collection Operations Report v2.5' in html),
+    ("Title v3.1",               'Collection Operations Report v3.1' in html),
     ("REAL_DATA present",        'const REAL_DATA = {' in html),
     ("No MOCK_DATA",             'MOCK_DATA.' not in html),
     ("No legacy moduleTarget var", "Math.round(moduleTarget)" not in html and "fill(moduleTarget)" not in html),
@@ -1397,8 +2002,13 @@ checks = [
     ("TL date selector",         'REAL_DATA.availableDates' in html),
     ("STL week selector",        'REAL_DATA.availableWeeks' in html),
     ("STL default week",        'REAL_DATA.defaultStlWeek' in html),
-    ("PTP null-safe (agent)",   'agent.ptp !== null' in html),
+    ("PTP null-safe (agent)",   'displayPtp !== null' in html or 'agent.ptp !== null' in html),
     ("callLossRate in agent",   'agent.callLossRate' in html),
+    ("callLossRate in stl week", 'displayCallLossRate' in html),
+    ("TL call loss header",      'Call Loss</th>' in html and 'displayCallLossRate' in html),
+    ("processTargets in data",   '"processTargets"' in html),
+    ("module process benchmark", 'processTarget.artCallTimes' in html and 'processTarget.callBillminRawTarget' in html),
+    ("STL gap cards",            'id=\"stl-call-gap\"' in html and 'id=\"stl-connect-gap\"' in html),
     ("validDays atRisk",        'const validDays = trendData' in html),
     ("TL trend <= dataDate",    tl_trend_cutoff_ok),
     ("Module trend <= dataDate", module_trend_cutoff_ok),
