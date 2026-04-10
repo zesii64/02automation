@@ -1,0 +1,3 @@
+{"role":"user","message":{"content":[{"type":"text","text":"<user_query>\n@CLAUDE.md 依据我为claude code写的rules，修改cursur的全局rules\n</user_query>"}]}}
+{"role":"assistant","message":{"content":[{"type":"text","text":"我会先读取你提到的 `CLAUDE.md`，再对照当前 Cursor 全局规则（`.cursor/rules`）逐条迁移，最后直接帮你改好规则文件。先去收集这两边的内容。"}]}}
+{"role":"assistant","message":{"content":[{"type":"text","text":"我已拿到创建规则的规范；接下来先定位你的 `CLAUDE.md` 实际路径，然后读取它并映射到 `.cursor/rules`。"}]}}

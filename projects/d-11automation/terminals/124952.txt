@@ -1,0 +1,71 @@
+---
+pid: 41320
+cwd: "D:\\11automation"
+command: "python \"02automation/10-Collection_Inspection/10-Collection_Inspection/05-scripts/generate_v2_5.py\""
+started_at: 2026-04-07T08:47:33.179Z
+running_for_ms: 300015   
+---
+Loading Excel data (v3)...
+  TL latest date    : 2026-04-06
+  Daily cutoff date : 2026-04-06
+  All weeks         : ['2026-03-28-2026-04-03', '2026-04-04-2026-04-10']
+  Default STL week  : 2026-03-28-2026-04-03
+  Available TL dates: 6
+Processing natural_month_repay...
+Building tlData...
+Building agentPerformance...
+Building groupPerformance...
+Building stlData...
+Building anomalyGroups...
+Building moduleDailyTrends...
+Building moduleMonthly...
+  JSON size  : 478 KB
+Patching HTML...
+
+Generated: d:/11automation/02automation/10-Collection_Inspection/10-Collection_Inspection/reports/Collection_Operations_Report_v3_2.html
+  Data date   : 2026-04-06
+  Sub-modules : ['M1-Large', 'M1-Small', 'M2', 'S0', 'S1-Large', 'S1-Small', 'S2-Large', 'S2-Small']
+  Groups      : 22
+  Anomalies   : 0
+
+Verification:
+  [OK] Title v3.2
+  [OK] REAL_DATA present
+  [OK] No MOCK_DATA
+  [OK] No legacy moduleTarget var
+  [OK] No fixed target fill
+  [OK] groupModule in data
+  [OK] nmRepayRate in data
+  [OK] moduleRepayRate in data
+  [OK] repayRate in data
+  [OK] callLossRate in data
+  [OK] ptpRate in data
+  [OK] TL date selector
+  [OK] STL week selector
+  [OK] STL default week
+  [OK] PTP null-safe (agent)
+  [OK] callLossRate in agent
+  [OK] callLossRate in stl week
+  [OK] TL call loss header
+  [OK] processTargets in data
+  [OK] module process benchmark
+  [OK] STL gap cards
+  [OK] STL trend title copy
+  [OK] STL week-end month logic
+  [OK] validDays atRisk
+  [OK] TL trend <= dataDate
+  [OK] Module trend <= dataDate
+
+All checks passed.
+
+Press Enter to close...Traceback (most recent call last):
+  File "D:\11automation\02automation\10-Collection_Inspection\10-Collection_Inspection\05-scripts\generate_v2_5.py", line 2379, in <module>
+    input("\nPress Enter to close...")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+EOFError: EOF when reading a line
+
+---
+exit_code: 1
+elapsed_ms: 304899
+ended_at: 2026-04-07T08:52:38.078Z
+---

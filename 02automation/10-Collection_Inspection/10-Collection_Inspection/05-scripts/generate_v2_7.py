@@ -1,5 +1,5 @@
 """
-Collection Operations Report v3.2 - Real Data v3
+Collection Operations Report v3.3 - Real Data v3
 Base: Collection_Operations_Report_v2_2.html
 Data: 260318_output_automation_v3.xlsx
 Changes vs v2.4:
@@ -12,14 +12,17 @@ Changes vs v2.4:
   - Default TL date: 2026-03-21 (max common date across all agent sources)
   - Default STL week: most-recent complete week
   - Call Loss Rate column added to all agent/group tables
-Output: Collection_Operations_Report_v3_1.html
+Output: Collection_Operations_Report_v3_3.html
 """
 import pandas as pd
 import json
 import math
 import re
+import os
 from datetime import timedelta
 from calendar import monthrange
+from view_tl_stl import apply_tl_stl_view_patches
+from view_data import apply_data_view_patches
 
 # ========================
 # Paths
@@ -28,7 +31,7 @@ BASE       = r'd:/11automation/02automation/10-Collection_Inspection/10-Collecti
 EXCEL_PATH = BASE + r'/data/260318_output_automation_v3.xlsx'
 PROCESS_TARGET_PATH = BASE + r'/data/process_data_target.xlsx'
 HTML_IN    = BASE + r'/reports/Collection_Operations_Report_v2_2.html'
-HTML_OUT   = BASE + r'/reports/Collection_Operations_Report_v3_2.html'
+HTML_OUT   = BASE + r'/reports/Collection_Operations_Report_v3_3.html'
 
 # ========================
 # Load data
@@ -180,6 +183,31 @@ def extract_module_key(group):
             return f"{parts[0]}-{parts[1].strip().split()[0].capitalize()}"
     return parts[0]
 
+# Canonical module order in JSON/UI: S0 → S1 → S2 → M1 (aligns with view_data Agent Overview).
+_MODULE_SORT_PRIORITY = ['S0', 'S1', 'S2', 'M1']
+_MODULE_SORT_RANK = {m: i for i, m in enumerate(_MODULE_SORT_PRIORITY)}
+
+def _parse_module_parts_for_sort(module_key):
+    text = str(module_key or '').strip()
+    parts = text.split('-')
+    base = (parts[0] or '').strip()
+    raw_tier = (parts[1] or '').strip().lower() if len(parts) > 1 else ''
+    if raw_tier == 'large' or '大额' in raw_tier:
+        tier = 'large'
+    elif raw_tier == 'small' or '小额' in raw_tier:
+        tier = 'small'
+    else:
+        tier = raw_tier
+    return base, tier
+
+def sort_module_keys(keys):
+    def key_fn(k):
+        base, tier = _parse_module_parts_for_sort(k)
+        rank = _MODULE_SORT_RANK.get(base, 999)
+        tier_order = 0 if tier == 'large' else (1 if tier == 'small' else 2)
+        return (rank, base, tier_order, str(k))
+    return sorted(keys, key=key_fn)
+
 def map_group_to_dtr(group):
     g = group.strip()
     if g.startswith('S0-'):
@@ -241,7 +269,7 @@ submodule_groups = {}
 for g in all_groups:
     mk = extract_module_key(g)
     submodule_groups.setdefault(mk, []).append(g)
-modules_list = sorted(submodule_groups.keys())
+modules_list = sort_module_keys(list(submodule_groups.keys()))
 
 # Module process targets from process_data_target.xlsx
 process_target_js = {}
@@ -1218,27 +1246,11 @@ html = (html[:mock_start]
 # ---- 2. MOCK_DATA. -> REAL_DATA. ----
 html = html.replace('MOCK_DATA.', 'REAL_DATA.')
 
-# ---- 3. renderTLChart: module extraction + group filter ----
-html = html.replace(
-    "const module = group.replace(/^G-/, '').replace(/-\\d+$/, '');",
-    "const module = REAL_DATA.tlData[group] ? REAL_DATA.tlData[group].groupModule : group.split('-')[0];"
-)
-html = html.replace(
-    "const allGroupsInModule = REAL_DATA.groups.filter(g => g.includes('-' + module + '-'));",
-    "const allGroupsInModule = REAL_DATA.groups.filter(g => REAL_DATA.tlData[g] && REAL_DATA.tlData[g].groupModule === module);"
-)
+# ---- TL/STL view patches (modularized) ----
+html = apply_tl_stl_view_patches(html)
 
-# ---- 4. renderSTLChart: group filter ----
-html = html.replace(
-    "const groupsInModule = REAL_DATA.groups.filter(g => g.includes('-' + module + '-'));",
-    "const groupsInModule = REAL_DATA.groups.filter(g => REAL_DATA.tlData[g] && REAL_DATA.tlData[g].groupModule === module);"
-)
-
-# ---- 5. renderTLChart: actuals -> repayRate ----
-html = html.replace(
-    "                const actuals = filteredDays.map(d => Math.round(d.actual));",
-    "                const actuals = filteredDays.map(d => d.nmRepayRate !== null && d.nmRepayRate !== undefined ? d.nmRepayRate : (d.repayRate !== null && d.repayRate !== undefined ? d.repayRate : null));"
-)
+# ---- Data view patches (modularized; Agent B) ----
+html = apply_data_view_patches(html)
 
 # ---- 5b. TL Recovery Trend: X-axis full month; target continues; actual null for future ----
 old_tl_month_block = """\
@@ -1619,52 +1631,6 @@ html = html.replace(
     "            const moduleActuals = dailyData.map(d => d.repayRate !== null && d.repayRate !== undefined ? d.repayRate : null);"
 )
 
-# ---- 13. loadTrendChart: actual/target -> rate + null-safe avg ----
-old_trend_vals = """\
-                    if (d < dailyData.length) {
-                        actualValues.push(dailyData[d].actual);
-                        targetValues.push(dailyData[d].target);
-                        avgDailyTarget += dailyData[d].target;
-                        targetCount++;
-                    } else {"""
-new_trend_vals = """\
-                    if (d < dailyData.length) {
-                        actualValues.push(dailyData[d].repayRate !== null && dailyData[d].repayRate !== undefined ? dailyData[d].repayRate : null);
-                        targetValues.push(dailyData[d].targetRepayRate !== null && dailyData[d].targetRepayRate !== undefined ? dailyData[d].targetRepayRate : null);
-                        if (dailyData[d].targetRepayRate !== null && dailyData[d].targetRepayRate !== undefined) {
-                            avgDailyTarget += dailyData[d].targetRepayRate;
-                            targetCount++;
-                        }
-                    } else {"""
-html = html.replace(old_trend_vals, new_trend_vals)
-
-# ---- 14. loadTrendChart: tooltip -> % ----
-html = html.replace(
-    "                    tooltip: { trigger: 'axis', formatter: params => {\n                        return params[0].name + '<br>' + params.map(p => p.marker + p.seriesName + ': ' + (p.value ? formatNumber(p.value) : '-')).join('<br>');\n                    }},",
-    "                    tooltip: { trigger: 'axis', formatter: params => {\n                        return params[0].name + '<br>' + params.map(p => p.marker + p.seriesName + ': ' + (p.value !== null && p.value !== undefined ? p.value.toFixed(2) + '%' : '-')).join('<br>');\n                    }},"
-)
-
-# ---- 15. loadTrendChart: Y-axis -> % ----
-html = html.replace(
-    "                    yAxis: { type: 'value', axisLabel: { formatter: v => formatNumber(v), fontSize: 10 } },",
-    "                    yAxis: { type: 'value', axisLabel: { formatter: v => v !== null && v !== undefined ? v.toFixed(2) + '%' : '', fontSize: 10 } },"
-)
-
-# ---- 16. loadTrendChart: card metric -> rate format ----
-html = html.replace(
-    "                        '<span>Daily Target: ' + formatNumber(Math.round(avgDailyTarget)) + ' (Natural Month Repay)</span>' +",
-    "                        '<span>Avg Daily Target Rate: ' + avgDailyTarget.toFixed(2) + '% (Natural Month Repay)</span>' +"
-)
-
-# ---- 16.1 loadTrendChart: remove "today" red dot marker ----
-html = re.sub(
-    r"(?s)\n\s*markPoint:\s*\{\s*data:\s*\[\s*\{\s*coord:\s*\[currentDayOfMonth - 1,\s*actualValues\[currentDayOfMonth - 1\]\s*\|\|\s*0\],\s*value:\s*'Today',.*?symbolSize:\s*10\s*\}\s*",
-    "\n",
-    html,
-    count=1
-)
-html = html.replace(" Red line = today.", "")
-
 # ---- 17. TL Date selector -> REAL_DATA.availableDates ----
 old_date_sel = """\
             // Populate date selector: last 30 days
@@ -1813,16 +1779,37 @@ html = html.replace(
                         <span style="display: inline-block; width: 12px; height: 12px; background: #fef2f2; border: 1px solid #fca5a5; border-radius: 2px; margin-right: 4px;"></span>3+ consecutive weeks &nbsp;
                         <span style="display: inline-block; width: 12px; height: 12px; background: #fffbeb; border: 1px solid #fcd34d; border-radius: 2px; margin-right: 4px;"></span>1–2 consecutive weeks
                     </p>
-                    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 12px;">
+                    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 12px;">
+                        <div class="metric-card">
+                            <div class="metric-value" id="stl-gap-amount">--</div>
+                            <div class="metric-label">Gap to Target</div>
+                            <div id="stl-gap-meta" style="font-size: 12px; color: #64748b; margin-top: 4px;">Target: -- | Actual: --</div>
+                        </div>
                         <div class="metric-card">
                             <div class="metric-value" id="stl-call-gap">--</div>
                             <div class="metric-label">Call Volume Gap</div>
+                            <div id="stl-call-gap-meta" style="font-size: 12px; color: #64748b; margin-top: 4px;">Target: -- | Actual: --</div>
                         </div>
                         <div class="metric-card">
                             <div class="metric-value" id="stl-connect-gap">--</div>
-                            <div class="metric-label">Connect Rate Gap</div>
+                            <div class="metric-label">Call Billmin Gap</div>
+                            <div id="stl-connect-gap-meta" style="font-size: 12px; color: #64748b; margin-top: 4px;">Target: -- | Actual: --</div>
                         </div>
                     </div>"""
+)
+
+# TL unmet section: add target/actual sub-lines under each gap card
+html = html.replace(
+    '<div class="metric-value" id="tl-gap-amount">--</div>\n                            <div class="metric-label">Gap to Target</div>',
+    '<div class="metric-value" id="tl-gap-amount">--</div>\n                            <div class="metric-label">Gap to Target</div>\n                            <div id="tl-gap-meta" style="font-size: 12px; color: #64748b; margin-top: 4px;">Target: -- | Actual: --</div>'
+)
+html = html.replace(
+    '<div class="metric-value" id="tl-call-gap">--</div>\n                            <div class="metric-label">Call Volume Gap</div>',
+    '<div class="metric-value" id="tl-call-gap">--</div>\n                            <div class="metric-label">Call Volume Gap</div>\n                            <div id="tl-call-gap-meta" style="font-size: 12px; color: #64748b; margin-top: 4px;">Target: -- | Actual: --</div>'
+)
+html = html.replace(
+    '<div class="metric-value" id="tl-connect-gap">--</div>\n                            <div class="metric-label">Connect Rate Gap</div>',
+    '<div class="metric-value" id="tl-connect-gap">--</div>\n                            <div class="metric-label">Call Billmin Gap</div>\n                            <div id="tl-connect-gap-meta" style="font-size: 12px; color: #64748b; margin-top: 4px;">Target: -- | Actual: --</div>'
 )
 
 # Fix display metrics to use weekIdx
@@ -1852,7 +1839,7 @@ html = html.replace(
 # STL gap metrics in unmet section, aligned to module process targets
 html = html.replace(
     "            generateSTLConclusions(data, isMet, displayAchievement, displayGap);",
-    "            const processTarget = REAL_DATA.processTargets && REAL_DATA.processTargets[module] ? REAL_DATA.processTargets[module] : {};\n            const callBenchmark = processTarget.artCallTimes !== null && processTarget.artCallTimes !== undefined ? processTarget.artCallTimes : null;\n            const callBillminBenchmark = processTarget.callBillminRawTarget !== null && processTarget.callBillminRawTarget !== undefined ? processTarget.callBillminRawTarget : null;\n            const groupsForGap = REAL_DATA.groupPerformance[module] || [];\n            const selectedWeekLabelForGap = document.getElementById('stl-week-select') ? document.getElementById('stl-week-select').value : REAL_DATA.defaultStlWeek;\n            const weekRows = groupsForGap.map(g => {\n                const wm = REAL_DATA.groupPerformanceByWeek && REAL_DATA.groupPerformanceByWeek[module] && REAL_DATA.groupPerformanceByWeek[module][g.name] ? REAL_DATA.groupPerformanceByWeek[module][g.name][selectedWeekLabelForGap] : null;\n                return { calls: wm && wm.calls !== undefined ? wm.calls : g.calls, callBillmin: wm && wm.callBillmin !== undefined ? wm.callBillmin : g.callBillmin };\n            });\n            const avgCalls = weekRows.length > 0 ? weekRows.reduce((sum, r) => sum + (r.calls || 0), 0) / weekRows.length : 0;\n            const avgCallBillmin = weekRows.length > 0 ? weekRows.reduce((sum, r) => sum + (r.callBillmin || 0), 0) / weekRows.length : 0;\n            const hasProcessTarget = callBenchmark !== null && callBillminBenchmark !== null;\n            const callGap = hasProcessTarget ? (avgCalls - callBenchmark) : 0;\n            const callBillminGap = hasProcessTarget ? (avgCallBillmin - callBillminBenchmark) : 0;\n            const processTargetMet = hasProcessTarget ? (avgCalls >= callBenchmark) && (avgCallBillmin >= callBillminBenchmark) : null;\n            const processTargetBadge = processTargetMet === null ? '<span class=\\\"status-badge\\\" style=\\\"background:#f3f4f6;color:#6b7280;\\\">Process Target: No Target</span>' : (processTargetMet ? '<span class=\\\"status-badge status-success\\\">Process Target: Met</span>' : '<span class=\\\"status-badge status-danger\\\">Process Target: Unmet</span>');\n            badge.innerHTML += ' <br>' + processTargetBadge;\n            const stlCallGapEl = document.getElementById('stl-call-gap');\n            if (stlCallGapEl) stlCallGapEl.textContent = hasProcessTarget ? ((callGap > 0 ? '+' : '') + callGap.toFixed(0)) : '--';\n            const stlConnectGapEl = document.getElementById('stl-connect-gap');\n            if (stlConnectGapEl) stlConnectGapEl.textContent = hasProcessTarget ? ((callBillminGap > 0 ? '+' : '') + callBillminGap.toFixed(1)) : '--';\n            generateSTLConclusions(data, isMet, displayAchievement, displayGap);"
+    "            const processTarget = REAL_DATA.processTargets && REAL_DATA.processTargets[module] ? REAL_DATA.processTargets[module] : {};\n            const callBenchmark = processTarget.artCallTimes !== null && processTarget.artCallTimes !== undefined ? processTarget.artCallTimes : null;\n            const callBillminBenchmark = processTarget.callBillminRawTarget !== null && processTarget.callBillminRawTarget !== undefined ? processTarget.callBillminRawTarget : null;\n            const groupsForGap = REAL_DATA.groupPerformance[module] || [];\n            const selectedWeekLabelForGap = document.getElementById('stl-week-select') ? document.getElementById('stl-week-select').value : REAL_DATA.defaultStlWeek;\n            const weekRows = groupsForGap.map(g => {\n                const wm = REAL_DATA.groupPerformanceByWeek && REAL_DATA.groupPerformanceByWeek[module] && REAL_DATA.groupPerformanceByWeek[module][g.name] ? REAL_DATA.groupPerformanceByWeek[module][g.name][selectedWeekLabelForGap] : null;\n                return { calls: wm && wm.calls !== undefined ? wm.calls : g.calls, callBillmin: wm && wm.callBillmin !== undefined ? wm.callBillmin : g.callBillmin };\n            });\n            const avgCalls = weekRows.length > 0 ? weekRows.reduce((sum, r) => sum + (r.calls || 0), 0) / weekRows.length : 0;\n            const avgCallBillmin = weekRows.length > 0 ? weekRows.reduce((sum, r) => sum + (r.callBillmin || 0), 0) / weekRows.length : 0;\n            const hasProcessTarget = callBenchmark !== null && callBillminBenchmark !== null;\n            const callGap = hasProcessTarget ? (avgCalls - callBenchmark) : null;\n            const callBillminGap = hasProcessTarget ? (avgCallBillmin - callBillminBenchmark) : null;\n            const processTargetMet = hasProcessTarget ? (avgCalls >= callBenchmark) && (avgCallBillmin >= callBillminBenchmark) : null;\n            const processTargetBadge = processTargetMet === null ? '<span class=\\\"status-badge\\\" style=\\\"background:#f3f4f6;color:#6b7280;\\\">Process Target: No Target</span>' : (processTargetMet ? '<span class=\\\"status-badge status-success\\\">Process Target: Met</span>' : '<span class=\\\"status-badge status-danger\\\">Process Target: Unmet</span>');\n            badge.innerHTML += ' <br>' + processTargetBadge;\n            const stlGapEl = document.getElementById('stl-gap-amount');\n            if (stlGapEl) stlGapEl.textContent = (displayActual > displayTarget ? '+' : '') + formatNumber(Math.round(displayActual - displayTarget));\n            const stlCallGapEl = document.getElementById('stl-call-gap');\n            if (stlCallGapEl) stlCallGapEl.textContent = callGap !== null ? ((callGap > 0 ? '+' : '') + callGap.toFixed(0)) : '--';\n            const stlConnectGapEl = document.getElementById('stl-connect-gap');\n            if (stlConnectGapEl) stlConnectGapEl.textContent = callBillminGap !== null ? ((callBillminGap > 0 ? '+' : '') + callBillminGap.toFixed(1)) : '--';\n            const stlGapMeta = document.getElementById('stl-gap-meta');\n            if (stlGapMeta) stlGapMeta.textContent = 'Target: ' + formatNumber(displayTarget) + ' | Actual: ' + formatNumber(displayActual);\n            const stlCallGapMeta = document.getElementById('stl-call-gap-meta');\n            if (stlCallGapMeta) stlCallGapMeta.textContent = 'Target: ' + (callBenchmark !== null ? callBenchmark.toFixed(0) : '--') + ' | Actual: ' + avgCalls.toFixed(0);\n            const stlConnectGapMeta = document.getElementById('stl-connect-gap-meta');\n            if (stlConnectGapMeta) stlConnectGapMeta.textContent = 'Target: ' + (callBillminBenchmark !== null ? callBillminBenchmark.toFixed(1) : '--') + ' | Actual: ' + avgCallBillmin.toFixed(1);\n            generateSTLConclusions(data, isMet, displayAchievement, displayGap);"
 )
 
 # TL: gap and status should compare against process targets (group/module means)
@@ -2081,18 +2068,6 @@ html = html.replace(
     '                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">PTP Rate</th>\n                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Call Loss</th>\n                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Attendance</th>\n                                <th style="padding: 12px; text-align: center; font-size: 12px; color: #64748b;">Process KPI</th>'
 )
 
-# ---- 22. riskModuleGroups table: PTP null-safe + Call Loss column ----
-html = html.replace(
-    "g.ptpRate.toFixed(1) + '%</td>' +",
-    "(g.ptpRate !== null && g.ptpRate !== undefined ? g.ptpRate.toFixed(1) + '%' : '--') + '</td>' +"
-)
-old_risk_row_end = "                        '<td style=\"padding: 8px; text-align: right;\">' + g.attendance + '%</td>' +"
-new_risk_row_end = "                        '<td style=\"padding: 8px; text-align: right;\">' + (g.callLossRate !== null && g.callLossRate !== undefined ? g.callLossRate.toFixed(1) + '%' : '--') + '</td>' +\n                        '<td style=\"padding: 8px; text-align: right;\">' + g.attendance + '%</td>' +"
-html = html.replace(old_risk_row_end, new_risk_row_end)
-old_risk_header = "                        <th style=\"padding: 8px; text-align: right; background: #f1f5f9;\">Attendance</th>"
-new_risk_header = "                        <th style=\"padding: 8px; text-align: right; background: #f1f5f9;\">Call Loss</th>\n                        <th style=\"padding: 8px; text-align: right; background: #f1f5f9;\">Attendance</th>"
-html = html.replace(old_risk_header, new_risk_header)
-
 # ---- 23. generateSTLConclusions: avgPtpRate null-safe ----
 old_ptp_avg = """\
                 const avgCalls = groups.reduce((sum, g) => sum + g.artCallTimes, 0) / groups.length;
@@ -2130,90 +2105,91 @@ html = html.replace(
     "                    conclusions.push('Call billmin is ' + Math.abs(connectGap).toFixed(1) + ' minutes below benchmark. Root cause: poor contact quality — either (a) outdated phone numbers, (b) customers unreachable during working hours, or (c) ineffective calling scripts.');"
 )
 
-# ---- 24. Recovery Trend status: On Track / Tentative / At Risk (time-aware) ----
+# ---- 24. Recovery Trend status: same metric as chart — repayRate vs targetRepayRate @ dataDate ----
 risk_status_fn = """\
         function calculateAtRisk(module) {
-            const mData = REAL_DATA.moduleMonthly[module];
-            if (!mData) {
-                return {
-                    isAtRisk: false,
-                    status: 'tentative',
-                    statusLabel: 'Tentative',
-                    badgeClass: 'status-badge'
-                };
-            }
+            // Extensibility: e.g. 'mtd_linear' | 'rate_vs_target_cutoff' (default matches Recovery Trend chart).
+            const RECOVERY_TREND_STATUS_POLICY = { mode: 'rate_vs_target_cutoff' };
 
-            const monthTarget = Number(mData.monthTarget || 0);
-            const currentActual = Number(mData.currentActual || 0);
-            const currentDay = Math.max(1, Number(mData.currentDay || 1));
-            const monthDays = Math.max(1, Number(mData.monthDays || 1));
+            const mData = REAL_DATA.moduleMonthly[module];
+            const monthTarget = mData ? Number(mData.monthTarget || 0) : 0;
+            const currentActual = mData ? Number(mData.currentActual || 0) : 0;
+            const currentDay = mData ? Math.max(1, Number(mData.currentDay || 1)) : 1;
+            const monthDays = mData ? Math.max(1, Number(mData.monthDays || 1)) : 1;
             const remainingDays = Math.max(0, monthDays - currentDay);
-            const dailyAvg = currentActual / currentDay;
+            const dailyAvg = currentDay > 0 ? (currentActual / currentDay) : 0;
             const projectedSimple = currentActual + (dailyAvg * remainingDays);
             const projectedConservative = projectedSimple;
             const projectedMomentum = projectedSimple;
             const dailyTrend = dailyAvg;
-
-            if (monthTarget <= 0) {
-                return {
-                    isAtRisk: false,
-                    status: 'tentative',
-                    statusLabel: 'Tentative',
-                    badgeClass: 'status-badge',
-                    monthTarget: monthTarget,
-                    currentActual: currentActual,
-                    currentDay: currentDay,
-                    monthDays: monthDays,
-                    remainingDays: remainingDays,
-                    dailyAvg: dailyAvg,
-                    dailyTrend: dailyTrend,
-                    projectedSimple: projectedSimple,
-                    projectedConservative: projectedConservative,
-                    projectedMomentum: projectedMomentum,
-                    gap: 0,
-                    simpleAch: 0,
-                    conservativeAch: 0,
-                    momentumAch: 0,
-                    requiredDaily: 0,
-                    targetByNow: 0,
-                    progressRatio: currentDay / monthDays,
-                    achievementRatio: 0,
-                    progressGap: 0
-                };
-            }
-
-            const progressRatio = currentDay / monthDays;
-            const achievementRatio = currentActual / monthTarget;
-            const targetByNow = monthTarget * progressRatio;
+            const progressRatio = monthDays > 0 ? (currentDay / monthDays) : 0;
+            const achievementRatio = monthTarget > 0 ? (currentActual / monthTarget) : 0;
+            const mtdTargetLinear = monthTarget * progressRatio;
             const progressGap = achievementRatio - progressRatio;
+            const gap = monthTarget - currentActual;
+            const simpleAch = monthTarget > 0 ? ((projectedSimple / monthTarget) * 100) : 0;
+            const conservativeAch = simpleAch;
+            const momentumAch = simpleAch;
 
-            // Time-aware thresholds:
-            // - On Track: clearly ahead of current pace
-            // - Tentative: near current pace
-            // - At Risk: significantly behind; tolerance shrinks late-month
-            const onTrackLead = 0.02;
-            const shortfallTolerance = 0.20 * (1 - progressRatio) + 0.04;
+            const cutoff = REAL_DATA.dataDate;
+            const trend = REAL_DATA.moduleDailyTrends && REAL_DATA.moduleDailyTrends[module]
+                ? REAL_DATA.moduleDailyTrends[module]
+                : null;
+            const dailyRows = trend && trend.daily ? trend.daily : [];
+            let compareRow = null;
+            for (let i = dailyRows.length - 1; i >= 0; i--) {
+                const r = dailyRows[i];
+                if (r.date > cutoff) continue;
+                const a = r.repayRate;
+                const t = r.targetRepayRate;
+                if (a !== null && a !== undefined && t !== null && t !== undefined) {
+                    compareRow = r;
+                    break;
+                }
+            }
 
             let status = 'tentative';
             let statusLabel = 'Tentative';
             let badgeClass = 'status-badge';
-            if (progressGap >= onTrackLead) {
-                status = 'on_track';
-                statusLabel = 'On Track';
-                badgeClass = 'status-badge status-success';
-            } else if (progressGap < -shortfallTolerance) {
-                status = 'at_risk';
-                statusLabel = 'At Risk';
-                badgeClass = 'status-badge status-danger';
+            let isAtRisk = false;
+
+            if (RECOVERY_TREND_STATUS_POLICY.mode === 'rate_vs_target_cutoff') {
+                if (!compareRow) {
+                    status = 'tentative';
+                    statusLabel = 'Tentative';
+                    badgeClass = 'status-badge';
+                    isAtRisk = false;
+                } else {
+                    const a = compareRow.repayRate;
+                    const t = compareRow.targetRepayRate;
+                    if (a >= t) {
+                        status = 'on_track';
+                        statusLabel = 'On Track';
+                        badgeClass = 'status-badge status-success';
+                        isAtRisk = false;
+                    } else {
+                        status = 'at_risk';
+                        statusLabel = 'At Risk';
+                        badgeClass = 'status-badge status-danger';
+                        isAtRisk = true;
+                    }
+                }
+            } else if (RECOVERY_TREND_STATUS_POLICY.mode === 'mtd_linear' && monthTarget > 0) {
+                if (currentActual >= mtdTargetLinear) {
+                    status = 'on_track';
+                    statusLabel = 'On Track';
+                    badgeClass = 'status-badge status-success';
+                    isAtRisk = false;
+                } else {
+                    status = 'at_risk';
+                    statusLabel = 'At Risk';
+                    badgeClass = 'status-badge status-danger';
+                    isAtRisk = true;
+                }
             }
 
-            const gap = monthTarget - currentActual;
-            const simpleAch = (projectedSimple / monthTarget) * 100;
-            const conservativeAch = (projectedConservative / monthTarget) * 100;
-            const momentumAch = (projectedMomentum / monthTarget) * 100;
-
             return {
-                isAtRisk: status === 'at_risk',
+                isAtRisk: isAtRisk,
                 status: status,
                 statusLabel: statusLabel,
                 badgeClass: badgeClass,
@@ -2231,11 +2207,14 @@ risk_status_fn = """\
                 simpleAch: simpleAch,
                 conservativeAch: conservativeAch,
                 momentumAch: momentumAch,
-                requiredDaily: remainingDays > 0 ? gap / remainingDays : 0,
-                targetByNow: targetByNow,
+                requiredDaily: remainingDays > 0 ? (gap / remainingDays) : 0,
+                targetByNow: mtdTargetLinear,
                 progressRatio: progressRatio,
                 achievementRatio: achievementRatio,
-                progressGap: progressGap
+                progressGap: progressGap,
+                compareDate: compareRow ? compareRow.date : null,
+                compareActualRate: compareRow ? compareRow.repayRate : null,
+                compareTargetRate: compareRow ? compareRow.targetRepayRate : null
             };
         }
 """
@@ -2253,7 +2232,11 @@ html = html.replace(
 
 html = html.replace(
     "<strong>At-Risk Logic:</strong> Module is at risk if projected month-end recovery (based on 7-day average) is below monthly target. ' +\n                'Projection = Current MTD + (7-day Avg × Remaining Days).'",
-    "<strong>Status Logic:</strong> On Track if clearly ahead of current month pace; Tentative if near pace; At Risk if significantly behind. ' +\n                'Late-month tolerance is tighter because catch-up gets harder.'"
+    "<strong>Status Logic:</strong> On Track if natural-month actual repay rate ≥ daily target rate on REAL_DATA.dataDate (same as chart); otherwise At Risk. ' +\n                'Policy: RECOVERY_TREND_STATUS_POLICY.mode \\'rate_vs_target_cutoff\\' (alt: \\'mtd_linear\\').'"
+)
+html = html.replace(
+    "<strong>Status Logic:</strong> On Track if MTD actual ≥ linear prorated month target (by calendar day); otherwise At Risk. ' +\n                'Policy hook: RECOVERY_TREND_STATUS_POLICY.mode === \\'mtd_linear\\' (extendable).'",
+    "<strong>Status Logic:</strong> On Track if natural-month actual repay rate ≥ daily target rate on REAL_DATA.dataDate (same as chart); otherwise At Risk. ' +\n                'Policy: RECOVERY_TREND_STATUS_POLICY.mode \\'rate_vs_target_cutoff\\' (alt: \\'mtd_linear\\').'"
 )
 
 # ---- 24.1 TL/STL Target Met logic align to repay-rate target; remove VS module avg ----
@@ -2275,7 +2258,7 @@ html = html.replace(
 # TL: process KPI gap cards should use call_billmin (remove %)
 html = html.replace(
     "                document.getElementById('tl-call-gap').textContent = (data.callGap > 0 ? '+' : '') + data.callGap;\n                document.getElementById('tl-connect-gap').textContent = (data.connectGap > 0 ? '+' : '') + data.connectGap.toFixed(1) + '%';\n                loadTLAgentTable(group);",
-    "                const processTarget = REAL_DATA.processTargets && REAL_DATA.processTargets[data.groupModule] ? REAL_DATA.processTargets[data.groupModule] : null;\n                const callBenchmark = processTarget && processTarget.artCallTimes !== undefined && processTarget.artCallTimes !== null ? processTarget.artCallTimes : null;\n                const callBillminBenchmark = processTarget && processTarget.callBillminRawTarget !== undefined && processTarget.callBillminRawTarget !== null ? processTarget.callBillminRawTarget : null;\n                const agentsForAvg = REAL_DATA.agentPerformance[group] || [];\n                let callsSum = 0, billminSum = 0, cnt = 0;\n                agentsForAvg.forEach(agent => {\n                    const dm = REAL_DATA.agentPerformanceByDate && REAL_DATA.agentPerformanceByDate[group] && REAL_DATA.agentPerformanceByDate[group][agent.name] ? REAL_DATA.agentPerformanceByDate[group][agent.name][selectedDate] : null;\n                    const c = dm && dm.calls !== undefined ? dm.calls : agent.calls;\n                    const b = dm && dm.callBillmin !== undefined ? dm.callBillmin : agent.callBillmin;\n                    if (c !== null && c !== undefined && b !== null && b !== undefined) { callsSum += c; billminSum += b; cnt += 1; }\n                });\n                const groupAvgCalls = cnt > 0 ? callsSum / cnt : 0;\n                const groupAvgBillmin = cnt > 0 ? billminSum / cnt : 0;\n                const callGap = callBenchmark !== null ? Math.round(groupAvgCalls - callBenchmark) : null;\n                const callBillminGap = callBillminBenchmark !== null ? Math.round((groupAvgBillmin - callBillminBenchmark) * 10) / 10 : null;\n                document.getElementById('tl-call-gap').textContent = callGap !== null ? (callGap > 0 ? '+' : '') + callGap : '--';\n                document.getElementById('tl-connect-gap').textContent = callBillminGap !== null ? (callBillminGap > 0 ? '+' : '') + callBillminGap.toFixed(1) : '--';\n                loadTLAgentTable(group);"
+    "                const processTarget = REAL_DATA.processTargets && REAL_DATA.processTargets[data.groupModule] ? REAL_DATA.processTargets[data.groupModule] : null;\n                const callBenchmark = processTarget && processTarget.artCallTimes !== undefined && processTarget.artCallTimes !== null ? processTarget.artCallTimes : null;\n                const callBillminBenchmark = processTarget && processTarget.callBillminRawTarget !== undefined && processTarget.callBillminRawTarget !== null ? processTarget.callBillminRawTarget : null;\n                const agentsForAvg = REAL_DATA.agentPerformance[group] || [];\n                let callsSum = 0, billminSum = 0, cnt = 0;\n                agentsForAvg.forEach(agent => {\n                    const dm = REAL_DATA.agentPerformanceByDate && REAL_DATA.agentPerformanceByDate[group] && REAL_DATA.agentPerformanceByDate[group][agent.name] ? REAL_DATA.agentPerformanceByDate[group][agent.name][selectedDate] : null;\n                    const c = dm && dm.calls !== undefined ? dm.calls : agent.calls;\n                    const b = dm && dm.callBillmin !== undefined ? dm.callBillmin : agent.callBillmin;\n                    if (c !== null && c !== undefined && b !== null && b !== undefined) { callsSum += c; billminSum += b; cnt += 1; }\n                });\n                const groupAvgCalls = cnt > 0 ? callsSum / cnt : 0;\n                const groupAvgBillmin = cnt > 0 ? billminSum / cnt : 0;\n                const callGap = callBenchmark !== null ? Math.round(groupAvgCalls - callBenchmark) : null;\n                const callBillminGap = callBillminBenchmark !== null ? Math.round((groupAvgBillmin - callBillminBenchmark) * 10) / 10 : null;\n                const repayTarget = (typeof displayTarget !== 'undefined') ? displayTarget : data.target;\n                const repayActual = (typeof displayActual !== 'undefined') ? displayActual : data.actual;\n                const repayGap = (repayActual !== null && repayActual !== undefined && repayTarget !== null && repayTarget !== undefined) ? (repayActual - repayTarget) : null;\n                const tlGapEl = document.getElementById('tl-gap-amount');\n                if (tlGapEl) tlGapEl.textContent = repayGap !== null ? ((repayGap > 0 ? '+' : '') + formatNumber(Math.round(repayGap))) : '--';\n                document.getElementById('tl-call-gap').textContent = callGap !== null ? (callGap > 0 ? '+' : '') + callGap : '--';\n                document.getElementById('tl-connect-gap').textContent = callBillminGap !== null ? (callBillminGap > 0 ? '+' : '') + callBillminGap.toFixed(1) : '--';\n                const tlGapMeta = document.getElementById('tl-gap-meta');\n                if (tlGapMeta) tlGapMeta.textContent = 'Target: ' + formatNumber(repayTarget) + ' | Actual: ' + formatNumber(repayActual);\n                const tlCallGapMeta = document.getElementById('tl-call-gap-meta');\n                if (tlCallGapMeta) tlCallGapMeta.textContent = 'Target: ' + (callBenchmark !== null ? callBenchmark.toFixed(0) : '--') + ' | Actual: ' + groupAvgCalls.toFixed(0);\n                const tlConnectGapMeta = document.getElementById('tl-connect-gap-meta');\n                if (tlConnectGapMeta) tlConnectGapMeta.textContent = 'Target: ' + (callBillminBenchmark !== null ? callBillminBenchmark.toFixed(1) : '--') + ' | Actual: ' + groupAvgBillmin.toFixed(1);\n                loadTLAgentTable(group);"
 )
 
 # STL: target met should follow weekly amount achievement (>=100%)
@@ -2321,433 +2304,6 @@ html = html.replace(
 )
 html = html.replace('Weekly Recovery Trend (12 Weeks)', 'Recovery Trend (Selected Month)')
 
-# ---- 25b. Data View: rename first subtab + under-performing criteria ----
-# Subtab button label
-html = html.replace(
-    "<button class=\"subtab-btn active\" id=\"subtab-anomaly\" onclick=\"switchDataSubTab('anomaly')\">Anomaly Detection</button>",
-    "<button class=\"subtab-btn active\" id=\"subtab-anomaly\" onclick=\"switchDataSubTab('anomaly')\">Under-performing</button>"
-)
-# Add Agent Overview as the 3rd subtab
-html = html.replace(
-    "<button class=\"subtab-btn\" id=\"subtab-trend\" onclick=\"switchDataSubTab('trend')\">Recovery Trend</button>",
-    "<button class=\"subtab-btn\" id=\"subtab-trend\" onclick=\"switchDataSubTab('trend')\">Recovery Trend</button>\n                <button class=\"subtab-btn\" id=\"subtab-agent-overview\" onclick=\"switchDataSubTab('agent-overview')\">Agent Overview</button>"
-)
-
-# Group card heading + helper text
-html = html.replace(
-    "Group — Continuous Unmet Target (3+ Days)",
-    "Group — Continuous Unmet Target (2+ Weeks)"
-)
-html = html.replace(
-    "Groups with 3+ consecutive days below daily target, sorted by consecutive days (descending).",
-    "Groups with 2+ consecutive weeks below weekly target, sorted by consecutive weeks (descending)."
-)
-
-# Group empty-state copy
-html = html.replace(
-    "No groups with 3+ consecutive unmet days",
-    "No groups with 2+ consecutive unmet weeks"
-)
-
-# Agent card copy stays 3+ days, but fix the subtitle wording (personal)
-html = html.replace(
-    "Agent — Continuous Unmet Target (3+ Days)",
-    "Individual — Continuous Unmet Target (3+ Days)"
-)
-
-# Rewrite Data View loader to use weekly-groups (2+ weeks) + individuals (3+ days)
-old_load_anomaly = """        function loadAnomalyData() {
-            // Load Group anomaly data (3+ days only, sorted by days desc)
-            const groupTbody = document.getElementById('anomaly-group-table');
-            const groupEmpty = document.getElementById('anomaly-group-empty');
-            groupTbody.innerHTML = '';
-            const groups = [...REAL_DATA.anomalyGroups].filter(g => g.days >= 3).sort((a, b) => b.days - a.days);
-
-            if (groups.length === 0) {
-                groupEmpty.style.display = 'block';
-            } else {
-                groupEmpty.style.display = 'none';
-                groups.forEach(item => {
-                    const mtdAch = item.mtdTarget > 0 ? (item.mtdActual / item.mtdTarget * 100) : 0;
-                    const achColor = mtdAch >= 100 ? '#22c55e' : mtdAch >= 90 ? '#d97706' : '#ef4444';
-                    const dailyGap = item.dailyTarget - item.dailyActual;
-                    groupTbody.innerHTML += '<tr class="drilldown-row red-row">' +
-                        '<td style="padding: 12px; font-weight: 500;">' + item.name + '</td>' +
-                        '<td style="padding: 12px; text-align: center;">' + item.module + '</td>' +
-                        '<td style="padding: 12px; text-align: center; font-weight: 700; color: #ef4444;">' + item.days + '</td>' +
-                        '<td style="padding: 12px; text-align: right;">' + formatNumber(item.dailyTarget) + '</td>' +
-                        '<td style="padding: 12px; text-align: right;">' + formatNumber(item.dailyActual) + '</td>' +
-                        '<td style="padding: 12px; text-align: right; color: #ef4444; font-weight: 600;">-' + formatNumber(dailyGap) + '</td>' +
-                        '<td style="padding: 12px; text-align: right;">' + formatNumber(item.mtdTarget) + '</td>' +
-                        '<td style="padding: 12px; text-align: right;">' + formatNumber(item.mtdActual) + '</td>' +
-                        '<td style="padding: 12px; text-align: right; color: ' + achColor + '; font-weight: 600;">' + mtdAch.toFixed(1) + '%</td>' +
-                        '</tr>';
-                });
-            }
-
-            // Load Agent anomaly data (3+ days only, sorted by days desc)
-            const agentTbody = document.getElementById('anomaly-agent-table');
-            const agentEmpty = document.getElementById('anomaly-agent-empty');
-            agentTbody.innerHTML = '';
-            const agents = [...REAL_DATA.anomalyAgents].filter(a => a.days >= 3).sort((a, b) => b.days - a.days);
-
-            if (agents.length === 0) {
-                agentEmpty.style.display = 'block';
-            } else {
-                agentEmpty.style.display = 'none';
-                agents.forEach(item => {
-                    const dailyGap = item.dailyTarget - item.dailyActual;
-                    agentTbody.innerHTML += '<tr class="drilldown-row red-row">' +
-                        '<td style="padding: 12px; font-weight: 500;">' + item.name + '</td>' +
-                        '<td style="padding: 12px;">' + item.group + '</td>' +
-                        '<td style="padding: 12px; text-align: center;">' + item.module + '</td>' +
-                        '<td style="padding: 12px; text-align: center; font-weight: 700; color: #ef4444;">' + item.days + '</td>' +
-                        '<td style="padding: 12px; text-align: right;">' + formatNumber(item.dailyTarget) + '</td>' +
-                        '<td style="padding: 12px; text-align: right;">' + formatNumber(item.dailyActual) + '</td>' +
-                        '<td style="padding: 12px; text-align: right; color: #ef4444; font-weight: 600;">-' + formatNumber(dailyGap) + '</td>' +
-                        '<td style="padding: 12px; text-align: right;">' + item.calls + '</td>' +
-                        '<td style="padding: 12px; text-align: right;">' + item.connectRate.toFixed(1) + '%</td>' +
-                        '<td style="padding: 12px; text-align: right;">' + item.attendance + '%</td>' +
-                        '</tr>';
-                });
-            }
-        }"""
-
-new_load_anomaly = """        function loadAnomalyData() {
-            // Under-performing groups: 2+ consecutive unmet weeks (sorted by weeks desc)
-            const groupTbody = document.getElementById('anomaly-group-table');
-            const groupEmpty = document.getElementById('anomaly-group-empty');
-            groupTbody.innerHTML = '';
-            const groups = [...REAL_DATA.anomalyGroups].filter(g => (g.weeks || 0) >= 2).sort((a, b) => (b.weeks || 0) - (a.weeks || 0));
-
-            if (groups.length === 0) {
-                groupEmpty.style.display = 'block';
-            } else {
-                groupEmpty.style.display = 'none';
-                groups.forEach(item => {
-                    const wTgt = item.weeklyTarget || 0;
-                    const wAct = item.weeklyActual || 0;
-                    const wAch = wTgt > 0 ? (wAct / wTgt * 100) : 0;
-                    const achColor = wAch >= 100 ? '#22c55e' : wAch >= 90 ? '#d97706' : '#ef4444';
-                    const wGap = Math.max(0, wTgt - wAct);
-                    const rowClass = (item.weeks || 0) >= 3 ? 'drilldown-row red-row' : 'drilldown-row yellow-row';
-                    groupTbody.innerHTML += '<tr class=\"' + rowClass + '\">' +
-                        '<td style=\"padding: 12px; font-weight: 500;\">' + item.name + '</td>' +
-                        '<td style=\"padding: 12px; text-align: center;\">' + item.module + '</td>' +
-                        '<td style=\"padding: 12px; text-align: center; font-weight: 700;\">' + item.weeks + '</td>' +
-                        '<td style=\"padding: 12px; text-align: right;\">' + formatNumber(wTgt) + '</td>' +
-                        '<td style=\"padding: 12px; text-align: right;\">' + formatNumber(wAct) + '</td>' +
-                        '<td style=\"padding: 12px; text-align: right; color: #ef4444; font-weight: 600;\">-' + formatNumber(wGap) + '</td>' +
-                        '<td style=\"padding: 12px; text-align: right; color: ' + achColor + '; font-weight: 600;\">' + wAch.toFixed(1) + '%</td>' +
-                        '</tr>';
-                });
-            }
-
-            // Under-performing individuals: 3+ consecutive unmet days (sorted by days desc)
-            const agentTbody = document.getElementById('anomaly-agent-table');
-            const agentEmpty = document.getElementById('anomaly-agent-empty');
-            agentTbody.innerHTML = '';
-            const agents = [...REAL_DATA.anomalyAgents].filter(a => (a.days || 0) >= 3).sort((a, b) => (b.days || 0) - (a.days || 0));
-
-            if (agents.length === 0) {
-                agentEmpty.style.display = 'block';
-            } else {
-                agentEmpty.style.display = 'none';
-                agents.forEach(item => {
-                    const dailyGap = Math.max(0, (item.dailyTarget || 0) - (item.dailyActual || 0));
-                    const callLoss = (item.callLossRate !== null && item.callLossRate !== undefined) ? item.callLossRate.toFixed(1) + '%' : '--';
-                    agentTbody.innerHTML += '<tr class=\"drilldown-row red-row\">' +
-                        '<td style=\"padding: 12px; font-weight: 500;\">' + item.name + '</td>' +
-                        '<td style=\"padding: 12px;\">' + item.group + '</td>' +
-                        '<td style=\"padding: 12px; text-align: center;\">' + item.module + '</td>' +
-                        '<td style=\"padding: 12px; text-align: center; font-weight: 700; color: #ef4444;\">' + item.days + '</td>' +
-                        '<td style=\"padding: 12px; text-align: right;\">' + formatNumber(item.dailyTarget) + '</td>' +
-                        '<td style=\"padding: 12px; text-align: right;\">' + formatNumber(item.dailyActual) + '</td>' +
-                        '<td style=\"padding: 12px; text-align: right; color: #ef4444; font-weight: 600;\">-' + formatNumber(dailyGap) + '</td>' +
-                        '<td style=\"padding: 12px; text-align: right;\">' + (item.calls !== null && item.calls !== undefined ? item.calls : '--') + '</td>' +
-                        '<td style=\"padding: 12px; text-align: right;\">' + (item.connectRate !== null && item.connectRate !== undefined ? item.connectRate.toFixed(1) + '%' : '--') + '</td>' +
-                        '<td style=\"padding: 12px; text-align: right;\">' + callLoss + '</td>' +
-                        '<td style=\"padding: 12px; text-align: right;\">' + item.attendance + '%</td>' +
-                        '</tr>';
-                });
-            }
-        }"""
-
-html = html.replace(old_load_anomaly, new_load_anomaly)
-
-# Add Agent Overview subtab container (before existing trend subtab)
-html = html.replace(
-    "            <!-- Recovery Trend Sub-tab -->",
-    """            <!-- Agent Overview Sub-tab -->
-            <div id="data-agent-overview" class="data-subtab-content" style="display: none;">
-                <div class="card" style="margin-bottom: 20px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom: 8px;">
-                        <h2 style="font-size: 18px; font-weight: 700; color: #1e293b; margin: 0;">Agent Overview</h2>
-                        <div style="display:flex; align-items:center; gap:8px;">
-                            <label style="font-size: 13px; color: #64748b;">Date:</label>
-                            <select id="data-agent-date" onchange="loadAgentOverviewData()" style="padding:6px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:13px;"></select>
-                        </div>
-                    </div>
-                    <p style="color: #64748b; font-size: 13px; margin-bottom: 0;">Per module, agents are sorted by daily actual repay amount (high to low).</p>
-                </div>
-                <div id="agent-overview-content"></div>
-            </div>
-
-            <!-- Recovery Trend Sub-tab -->"""
-)
-
-# Data subtab switching: include agent-overview branch
-html = html.replace(
-    """        function switchDataSubTab(subtab) {
-            document.querySelectorAll('.subtab-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById('subtab-' + subtab).classList.add('active');
-            document.querySelectorAll('.data-subtab-content').forEach(c => c.style.display = 'none');
-            document.getElementById('data-' + subtab).style.display = 'block';
-            if (subtab === 'trend') loadTrendData();
-        }""",
-    """        function switchDataSubTab(subtab) {
-            document.querySelectorAll('.subtab-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById('subtab-' + subtab).classList.add('active');
-            document.querySelectorAll('.data-subtab-content').forEach(c => c.style.display = 'none');
-            document.getElementById('data-' + subtab).style.display = 'block';
-            if (subtab === 'trend') loadTrendData();
-            else if (subtab === 'agent-overview') loadAgentOverviewData();
-        }"""
-)
-
-# Agent Overview renderer/functions
-html = html.replace(
-    "        function loadTrendData() {",
-    """        function initAgentOverviewDateSelector() {
-            const sel = document.getElementById('data-agent-date');
-            if (!sel) return;
-            const dates = REAL_DATA.availableDates || [];
-            sel.innerHTML = '';
-            dates.forEach(d => {
-                sel.innerHTML += '<option value=\"' + d + '\">' + d + '</option>';
-            });
-            if (dates.length > 0) {
-                const defDate = (REAL_DATA.dataDate && dates.includes(REAL_DATA.dataDate)) ? REAL_DATA.dataDate : dates[0];
-                sel.value = defDate;
-            }
-        }
-
-        function computeAgentConsecutiveDaysByDate(groupId, agentId, selectedDate) {
-            const hist = REAL_DATA.agentPerformanceByDate && REAL_DATA.agentPerformanceByDate[groupId] && REAL_DATA.agentPerformanceByDate[groupId][agentId]
-                ? REAL_DATA.agentPerformanceByDate[groupId][agentId]
-                : null;
-            if (!hist) return 0;
-            const dates = (REAL_DATA.availableDates || []).slice().reverse(); // oldest -> newest
-            const endIdx = dates.indexOf(selectedDate);
-            if (endIdx < 0) return 0;
-            let streak = 0;
-            for (let i = endIdx; i >= 0; i--) {
-                const d = dates[i];
-                const row = hist[d];
-                if (!row || row.achievement === null || row.achievement === undefined) break;
-                if (row.achievement < 100) streak += 1;
-                else break;
-            }
-            return streak;
-        }
-
-        function loadAgentOverviewData() {
-            const container = document.getElementById('agent-overview-content');
-            const sel = document.getElementById('data-agent-date');
-            if (!container || !sel) return;
-            const selectedDate = sel.value || REAL_DATA.dataDate;
-            container.innerHTML = '';
-            window.agentOverviewExpanded = window.agentOverviewExpanded || {};
-
-            const modulePriority = ['S0', 'S1', 'S2', 'M1'];
-            const moduleRank = {};
-            modulePriority.forEach((m, i) => { moduleRank[m] = i; });
-
-            function parseModuleParts(module) {
-                const text = String(module || '').trim();
-                const parts = text.split('-');
-                const base = (parts[0] || '').trim();
-                const rawTier = (parts[1] || '').trim().toLowerCase();
-                const tier = (rawTier === 'large' || rawTier.includes('大额'))
-                    ? 'large'
-                    : ((rawTier === 'small' || rawTier.includes('小额')) ? 'small' : rawTier);
-                return { base, tier };
-            }
-
-            function sortModules(a, b) {
-                const pa = parseModuleParts(a);
-                const pb = parseModuleParts(b);
-                const ra = Object.prototype.hasOwnProperty.call(moduleRank, pa.base) ? moduleRank[pa.base] : 999;
-                const rb = Object.prototype.hasOwnProperty.call(moduleRank, pb.base) ? moduleRank[pb.base] : 999;
-                if (ra !== rb) return ra - rb;
-                if (pa.base !== pb.base) return pa.base.localeCompare(pb.base);
-                const ta = pa.tier === 'large' ? 0 : (pa.tier === 'small' ? 1 : 2);
-                const tb = pb.tier === 'large' ? 0 : (pb.tier === 'small' ? 1 : 2);
-                if (ta !== tb) return ta - tb;
-                return String(a).localeCompare(String(b));
-            }
-
-            function renderModuleTable(module) {
-                const groupsInModule = (REAL_DATA.groups || []).filter(g => REAL_DATA.tlData[g] && REAL_DATA.tlData[g].groupModule === module);
-                let rows = [];
-                groupsInModule.forEach(groupId => {
-                    const agents = REAL_DATA.agentPerformance[groupId] || [];
-                    agents.forEach(agent => {
-                        const dm = REAL_DATA.agentPerformanceByDate && REAL_DATA.agentPerformanceByDate[groupId] && REAL_DATA.agentPerformanceByDate[groupId][agent.name]
-                            ? REAL_DATA.agentPerformanceByDate[groupId][agent.name][selectedDate]
-                            : null;
-                        const actual = dm && dm.actual !== undefined ? dm.actual : agent.actual;
-                        const target = dm && dm.target !== undefined ? dm.target : agent.target;
-                        const achievement = dm && dm.achievement !== undefined ? dm.achievement : agent.achievement;
-                        rows.push({
-                            name: agent.name,
-                            group: groupId,
-                            actual: actual || 0,
-                            target: target || 0,
-                            achievement: achievement || 0,
-                            consecutiveDays: computeAgentConsecutiveDaysByDate(groupId, agent.name, selectedDate)
-                        });
-                    });
-                });
-
-                rows.sort((a, b) => (b.actual || 0) - (a.actual || 0));
-                rows = rows.map((r, idx) => ({ ...r, rank: idx + 1 }));
-                const expanded = !!window.agentOverviewExpanded[module];
-                const showTopN = 10;
-                const visibleRows = expanded ? rows : rows.slice(0, showTopN);
-
-                let section = '<div class=\"card\">';
-                section += '<h3 style=\"font-size:16px; font-weight:600; margin-bottom:10px; color:#1e293b;\">' + module + '</h3>';
-                if (rows.length === 0) {
-                    section += '<div class=\"empty-state\" style=\"display:block;\"><div class=\"empty-state-title\">No agent data</div><div class=\"empty-state-sub\">No records available for selected date.</div></div>';
-                } else {
-                    section += '<div style=\"width:100%; overflow-x:auto;\">';
-                    section += '<table style=\"width:100%; border-collapse:collapse;\">';
-                    section += '<thead><tr style=\"background:#f8fafc; border-bottom:2px solid #e2e8f0;\">'
-                        + '<th style=\"padding:12px; text-align:center; font-size:12px; color:#64748b; white-space:nowrap;\">Rank</th>'
-                        + '<th style=\"padding:12px; text-align:left; font-size:12px; color:#64748b; white-space:nowrap;\">Agent</th>'
-                        + '<th style=\"padding:12px; text-align:left; font-size:12px; color:#64748b; white-space:nowrap;\">Group</th>'
-                        + '<th style=\"padding:12px; text-align:right; font-size:12px; color:#64748b; white-space:nowrap;\">Daily Actual</th>'
-                        + '<th style=\"padding:12px; text-align:right; font-size:12px; color:#64748b; white-space:nowrap;\">Daily Target</th>'
-                        + '<th style=\"padding:12px; text-align:right; font-size:12px; color:#64748b; white-space:nowrap;\">Achievement</th>'
-                        + '<th style=\"padding:12px; text-align:center; font-size:12px; color:#64748b; white-space:nowrap;\">Consecutive Days</th>'
-                        + '</tr></thead><tbody>';
-                    visibleRows.forEach(r => {
-                        const achColor = r.achievement >= 100 ? '#16a34a' : '#dc2626';
-                        section += '<tr class=\"drilldown-row\">'
-                            + '<td style=\"padding:12px; text-align:center; font-weight:600; white-space:nowrap;\">' + r.rank + '</td>'
-                            + '<td style=\"padding:12px; font-weight:500; white-space:nowrap;\">' + r.name + '</td>'
-                            + '<td style=\"padding:12px; white-space:nowrap;\">' + r.group + '</td>'
-                            + '<td style=\"padding:12px; text-align:right; white-space:nowrap;\">' + formatNumber(r.actual) + '</td>'
-                            + '<td style=\"padding:12px; text-align:right; white-space:nowrap;\">' + formatNumber(r.target) + '</td>'
-                            + '<td style=\"padding:12px; text-align:right; color:' + achColor + '; font-weight:600; white-space:nowrap;\">' + r.achievement.toFixed(1) + '%</td>'
-                            + '<td style=\"padding:12px; text-align:center; font-weight:600; white-space:nowrap;\">' + r.consecutiveDays + '</td>'
-                            + '</tr>';
-                    });
-                    section += '</tbody></table>';
-                    section += '</div>';
-                    if (rows.length > showTopN) {
-                        const btnText = expanded ? 'Show Top 10' : ('Show All (' + rows.length + ')');
-                        section += '<div style=\"display:flex; justify-content:flex-end; margin-top:10px;\">'
-                            + '<button onclick=\"toggleAgentOverviewModule(\\'' + module + '\\')\" style=\"border:1px solid #cbd5e1; background:#fff; color:#334155; padding:6px 10px; border-radius:6px; cursor:pointer; font-size:12px;\">'
-                            + btnText
-                            + '</button></div>';
-                    }
-                }
-                section += '</div>';
-                return section;
-            }
-
-            function toggleAgentOverviewModule(module) {
-                window.agentOverviewExpanded[module] = !window.agentOverviewExpanded[module];
-                loadAgentOverviewData();
-            }
-            window.toggleAgentOverviewModule = toggleAgentOverviewModule;
-
-            const orderedModules = (REAL_DATA.modules || []).slice().sort(sortModules);
-            const groupedByBase = {};
-            orderedModules.forEach(module => {
-                const p = parseModuleParts(module);
-                if (!groupedByBase[p.base]) groupedByBase[p.base] = [];
-                groupedByBase[p.base].push(module);
-            });
-
-            const baseOrder = Object.keys(groupedByBase).sort((a, b) => {
-                const ra = Object.prototype.hasOwnProperty.call(moduleRank, a) ? moduleRank[a] : 999;
-                const rb = Object.prototype.hasOwnProperty.call(moduleRank, b) ? moduleRank[b] : 999;
-                if (ra !== rb) return ra - rb;
-                return a.localeCompare(b);
-            });
-
-            baseOrder.forEach(base => {
-                const modules = groupedByBase[base];
-                const largeModule = modules.find(m => parseModuleParts(m).tier === 'large');
-                const smallModule = modules.find(m => parseModuleParts(m).tier === 'small');
-                const otherModules = modules.filter(m => {
-                    const t = parseModuleParts(m).tier;
-                    return t !== 'large' && t !== 'small';
-                });
-
-                if (largeModule && smallModule) {
-                    let rowHtml = '<div style=\"display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; align-items:start;\">';
-                    rowHtml += '<div>' + renderModuleTable(largeModule) + '</div>';
-                    rowHtml += '<div>' + renderModuleTable(smallModule) + '</div>';
-                    rowHtml += '</div>';
-                    container.innerHTML += rowHtml;
-                    otherModules.forEach(module => {
-                        container.innerHTML += '<div style=\"margin-bottom:16px;\">' + renderModuleTable(module) + '</div>';
-                    });
-                } else {
-                    modules.forEach(module => {
-                        container.innerHTML += '<div style=\"margin-bottom:16px;\">' + renderModuleTable(module) + '</div>';
-                    });
-                }
-            });
-        }
-
-        function loadTrendData() {"""
-)
-
-# Init Data view: also init Agent Overview date selector
-html = html.replace(
-    """        function initDataView() {
-            loadAnomalyData();
-        }""",
-    """        function initDataView() {
-            loadAnomalyData();
-            initAgentOverviewDateSelector();
-        }"""
-)
-
-# Update group under-performing table headers to weekly schema (keep tbody id)
-old_underperf_group_header = """                            <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
-                                <th style="padding: 12px; text-align: left; font-size: 12px; color: #64748b;">Group</th>
-                                <th style="padding: 12px; text-align: center; font-size: 12px; color: #64748b;">Module</th>
-                                <th style="padding: 12px; text-align: center; font-size: 12px; color: #64748b;">Consecutive Days</th>
-                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Daily Target</th>
-                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Daily Actual</th>
-                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Daily Gap</th>
-                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">MTD Target</th>
-                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">MTD Actual</th>
-                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">MTD Achievement</th>
-                            </tr>"""
-new_underperf_group_header = """                            <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
-                                <th style="padding: 12px; text-align: left; font-size: 12px; color: #64748b;">Group</th>
-                                <th style="padding: 12px; text-align: center; font-size: 12px; color: #64748b;">Module</th>
-                                <th style="padding: 12px; text-align: center; font-size: 12px; color: #64748b;">Consecutive Weeks</th>
-                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Weekly Target</th>
-                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Weekly Actual</th>
-                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Weekly Gap</th>
-                                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Weekly Achievement</th>
-                            </tr>"""
-html = html.replace(old_underperf_group_header, new_underperf_group_header)
-
-# ---- 26. Data date ----
-html = html.replace(
-    "document.getElementById('data-date').textContent = new Date(Date.now() - 86400000).toISOString().split('T')[0];",
-    f"document.getElementById('data-date').textContent = REAL_DATA.dataDate;"
-)
-
 # Process KPI drill-down: use art_call_times for call volume comparisons
 html = html.replace("displayCalls >= procCallTarget", "displayArtCallTimes >= procCallTarget")
 
@@ -2781,30 +2337,128 @@ html = html.replace(
     "getVisibleModules().forEach(m => {"
 )
 
+# ---- 26c. Recovery Trend layout: S0 single row; Large row; Small row; no wrapping ----
 html = html.replace(
-    "const groups = [...REAL_DATA.anomalyGroups].filter(g => (g.weeks || 0) >= 2).sort((a, b) => (b.weeks || 0) - (a.weeks || 0));",
-    """const groups = [...REAL_DATA.anomalyGroups]
-                .filter(g => !isM2Module(g.module))
-                .filter(g => (g.weeks || 0) >= 2)
-                .sort((a, b) => (b.weeks || 0) - (a.weeks || 0));"""
+    "        function loadTrendChart() {\n            const grid = document.getElementById('module-charts-grid');\n            grid.innerHTML = '';",
+    """        function loadTrendChart() {
+            const grid = document.getElementById('module-charts-grid');
+            grid.innerHTML = '';
+            // Force deterministic row layout (avoid CSS grid auto-wrap from global stylesheet).
+            grid.style.display = 'block';
+            grid.style.gap = '0';
+
+            const modulePriority = ['S0', 'S1', 'S2', 'M1'];
+            const moduleRank = {};
+            modulePriority.forEach((m, i) => { moduleRank[m] = i; });
+            function parseModuleParts(module) {
+                const text = String(module || '').trim();
+                const parts = text.split('-');
+                const base = (parts[0] || '').trim();
+                const rawTier = (parts[1] || '').trim().toLowerCase();
+                const tier = (rawTier === 'large' || rawTier.includes('大额'))
+                    ? 'large'
+                    : ((rawTier === 'small' || rawTier.includes('小额')) ? 'small' : rawTier);
+                return { base, tier };
+            }
+            function sortModules(a, b) {
+                const pa = parseModuleParts(a);
+                const pb = parseModuleParts(b);
+                const ra = Object.prototype.hasOwnProperty.call(moduleRank, pa.base) ? moduleRank[pa.base] : 999;
+                const rb = Object.prototype.hasOwnProperty.call(moduleRank, pb.base) ? moduleRank[pb.base] : 999;
+                if (ra !== rb) return ra - rb;
+                if (pa.base !== pb.base) return pa.base.localeCompare(pb.base);
+                const ta = pa.tier === 'large' ? 0 : (pa.tier === 'small' ? 1 : 2);
+                const tb = pb.tier === 'large' ? 0 : (pb.tier === 'small' ? 1 : 2);
+                if (ta !== tb) return ta - tb;
+                return String(a).localeCompare(String(b));
+            }
+
+            const orderedTrendModules = getVisibleModules().slice().sort(sortModules);
+            const groupedByBase = {};
+            orderedTrendModules.forEach(module => {
+                const p = parseModuleParts(module);
+                if (!groupedByBase[p.base]) groupedByBase[p.base] = [];
+                groupedByBase[p.base].push(module);
+            });
+
+            const baseOrder = ['S0', 'S1', 'S2', 'M1'].filter(b => groupedByBase[b]);
+            Object.keys(groupedByBase)
+                .filter(b => !baseOrder.includes(b))
+                .sort()
+                .forEach(b => baseOrder.push(b));
+
+            const rowByBase = {};
+            baseOrder.forEach(base => {
+                const row = document.createElement('div');
+                row.style.display = 'grid';
+                row.style.gridTemplateColumns = base === 'S0' ? '1fr' : '1fr 1fr';
+                row.style.gap = '20px';
+                row.style.marginBottom = '16px';
+                row.style.alignItems = 'start';
+                grid.appendChild(row);
+                rowByBase[base] = row;
+            });
+
+            function getTrendRowContainer(module) {
+                const p = parseModuleParts(module);
+                return rowByBase[p.base] || null;
+            }""",
 )
 
 html = html.replace(
-    "const agents = [...REAL_DATA.anomalyAgents].filter(a => (a.days || 0) >= 3).sort((a, b) => (b.days || 0) - (a.days || 0));",
-    """const agents = [...REAL_DATA.anomalyAgents]
-                .filter(a => !isM2Module(a.module))
-                .filter(a => (a.days || 0) >= 3)
-                .sort((a, b) => (b.days || 0) - (a.days || 0));"""
+    "            getVisibleModules().forEach(module => {",
+    "            orderedTrendModules.forEach(module => {"
+)
+# `loadRiskModuleReview` must not depend on `orderedTrendModules` (scoped in `loadTrendChart`).
+html = html.replace(
+    "        function loadRiskModuleReview() {\n            // Calculate At-Risk for all modules dynamically\n            const riskModules = [];\n            orderedTrendModules.forEach(module => {",
+    "        function loadRiskModuleReview() {\n            // Calculate At-Risk for all modules dynamically\n            const riskModules = [];\n            getVisibleModules().forEach(module => {"
 )
 
 html = html.replace(
-    "const orderedModules = (REAL_DATA.modules || []).slice().sort(sortModules);",
-    "const orderedModules = getVisibleModules().slice().sort(sortModules);"
+    "                grid.appendChild(card);",
+    "                getTrendRowContainer(module).appendChild(card);"
 )
 
 html = html.replace(
-    "REAL_DATA.modules.forEach(module => {",
-    "getVisibleModules().forEach(module => {"
+    "            getVisibleModules().forEach(module => {\n                // Dynamic At-Risk calculation based on projection",
+    """            orderedTrendModules.forEach(module => {
+                // Dynamic At-Risk calculation based on projection"""
+)
+
+html = html.replace(
+    "            });\n        }\n\n        function calculateAtRisk(module) {",
+    """            });
+
+            // Hide empty rows while keeping fixed row order.
+            baseOrder.forEach(base => {
+                const row = rowByBase[base];
+                row.style.display = row.children.length > 0 ? 'grid' : 'none';
+            });
+        }
+
+        function calculateAtRisk(module) {"""
+)
+html = html.replace(
+    "                });\n            });\n        }\n\n        // Calculate At-Risk based on recovery projection",
+    """                });
+            });
+
+            // Hide empty rows while keeping fixed row order.
+            baseOrder.forEach(base => {
+                const row = rowByBase[base];
+                row.style.display = row.children.length > 0 ? 'grid' : 'none';
+            });
+        }
+
+        // Calculate At-Risk based on recovery projection"""
+)
+
+# Trend cards are appended into row containers (not yet in DOM during loop),
+# so chartDom must be resolved from the `card` element, not the document.
+html = html.replace(
+    "                const chartDom = document.getElementById('trend-chart-' + module);",
+    "                const chartDom = card.querySelector('#trend-chart-' + module);"
 )
 
 # ---- TL: unify repay badge labels + show process badge only when repay not met ----
@@ -2955,12 +2609,561 @@ html = re.sub(
 )
 
 # ========================
+# v3.3: bilingual (EN/ZH) display layer
+# - Data and calculations unchanged
+# - Only UI text rendering switches by language
+# ========================
+html = html.replace("Collection Operations Report v3.2", "Collection Operations Report v3.3")
+
+html = html.replace(
+    "<p style=\"font-size: 14px; opacity: 0.9; margin-top: 4px;\">Generated: <span id=\"report-date\"></span> | Data Date: <span id=\"data-date\"></span></p>",
+    "<p style=\"font-size: 14px; opacity: 0.9; margin-top: 4px;\">Generated: <span id=\"report-date\"></span> | Data Date: <span id=\"data-date\"></span></p>"
+)
+
+html = html.replace(
+    "<div style=\"display: flex; justify-content: space-between; align-items: center; max-width: 1400px; margin: 0 auto;\">",
+    "<div style=\"display: flex; justify-content: space-between; align-items: center; max-width: 1400px; margin: 0 auto; position: relative;\">"
+)
+
+html = html.replace(
+    "<div class=\"role-selector\">",
+    "<div id=\"lang-switch\" style=\"position:absolute; left:50%; transform:translateX(-50%); top:50%; margin-top:2px; z-index:12;\">\n                <div style=\"position:relative; display:inline-block;\">\n                    <button id=\"lang-toggle\" title=\"Language\" onclick=\"toggleLanguageMenu(event)\" style=\"border:1px solid rgba(255,255,255,0.45); background:rgba(255,255,255,0.15); color:#fff; padding:4px 10px; border-radius:8px; cursor:pointer; font-size:14px; line-height:1;\">🌐</button>\n                    <div id=\"lang-menu\" style=\"display:none; position:absolute; top:36px; right:0; min-width:110px; background:#fff; border:1px solid #cbd5e1; border-radius:8px; box-shadow:0 6px 18px rgba(15,23,42,0.14); z-index:20; overflow:hidden;\">\n                        <button id=\"lang-option-en\" onclick=\"setLanguage('en')\" style=\"display:block; width:100%; border:none; background:#fff; color:#1e293b; text-align:left; padding:8px 10px; cursor:pointer; font-size:13px;\">English</button>\n                        <button id=\"lang-option-zh\" onclick=\"setLanguage('zh')\" style=\"display:block; width:100%; border:none; background:#fff; color:#1e293b; text-align:left; padding:8px 10px; cursor:pointer; font-size:13px;\">中文</button>\n                    </div>\n                </div>\n            </div>\n            <div class=\"role-selector\">"
+)
+
+i18n_inject = r"""
+        let currentLang = 'en';
+        const I18N_ZH = {
+            'Generated: ': '生成时间：',
+            'Data Date: ': '数据日期：',
+            'TL View': 'TL视图',
+            'STL View': 'STL视图',
+            'Data View': '数据视图',
+            'TL Daily Review': 'TL日度复盘',
+            'Group:': '组别：',
+            'Date:': '日期：',
+            '-- Select Group --': '-- 选择组别 --',
+            'Select a group to view daily performance': '请选择组别以查看日度表现',
+            'Use the Group selector above to get started': '请使用上方组别选择器开始',
+            'Target': '目标',
+            'Actual': '实际',
+            'Achievement Rate': '达成率',
+            'vs Module Avg': '对比模块均值',
+            'Daily Recovery Trend (Selected Month)': '日回收趋势（所选月份）',
+            'Unmet Target — Detail Review': '未达标明细复盘',
+            'Gap to Target': '目标差额',
+            'Call Gap': '通话差额',
+            'Conn/BillMin Gap': '接通分钟差额',
+            'Agent Level Drill-down': '坐席明细下钻',
+            'Agent': '坐席',
+            'Fail to meet target': '连续未达标',
+            'Automated Conclusions': '自动结论',
+            'STL Weekly Review': 'STL周度复盘',
+            'Module:': '模块：',
+            '-- Select Module --': '-- 选择模块 --',
+            'Select a module to view weekly performance': '请选择模块以查看周度表现',
+            'Use the Module selector above to get started': '请使用上方模块选择器开始',
+            'Week Target': '周目标',
+            'Recovery Trend (Selected Month)': '回收趋势（所选月份）',
+            'Unmet Target — Group Drill-down': '未达标组下钻',
+            'Group': '组别',
+            'Call Loss': '呼损率',
+            'Attendance': '出勤率',
+            'Under-performing': '连续未达标',
+            'Recovery Trend': '回收趋势',
+            'Agent Overview': '坐席总览',
+            'Group — Continuous Unmet Target (2+ Weeks)': '组别连续未达标（2周+）',
+            'Individual — Continuous Unmet Target (3+ Days)': '个人连续未达标（3天+）',
+            'Consecutive Weeks': '连续周数',
+            'Weekly Target': '周目标',
+            'Weekly Actual': '周实际',
+            'Weekly Gap': '周差额',
+            'Weekly Achievement': '周达成率',
+            'Consecutive Days': '连续天数',
+            'Daily Target': '日目标',
+            'Daily Actual': '日实际',
+            'Daily Gap': '日差额',
+            'Calls': '通话量',
+            'Conn. Rate': '接通率',
+            'Cover Times': '覆盖次数',
+            'Call Times': '拨打次数',
+            'Art': '点呼',
+            'Call Billmin': '接通时长（分钟）',
+            'Single Call Duration': '单次通话时长',
+            'Process KPI': '过程KPI',
+            'PTP': 'PTP',
+            'PTP Rate': 'PTP率',
+            '3+ consecutive days': '连续3天+未达成',
+            '1–2 consecutive days': '连续1-2天未达成',
+            '3+ consecutive unmet days': '连续3天+未达成',
+            '1–2 consecutive unmet days': '连续1-2天未达成',
+            '3+ consecutive weeks': '连续3周+',
+            '1–2 consecutive weeks': '连续1-2周',
+            'Groups with 2+ consecutive weeks below weekly target, sorted by consecutive weeks (descending).': '连续2周及以上未达周目标的组，按连续周数降序。',
+            'Agents with 3+ consecutive days below daily target, sorted by consecutive days (descending).': '连续3天及以上未达日目标的坐席，按连续天数降序。',
+            'No groups with 2+ consecutive unmet weeks': '暂无连续2周以上未达标组',
+            'No agents with 3+ consecutive unmet days': '暂无连续3天以上未达标坐席',
+            'No records found for current criteria': '当前条件下无数据',
+            'No records found for current threshold': '当前阈值下无数据',
+            'Recovery Trend by Module': '模块回收趋势',
+            'At-Risk Modules — Group Drill-down': '风险模块—组别下钻',
+            'No at-risk modules in current data.': '当前数据暂无风险模块',
+            'At Risk': '有风险',
+            'On Track': '达标中',
+            'Repay Target: Met': '回款目标：达标',
+            'Repay Target: Unmet': '回款目标：未达标',
+            'Process Target: Met': '过程目标：达标',
+            'Process Target: Unmet': '过程目标：未达标',
+            'Process Target: No Target': '过程目标：无目标',
+            'Show Top 10': '仅看前10',
+            'No agent data': '无坐席数据',
+            'No records available for selected date.': '所选日期暂无记录',
+            'Rank': '排名',
+            'Conn%': '接通率%',
+            'PTP%': 'PTP%',
+            'Attd%': '出勤率%',
+            'Conservative': '保守预测',
+            'Simple Avg': '简单均值',
+            'Momentum (3-day)': '动量（近3天）',
+            'Month Target': '月目标',
+            'Gap to Close': '待弥补差额',
+            'Required Daily Avg': '所需日均',
+            'Module Total': '模块汇总',
+            'Module Target': '模块目标',
+            'Daily Target': '日目标',
+            'Today': '今日',
+            'Target achieved with ': '目标已达成，达成率',
+            'Performance is ': '表现较模块均值',
+            ' module average.': '。',
+            'above': '高于',
+            'below': '低于',
+            'Target gap of ': '目标差额 ',
+            '% below target': '% 低于目标',
+            'Call volume is ': '通话量较目标少 ',
+            ' calls below target. Review attendance and dial rate.': ' 通，建议复核出勤与拨号效率。',
+            'Connect rate is ': '接通率较基准低 ',
+            '% below benchmark. Review contact list quality and call timing.': '%，建议复核名单质量与外呼时段。',
+            ' agent(s) with 3+ consecutive unmet days require immediate coaching: ': ' 名连续3天以上未达标坐席需立即辅导：',
+            'Weekly target achieved with ': '周目标已达成，达成率',
+            'Week-over-week trend is ': '周环比趋势为',
+            '. Requires improvement.': '，需改进。',
+            'Weekly gap of ': '周差额 ',
+            ' calls/agent below benchmark. Root cause: insufficient outbound attempts due to either (a) agent absenteeism, (b) low dialer efficiency, or (c) inadequate contact list coverage.': ' 通/人低于基准。可能原因：出勤不足、外呼效率低或名单覆盖不足。',
+            ' minutes below benchmark. Root cause: poor contact quality — either (a) outdated phone numbers, (b) customers unreachable during working hours, or (c) ineffective calling scripts.': ' 分钟低于基准。可能原因：联系方式质量不足、工作时段难触达、或话术效果不佳。',
+            '% below benchmark. Root cause: weak negotiation skills — agents failing to (a) secure firm payment commitments, (b) explain consequences of non-payment, or (c) schedule callbacks at convenient times.': '% 低于基准。可能原因：谈判能力不足（承诺确认、后果说明、回访预约）。',
+            '% below benchmark. Root cause: either (a) low team morale, (b) inadequate attendance incentives, or (c) scheduling conflicts.': '% 低于基准。可能原因：士气偏低、激励不足或排班冲突。',
+            ' group(s) with 3+ consecutive unmet weeks: ': ' 个连续3周以上未达标组：',
+            '. Recommend immediate TL coaching intervention.': '。建议立即进行TL辅导干预。',
+            'Summary: Underperformance driven by ': '总结：未达标主要由以下因素驱动：',
+            '. STL should prioritize addressing these process gaps in weekly action plan.': '。建议STL在周行动计划中优先修复这些过程短板。'
+        };
+
+        function localizeText(text) {
+            if (!text || currentLang !== 'zh') return text;
+            let out = text;
+            Object.keys(I18N_ZH).forEach(k => {
+                out = out.split(k).join(I18N_ZH[k]);
+            });
+            // Sentence-level normalization for readable Chinese word order.
+            out = out.replace(/目标已达成，达成率\s*([0-9.]+)%\s*achievement rate\./g, '目标已达成，达成率为 $1%。');
+            out = out.replace(/周目标已达成，达成率\s*([0-9.]+)%\s*achievement rate\./g, '周目标已达成，达成率为 $1%。');
+            out = out.replace(/表现较模块均值\s*([0-9.]+)%\s*高于。/g, '表现较模块均值高 $1%。');
+            out = out.replace(/表现较模块均值\s*([0-9.]+)%\s*低于。/g, '表现较模块均值低 $1%。');
+            out = out.replace(/目标差额\s*([0-9,]+)\s*PHP\s*\(([0-9.]+)%\s*低于目标\)\./g, '目标差额为 $1 PHP，较目标低 $2%。');
+            out = out.replace(/周差额\s*([0-9,]+)\s*PHP\s*\(([0-9.]+)%\s*低于目标\)\./g, '周差额为 $1 PHP，较目标低 $2%。');
+            out = out.replace(/周环比趋势为\s*up\./gi, '周环比趋势：上升。');
+            out = out.replace(/周环比趋势为\s*down\./gi, '周环比趋势：下降。');
+            out = out.replace(/周环比趋势为\s*flat\./gi, '周环比趋势：持平。');
+            out = out.replace(/周环比趋势为\s*([^。.\n]+)\./g, '周环比趋势：$1。');
+            out = out.replace(/([0-9]+)\s*名连续3天以上未达标坐席需立即辅导：([^。]+)\./g, '有 $1 名坐席连续 3 天以上未达标，建议立即辅导：$2。');
+            out = out.replace(/([0-9]+)\s*个连续3周以上未达标组：([^。]+)。建议立即进行TL辅导干预。/g, '有 $1 个组连续 3 周以上未达标：$2。建议立即进行 TL 辅导干预。');
+            out = out.replace(/总结：未达标主要由以下因素驱动：([^。]+)。建议STL在周行动计划中优先修复这些过程短板。/g, '总结：未达标主要由 $1 导致。建议 STL 在周行动计划中优先修复这些过程短板。');
+            out = out.replace(/达标中/g, '进度正常');
+            out = out.replace(/有风险/g, '存在风险');
+            out = out.replace(/MTD: /g, '当月累计：');
+            out = out.replace(/Avg Daily Target Rate:/g, '日均目标回款率：');
+            out = out.replace(/Natural Month Repay/g, '自然月回款');
+            out = out.replace(/MTD Actual \(Day (\d+)\)/g, '当月累计实际（第$1天）');
+            out = out.replace(/Daily Avg: /g, '日均：');
+            out = out.replace(/7-Day Avg: /g, '7日均值：');
+            out = out.replace(/Remaining Days: /g, '剩余天数：');
+            out = out.replace(/Show All \((\d+)\)/g, '查看全部（$1）');
+            return out;
+        }
+
+        const ORIGINAL_TEXT = new WeakMap();
+        let ORIGINAL_TITLE = '';
+        let languageObserver = null;
+
+        function applyLanguage(root = document.body) {
+            if (!root) return;
+            const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+            const nodes = [];
+            let node = walker.nextNode();
+            while (node) {
+                const p = node.parentNode;
+                const tag = p && p.tagName ? p.tagName.toUpperCase() : '';
+                if (tag !== 'SCRIPT' && tag !== 'STYLE') nodes.push(node);
+                node = walker.nextNode();
+            }
+            nodes.forEach(n => {
+                if (!ORIGINAL_TEXT.has(n)) ORIGINAL_TEXT.set(n, n.nodeValue);
+                const base = ORIGINAL_TEXT.get(n);
+                n.nodeValue = currentLang === 'zh' ? localizeText(base) : base;
+            });
+            if (!ORIGINAL_TITLE) ORIGINAL_TITLE = document.title;
+            document.title = currentLang === 'zh' ? localizeText(ORIGINAL_TITLE) : ORIGINAL_TITLE;
+        }
+
+        function refreshLanguageButtons() {
+            const enBtn = document.getElementById('lang-option-en');
+            const zhBtn = document.getElementById('lang-option-zh');
+            if (!enBtn || !zhBtn) return;
+            enBtn.style.background = currentLang === 'en' ? '#e2e8f0' : '#fff';
+            zhBtn.style.background = currentLang === 'zh' ? '#e2e8f0' : '#fff';
+        }
+
+        function toggleLanguageMenu(event) {
+            if (event) event.stopPropagation();
+            const menu = document.getElementById('lang-menu');
+            if (!menu) return;
+            menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+        }
+
+        function closeLanguageMenu() {
+            const menu = document.getElementById('lang-menu');
+            if (menu) menu.style.display = 'none';
+        }
+
+        function enhanceConsecutiveDaysHint() {
+            const hint = currentLang === 'zh'
+                ? '连续天数：表示连续 X 天达成率低于 100%（未达成目标）。'
+                : 'Consecutive days: number of days in a row with achievement below 100% (target not met).';
+            const dayLabels = [
+                'Consecutive Days',
+                '3+ consecutive days',
+                '1–2 consecutive days',
+                '连续天数',
+                '连续3天+未达成',
+                '连续1-2天未达成',
+                '连续3天+',
+                '连续1-2天'
+            ];
+            const dayLabelSet = new Set(dayLabels.map(v => String(v).toLowerCase()));
+
+            document.querySelectorAll('th,span,div').forEach(el => {
+                const txt = (el.textContent || '').trim();
+                if (!txt) return;
+                if (dayLabelSet.has(txt.toLowerCase())) {
+                    el.title = hint;
+                    el.style.cursor = 'help';
+                    if (el.tagName && el.tagName.toUpperCase() === 'TH') {
+                        el.style.textDecoration = 'underline dotted';
+                        el.style.textUnderlineOffset = '3px';
+                    }
+                }
+            });
+
+            document.querySelectorAll('th[title*="days in a row"], th[title*="X days"]').forEach(el => {
+                el.title = currentLang === 'zh'
+                    ? '连续未达标：表示连续 X 天未达成目标。'
+                    : 'Fail to meet target: consecutive X days with target not met.';
+                el.style.cursor = 'help';
+                el.style.textDecoration = 'underline dotted';
+                el.style.textUnderlineOffset = '3px';
+            });
+        }
+
+        function captureUIState() {
+            const activeSubtab = document.querySelector('.subtab-btn.active');
+            return {
+                role: currentRole,
+                tlGroup: document.getElementById('tl-group-select') ? document.getElementById('tl-group-select').value : '',
+                tlDate: document.getElementById('tl-date-select') ? document.getElementById('tl-date-select').value : '',
+                stlModule: document.getElementById('stl-module-select') ? document.getElementById('stl-module-select').value : '',
+                stlWeek: document.getElementById('stl-week-select') ? document.getElementById('stl-week-select').value : '',
+                dataSubtab: activeSubtab ? activeSubtab.id.replace('subtab-', '') : 'anomaly',
+                dataAgentDate: document.getElementById('data-agent-date') ? document.getElementById('data-agent-date').value : '',
+            };
+        }
+
+        function restoreUIState(state) {
+            if (!state) return;
+            const role = state.role || currentRole;
+            if (role === 'TL') {
+                initTLView();
+                const g = document.getElementById('tl-group-select');
+                const d = document.getElementById('tl-date-select');
+                if (g && state.tlGroup && Array.from(g.options).some(o => o.value === state.tlGroup)) g.value = state.tlGroup;
+                if (d && state.tlDate && Array.from(d.options).some(o => o.value === state.tlDate)) d.value = state.tlDate;
+                loadTLData();
+            } else if (role === 'STL') {
+                initSTLView();
+                const m = document.getElementById('stl-module-select');
+                const w = document.getElementById('stl-week-select');
+                if (m && state.stlModule && Array.from(m.options).some(o => o.value === state.stlModule)) m.value = state.stlModule;
+                if (w && state.stlWeek && Array.from(w.options).some(o => o.value === state.stlWeek)) w.value = state.stlWeek;
+                loadSTLData();
+            } else {
+                initDataView();
+                const subtab = state.dataSubtab || 'anomaly';
+                switchDataSubTab(subtab);
+                if (subtab === 'agent-overview') {
+                    const ds = document.getElementById('data-agent-date');
+                    if (ds && state.dataAgentDate && Array.from(ds.options).some(o => o.value === state.dataAgentDate)) {
+                        ds.value = state.dataAgentDate;
+                    }
+                    loadAgentOverviewData();
+                }
+            }
+        }
+
+        function setLanguage(lang) {
+            const next = (lang === 'zh') ? 'zh' : 'en';
+            localStorage.setItem('collection_report_lang', next);
+            if (next === currentLang) {
+                closeLanguageMenu();
+                return;
+            }
+            const state = captureUIState();
+            currentLang = next;
+            refreshLanguageButtons();
+            restoreUIState(state);
+            applyLanguage(document.body);
+            enhanceConsecutiveDaysHint();
+            closeLanguageMenu();
+        }
+
+        function initLanguageToggle() {
+            const saved = localStorage.getItem('collection_report_lang');
+            currentLang = (saved === 'zh') ? 'zh' : 'en';
+            refreshLanguageButtons();
+            if (!languageObserver) {
+                languageObserver = new MutationObserver(() => {
+                    applyLanguage(document.body);
+                    enhanceConsecutiveDaysHint();
+                });
+                languageObserver.observe(document.body, { childList: true, subtree: true });
+                document.addEventListener('click', closeLanguageMenu);
+            }
+            applyLanguage(document.body);
+            enhanceConsecutiveDaysHint();
+        }
+"""
+
+html = html.replace(
+    "        function isM2Module(module) {",
+    i18n_inject + "\n\n        function isM2Module(module) {"
+)
+
+# Chart legend/series labels: switch by language at render time
+html = html.replace("legend: { data: ['Actual', 'Daily Target'], bottom: 0, itemGap: 16, textStyle: { fontSize: 11 } },",
+                    "legend: { data: [currentLang === 'zh' ? '实际值' : 'Actual', currentLang === 'zh' ? '日目标' : 'Daily Target'], bottom: 0, itemGap: 16, textStyle: { fontSize: 11 } },")
+html = html.replace("name: 'Actual',", "name: currentLang === 'zh' ? '实际值' : 'Actual',")
+html = html.replace("name: 'Daily Target',", "name: currentLang === 'zh' ? '日目标' : 'Daily Target',")
+html = html.replace("const legendData = ['Module Target'];", "const legendData = [currentLang === 'zh' ? '模块目标' : 'Module Target'];")
+html = html.replace("name: 'Module Target',", "name: currentLang === 'zh' ? '模块目标' : 'Module Target',")
+html = html.replace("name: 'Module Total',", "name: currentLang === 'zh' ? '模块汇总' : 'Module Total',")
+html = html.replace("legendData.unshift('Module Total');", "legendData.unshift(currentLang === 'zh' ? '模块汇总' : 'Module Total');")
+
+html = html.replace(
+    "        initTLView();",
+    "        initLanguageToggle();\n        initTLView();\n        if (currentLang === 'zh') applyLanguage(document.body);"
+)
+
+
+def inject_theme(html_text: str, theme_key: str, css_text: str) -> str:
+    themed = html_text.replace("<body>", f"<body class=\"theme-{theme_key}\">", 1)
+    return themed.replace("</head>", f"\n<style id=\"theme-{theme_key}\">\n{css_text}\n</style>\n</head>", 1)
+
+def inject_chart_palette(html_text: str) -> str:
+    chart_palette_js = """
+<script id="chart-palette-patch">
+(function () {
+  if (window.__chartPalettePatched) return;
+  window.__chartPalettePatched = true;
+  function patch() {
+    if (!window.echarts || !window.echarts.init || window.echarts.__chartPaletteWrapped) return;
+    const baseInit = window.echarts.init;
+    window.echarts.init = function() {
+      const chart = baseInit.apply(this, arguments);
+      const originalSetOption = chart.setOption.bind(chart);
+      chart.setOption = function(option, ...rest) {
+        const palette = ['#0f172a', '#334155', '#64748b', '#94a3b8', '#cbd5e1', '#c8102e'];
+        if (!option.color) option.color = palette;
+        if (option.legend && option.legend.textStyle) {
+          option.legend.textStyle.color = '#111827';
+        } else if (option.legend) {
+          option.legend.textStyle = { color: '#111827' };
+        }
+        if (option.xAxis && !Array.isArray(option.xAxis)) {
+          option.xAxis.axisLine = option.xAxis.axisLine || {};
+          option.xAxis.axisLine.lineStyle = Object.assign({ color: '#9ca3af' }, option.xAxis.axisLine.lineStyle || {});
+          option.xAxis.axisLabel = Object.assign({ color: '#374151' }, option.xAxis.axisLabel || {});
+        }
+        if (option.yAxis && !Array.isArray(option.yAxis)) {
+          option.yAxis.axisLine = option.yAxis.axisLine || {};
+          option.yAxis.axisLine.lineStyle = Object.assign({ color: '#9ca3af' }, option.yAxis.axisLine.lineStyle || {});
+          option.yAxis.axisLabel = Object.assign({ color: '#374151' }, option.yAxis.axisLabel || {});
+          option.yAxis.splitLine = Object.assign({ lineStyle: { color: '#e5e7eb' } }, option.yAxis.splitLine || {});
+        }
+        return originalSetOption(option, ...rest);
+      };
+      return chart;
+    };
+    window.echarts.__chartPaletteWrapped = true;
+  }
+  patch();
+  const timer = setInterval(() => {
+    patch();
+    if (window.echarts && window.echarts.__chartPaletteWrapped) clearInterval(timer);
+  }, 50);
+})();
+</script>
+"""
+    return html_text.replace("</head>", chart_palette_js + "\n</head>", 1)
+
+
+THEME_CSS = {
+    # ① Reference image-inspired dashboard style
+    "style_1_reference": """
+body.theme-style_1_reference {
+  background: #e8e4dc !important;
+  color: #1f2937 !important;
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif !important;
+}
+body.theme-style_1_reference > div:first-child {
+  background: #1f2432 !important;
+  border-radius: 20px;
+  margin: 16px auto 10px auto;
+  max-width: 1460px;
+  box-shadow: 0 12px 32px rgba(17, 24, 39, 0.22);
+}
+body.theme-style_1_reference .card,
+body.theme-style_1_reference .metric-card {
+  border-radius: 18px !important;
+  border: none !important;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08) !important;
+}
+body.theme-style_1_reference .role-btn,
+body.theme-style_1_reference .subtab-btn {
+  border-radius: 999px !important;
+}
+body.theme-style_1_reference .role-btn.active,
+body.theme-style_1_reference .subtab-btn.active {
+  background: #f2d15c !important;
+  color: #1f2937 !important;
+  border-color: #f2d15c !important;
+}
+body.theme-style_1_reference select {
+  border-radius: 12px !important;
+  background: #f8fafc !important;
+}
+""",
+    # ② Bauhaus style
+    "style_2_bauhaus": """
+body.theme-style_2_bauhaus {
+  background: #f6f6f3 !important;
+  color: #111 !important;
+  font-family: "Futura", "Avenir Next", "Segoe UI", sans-serif !important;
+}
+body.theme-style_2_bauhaus > div:first-child {
+  background: #0057b8 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+body.theme-style_2_bauhaus .card,
+body.theme-style_2_bauhaus .metric-card {
+  border: 2px solid #111 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+body.theme-style_2_bauhaus .role-btn.active,
+body.theme-style_2_bauhaus .subtab-btn.active {
+  background: #ffcc00 !important;
+  color: #111 !important;
+  border-color: #111 !important;
+}
+body.theme-style_2_bauhaus .status-success { background: #0057b8 !important; color: #fff !important; }
+body.theme-style_2_bauhaus .status-danger { background: #e10600 !important; color: #fff !important; }
+body.theme-style_2_bauhaus .metric-value { color: #111 !important; }
+body.theme-style_2_bauhaus .empty-state-icon { color: #0057b8 !important; }
+""",
+    # ③ Default report theme (v3.3 main output)
+    "style_3": """
+body.theme-style_3 {
+  background: #f7f7f7 !important;
+  color: #111 !important;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+}
+body.theme-style_3 > div:first-child {
+  background: #ffffff !important;
+  color: #111 !important;
+  border-bottom: 1px solid #d1d5db;
+}
+body.theme-style_3 > div:first-child h1,
+body.theme-style_3 > div:first-child p { color: #111 !important; }
+body.theme-style_3 #lang-toggle {
+  background: #f8fafc !important;
+  color: #111 !important;
+  border-color: #cbd5e1 !important;
+}
+body.theme-style_3 .card,
+body.theme-style_3 .metric-card {
+  background: #fff !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 2px !important;
+  box-shadow: none !important;
+}
+body.theme-style_3 .role-btn,
+body.theme-style_3 .subtab-btn {
+  color: #334155 !important;
+  border-color: #cbd5e1 !important;
+  border-radius: 0 !important;
+  border-bottom: 2px solid transparent !important;
+}
+body.theme-style_3 .role-btn.active,
+body.theme-style_3 .subtab-btn.active {
+  background: #fff !important;
+  color: #c8102e !important;
+  border-bottom-color: #c8102e !important;
+}
+body.theme-style_3 .empty-state-icon { color: #c8102e !important; }
+body.theme-style_3 .metric-label { color: #6b7280 !important; }
+body.theme-style_3 .metric-value { color: #111827 !important; letter-spacing: 0.2px; }
+body.theme-style_3 .status-badge { border-radius: 2px !important; }
+body.theme-style_3 .status-success { background: #0f766e !important; color: #fff !important; }
+body.theme-style_3 .status-danger { background: #c8102e !important; color: #fff !important; }
+body.theme-style_3 .drilldown-row:hover { background: #f3f4f6 !important; }
+body.theme-style_3 .metric-value { letter-spacing: 0.2px; }
+body.theme-style_3 .status-success,
+body.theme-style_3 .status-danger {
+  border-radius: 2px !important;
+}
+""",
+}
+
+# Optional alternate theme previews only (main deliverable is HTML_OUT = v3.3)
+THEME_OUTPUT_PATHS = {
+    "style_1_reference": os.path.join(os.path.dirname(HTML_OUT), "Collection_Operations_Report_v3_3_style_1_reference.html"),
+    "style_2_bauhaus": os.path.join(os.path.dirname(HTML_OUT), "Collection_Operations_Report_v3_3_style_2_bauhaus.html"),
+}
+
+# ========================
 # Write output
 # ========================
+base_html = inject_theme(html, "style_3", THEME_CSS["style_3"])
+base_html = inject_chart_palette(base_html)
 with open(HTML_OUT, 'w', encoding='utf-8') as f:
-    f.write(html)
+    f.write(base_html)
+
+for _theme_key, _theme_path in THEME_OUTPUT_PATHS.items():
+    themed_html = inject_theme(html, _theme_key, THEME_CSS[_theme_key])
+    with open(_theme_path, "w", encoding="utf-8") as tf:
+        tf.write(themed_html)
 
 print(f"\nGenerated: {HTML_OUT}")
+for _theme_key, _theme_path in THEME_OUTPUT_PATHS.items():
+    print(f"  Theme preview {_theme_key} : {_theme_path}")
 print(f"  Data date   : {TL_LATEST_STR}")
 print(f"  Sub-modules : {modules_list}")
 print(f"  Groups      : {len(all_groups)}")
@@ -3084,7 +3287,7 @@ hard_checks = [
 ]
 
 soft_checks = [
-    ("Title v3.2",               'Collection Operations Report v3.2' in html),
+    ("Title v3.3",               'Collection Operations Report v3.3' in html),
     ("REAL_DATA present",        'const REAL_DATA = {' in html),
     ("No MOCK_DATA",             'MOCK_DATA.' not in html),
     ("No legacy moduleTarget var", "Math.round(moduleTarget)" not in html and "fill(moduleTarget)" not in html),

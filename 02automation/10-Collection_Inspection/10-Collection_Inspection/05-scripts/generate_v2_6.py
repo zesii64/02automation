@@ -1,5 +1,5 @@
 """
-Collection Operations Report v3.2 - Real Data v3
+Collection Operations Report v3.3 - Real Data v3
 Base: Collection_Operations_Report_v2_2.html
 Data: 260318_output_automation_v3.xlsx
 Changes vs v2.4:
@@ -12,7 +12,7 @@ Changes vs v2.4:
   - Default TL date: 2026-03-21 (max common date across all agent sources)
   - Default STL week: most-recent complete week
   - Call Loss Rate column added to all agent/group tables
-Output: Collection_Operations_Report_v3_1.html
+Output: Collection_Operations_Report_v3_3.html
 """
 import pandas as pd
 import json
@@ -28,7 +28,7 @@ BASE       = r'd:/11automation/02automation/10-Collection_Inspection/10-Collecti
 EXCEL_PATH = BASE + r'/data/260318_output_automation_v3.xlsx'
 PROCESS_TARGET_PATH = BASE + r'/data/process_data_target.xlsx'
 HTML_IN    = BASE + r'/reports/Collection_Operations_Report_v2_2.html'
-HTML_OUT   = BASE + r'/reports/Collection_Operations_Report_v3_2.html'
+HTML_OUT   = BASE + r'/reports/Collection_Operations_Report_v3_3.html'
 
 # ========================
 # Load data
@@ -630,9 +630,14 @@ for group in all_groups:
             if 'single_call_duration' in ap_a.columns and pd.notna(ap_a['single_call_duration']).any():
                 single_call_duration_val = float(ap_a['single_call_duration'].astype(float).mean())
 
-            if 'call_billhr' in ap_a.columns:
+            if 'connect_rate' in ap_a.columns and pd.notna(ap_a['connect_rate']).any():
+                conn_r = round(float(ap_a['connect_rate'].astype(float).mean()) * 100, 1)
+            elif 'call_billhr' in ap_a.columns:
                 conn_val = float(ap_a['call_billhr'].astype(float).mean())
                 conn_r = round(conn_val * 100, 1)
+            elif 'call_connect_times' in ap_a.columns:
+                connects = int(round(float(ap_a['call_connect_times'].astype(float).sum())))
+                conn_r = round(connects / calls * 100, 1) if calls > 0 else 0.0
             elif 'connect_times' in ap_a.columns:
                 connects = int(round(float(ap_a['connect_times'].astype(float).sum())))
                 conn_r = round(connects / calls * 100, 1) if calls > 0 else 0.0
@@ -724,8 +729,12 @@ for group in all_groups:
             if 'cover_times' in ap_hist.columns:
                 agg_map['coverTimes'] = ('cover_times', lambda x: x.astype(float).sum())
 
-            if 'call_billhr' in ap_hist.columns:
+            if 'connect_rate' in ap_hist.columns:
+                agg_map['connect_rate'] = ('connect_rate', 'mean')
+            elif 'call_billhr' in ap_hist.columns:
                 agg_map['call_billhr'] = ('call_billhr', 'mean')
+            elif 'call_connect_times' in ap_hist.columns:
+                agg_map['connects'] = ('call_connect_times', lambda x: x.astype(float).sum())
             elif 'connect_times' in ap_hist.columns:
                 agg_map['connects'] = ('connect_times', lambda x: x.astype(float).sum())
 
@@ -750,7 +759,9 @@ for group in all_groups:
                 dt_str = pd.to_datetime(hr['dt']).strftime('%Y-%m-%d')
                 calls_d = int(round(float(hr['calls']))) if ('calls' in hr and pd.notna(hr['calls'])) else 0
 
-                if 'call_billhr' in hr and pd.notna(hr['call_billhr']):
+                if 'connect_rate' in hr and pd.notna(hr['connect_rate']):
+                    conn_r_d = round(float(hr['connect_rate']) * 100, 1)
+                elif 'call_billhr' in hr and pd.notna(hr['call_billhr']):
                     conn_r_d = round(float(hr['call_billhr']) * 100, 1)
                 else:
                     connects_d = int(round(float(hr['connects']))) if ('connects' in hr and pd.notna(hr['connects'])) else 0
@@ -1813,16 +1824,37 @@ html = html.replace(
                         <span style="display: inline-block; width: 12px; height: 12px; background: #fef2f2; border: 1px solid #fca5a5; border-radius: 2px; margin-right: 4px;"></span>3+ consecutive weeks &nbsp;
                         <span style="display: inline-block; width: 12px; height: 12px; background: #fffbeb; border: 1px solid #fcd34d; border-radius: 2px; margin-right: 4px;"></span>1–2 consecutive weeks
                     </p>
-                    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 12px;">
+                    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 12px;">
+                        <div class="metric-card">
+                            <div class="metric-value" id="stl-gap-amount">--</div>
+                            <div class="metric-label">Gap to Target</div>
+                            <div id="stl-gap-meta" style="font-size: 12px; color: #64748b; margin-top: 4px;">Target: -- | Actual: --</div>
+                        </div>
                         <div class="metric-card">
                             <div class="metric-value" id="stl-call-gap">--</div>
                             <div class="metric-label">Call Volume Gap</div>
+                            <div id="stl-call-gap-meta" style="font-size: 12px; color: #64748b; margin-top: 4px;">Target: -- | Actual: --</div>
                         </div>
                         <div class="metric-card">
                             <div class="metric-value" id="stl-connect-gap">--</div>
-                            <div class="metric-label">Connect Rate Gap</div>
+                            <div class="metric-label">Call Billmin Gap</div>
+                            <div id="stl-connect-gap-meta" style="font-size: 12px; color: #64748b; margin-top: 4px;">Target: -- | Actual: --</div>
                         </div>
                     </div>"""
+)
+
+# TL unmet section: add target/actual sub-lines under each gap card
+html = html.replace(
+    '<div class="metric-value" id="tl-gap-amount">--</div>\n                            <div class="metric-label">Gap to Target</div>',
+    '<div class="metric-value" id="tl-gap-amount">--</div>\n                            <div class="metric-label">Gap to Target</div>\n                            <div id="tl-gap-meta" style="font-size: 12px; color: #64748b; margin-top: 4px;">Target: -- | Actual: --</div>'
+)
+html = html.replace(
+    '<div class="metric-value" id="tl-call-gap">--</div>\n                            <div class="metric-label">Call Volume Gap</div>',
+    '<div class="metric-value" id="tl-call-gap">--</div>\n                            <div class="metric-label">Call Volume Gap</div>\n                            <div id="tl-call-gap-meta" style="font-size: 12px; color: #64748b; margin-top: 4px;">Target: -- | Actual: --</div>'
+)
+html = html.replace(
+    '<div class="metric-value" id="tl-connect-gap">--</div>\n                            <div class="metric-label">Connect Rate Gap</div>',
+    '<div class="metric-value" id="tl-connect-gap">--</div>\n                            <div class="metric-label">Call Billmin Gap</div>\n                            <div id="tl-connect-gap-meta" style="font-size: 12px; color: #64748b; margin-top: 4px;">Target: -- | Actual: --</div>'
 )
 
 # Fix display metrics to use weekIdx
@@ -1852,7 +1884,7 @@ html = html.replace(
 # STL gap metrics in unmet section, aligned to module process targets
 html = html.replace(
     "            generateSTLConclusions(data, isMet, displayAchievement, displayGap);",
-    "            const processTarget = REAL_DATA.processTargets && REAL_DATA.processTargets[module] ? REAL_DATA.processTargets[module] : {};\n            const callBenchmark = processTarget.artCallTimes !== null && processTarget.artCallTimes !== undefined ? processTarget.artCallTimes : null;\n            const callBillminBenchmark = processTarget.callBillminRawTarget !== null && processTarget.callBillminRawTarget !== undefined ? processTarget.callBillminRawTarget : null;\n            const groupsForGap = REAL_DATA.groupPerformance[module] || [];\n            const selectedWeekLabelForGap = document.getElementById('stl-week-select') ? document.getElementById('stl-week-select').value : REAL_DATA.defaultStlWeek;\n            const weekRows = groupsForGap.map(g => {\n                const wm = REAL_DATA.groupPerformanceByWeek && REAL_DATA.groupPerformanceByWeek[module] && REAL_DATA.groupPerformanceByWeek[module][g.name] ? REAL_DATA.groupPerformanceByWeek[module][g.name][selectedWeekLabelForGap] : null;\n                return { calls: wm && wm.calls !== undefined ? wm.calls : g.calls, callBillmin: wm && wm.callBillmin !== undefined ? wm.callBillmin : g.callBillmin };\n            });\n            const avgCalls = weekRows.length > 0 ? weekRows.reduce((sum, r) => sum + (r.calls || 0), 0) / weekRows.length : 0;\n            const avgCallBillmin = weekRows.length > 0 ? weekRows.reduce((sum, r) => sum + (r.callBillmin || 0), 0) / weekRows.length : 0;\n            const hasProcessTarget = callBenchmark !== null && callBillminBenchmark !== null;\n            const callGap = hasProcessTarget ? (avgCalls - callBenchmark) : 0;\n            const callBillminGap = hasProcessTarget ? (avgCallBillmin - callBillminBenchmark) : 0;\n            const processTargetMet = hasProcessTarget ? (avgCalls >= callBenchmark) && (avgCallBillmin >= callBillminBenchmark) : null;\n            const processTargetBadge = processTargetMet === null ? '<span class=\\\"status-badge\\\" style=\\\"background:#f3f4f6;color:#6b7280;\\\">Process Target: No Target</span>' : (processTargetMet ? '<span class=\\\"status-badge status-success\\\">Process Target: Met</span>' : '<span class=\\\"status-badge status-danger\\\">Process Target: Unmet</span>');\n            badge.innerHTML += ' <br>' + processTargetBadge;\n            const stlCallGapEl = document.getElementById('stl-call-gap');\n            if (stlCallGapEl) stlCallGapEl.textContent = hasProcessTarget ? ((callGap > 0 ? '+' : '') + callGap.toFixed(0)) : '--';\n            const stlConnectGapEl = document.getElementById('stl-connect-gap');\n            if (stlConnectGapEl) stlConnectGapEl.textContent = hasProcessTarget ? ((callBillminGap > 0 ? '+' : '') + callBillminGap.toFixed(1)) : '--';\n            generateSTLConclusions(data, isMet, displayAchievement, displayGap);"
+    "            const processTarget = REAL_DATA.processTargets && REAL_DATA.processTargets[module] ? REAL_DATA.processTargets[module] : {};\n            const callBenchmark = processTarget.artCallTimes !== null && processTarget.artCallTimes !== undefined ? processTarget.artCallTimes : null;\n            const callBillminBenchmark = processTarget.callBillminRawTarget !== null && processTarget.callBillminRawTarget !== undefined ? processTarget.callBillminRawTarget : null;\n            const groupsForGap = REAL_DATA.groupPerformance[module] || [];\n            const selectedWeekLabelForGap = document.getElementById('stl-week-select') ? document.getElementById('stl-week-select').value : REAL_DATA.defaultStlWeek;\n            const weekRows = groupsForGap.map(g => {\n                const wm = REAL_DATA.groupPerformanceByWeek && REAL_DATA.groupPerformanceByWeek[module] && REAL_DATA.groupPerformanceByWeek[module][g.name] ? REAL_DATA.groupPerformanceByWeek[module][g.name][selectedWeekLabelForGap] : null;\n                return { calls: wm && wm.calls !== undefined ? wm.calls : g.calls, callBillmin: wm && wm.callBillmin !== undefined ? wm.callBillmin : g.callBillmin };\n            });\n            const avgCalls = weekRows.length > 0 ? weekRows.reduce((sum, r) => sum + (r.calls || 0), 0) / weekRows.length : 0;\n            const avgCallBillmin = weekRows.length > 0 ? weekRows.reduce((sum, r) => sum + (r.callBillmin || 0), 0) / weekRows.length : 0;\n            const hasProcessTarget = callBenchmark !== null && callBillminBenchmark !== null;\n            const callGap = hasProcessTarget ? (avgCalls - callBenchmark) : null;\n            const callBillminGap = hasProcessTarget ? (avgCallBillmin - callBillminBenchmark) : null;\n            const processTargetMet = hasProcessTarget ? (avgCalls >= callBenchmark) && (avgCallBillmin >= callBillminBenchmark) : null;\n            const processTargetBadge = processTargetMet === null ? '<span class=\\\"status-badge\\\" style=\\\"background:#f3f4f6;color:#6b7280;\\\">Process Target: No Target</span>' : (processTargetMet ? '<span class=\\\"status-badge status-success\\\">Process Target: Met</span>' : '<span class=\\\"status-badge status-danger\\\">Process Target: Unmet</span>');\n            badge.innerHTML += ' <br>' + processTargetBadge;\n            const stlGapEl = document.getElementById('stl-gap-amount');\n            if (stlGapEl) stlGapEl.textContent = (displayActual > displayTarget ? '+' : '') + formatNumber(Math.round(displayActual - displayTarget));\n            const stlCallGapEl = document.getElementById('stl-call-gap');\n            if (stlCallGapEl) stlCallGapEl.textContent = callGap !== null ? ((callGap > 0 ? '+' : '') + callGap.toFixed(0)) : '--';\n            const stlConnectGapEl = document.getElementById('stl-connect-gap');\n            if (stlConnectGapEl) stlConnectGapEl.textContent = callBillminGap !== null ? ((callBillminGap > 0 ? '+' : '') + callBillminGap.toFixed(1)) : '--';\n            const stlGapMeta = document.getElementById('stl-gap-meta');\n            if (stlGapMeta) stlGapMeta.textContent = 'Target: ' + formatNumber(displayTarget) + ' | Actual: ' + formatNumber(displayActual);\n            const stlCallGapMeta = document.getElementById('stl-call-gap-meta');\n            if (stlCallGapMeta) stlCallGapMeta.textContent = 'Target: ' + (callBenchmark !== null ? callBenchmark.toFixed(0) : '--') + ' | Actual: ' + avgCalls.toFixed(0);\n            const stlConnectGapMeta = document.getElementById('stl-connect-gap-meta');\n            if (stlConnectGapMeta) stlConnectGapMeta.textContent = 'Target: ' + (callBillminBenchmark !== null ? callBillminBenchmark.toFixed(1) : '--') + ' | Actual: ' + avgCallBillmin.toFixed(1);\n            generateSTLConclusions(data, isMet, displayAchievement, displayGap);"
 )
 
 # TL: gap and status should compare against process targets (group/module means)
@@ -2275,7 +2307,7 @@ html = html.replace(
 # TL: process KPI gap cards should use call_billmin (remove %)
 html = html.replace(
     "                document.getElementById('tl-call-gap').textContent = (data.callGap > 0 ? '+' : '') + data.callGap;\n                document.getElementById('tl-connect-gap').textContent = (data.connectGap > 0 ? '+' : '') + data.connectGap.toFixed(1) + '%';\n                loadTLAgentTable(group);",
-    "                const processTarget = REAL_DATA.processTargets && REAL_DATA.processTargets[data.groupModule] ? REAL_DATA.processTargets[data.groupModule] : null;\n                const callBenchmark = processTarget && processTarget.artCallTimes !== undefined && processTarget.artCallTimes !== null ? processTarget.artCallTimes : null;\n                const callBillminBenchmark = processTarget && processTarget.callBillminRawTarget !== undefined && processTarget.callBillminRawTarget !== null ? processTarget.callBillminRawTarget : null;\n                const agentsForAvg = REAL_DATA.agentPerformance[group] || [];\n                let callsSum = 0, billminSum = 0, cnt = 0;\n                agentsForAvg.forEach(agent => {\n                    const dm = REAL_DATA.agentPerformanceByDate && REAL_DATA.agentPerformanceByDate[group] && REAL_DATA.agentPerformanceByDate[group][agent.name] ? REAL_DATA.agentPerformanceByDate[group][agent.name][selectedDate] : null;\n                    const c = dm && dm.calls !== undefined ? dm.calls : agent.calls;\n                    const b = dm && dm.callBillmin !== undefined ? dm.callBillmin : agent.callBillmin;\n                    if (c !== null && c !== undefined && b !== null && b !== undefined) { callsSum += c; billminSum += b; cnt += 1; }\n                });\n                const groupAvgCalls = cnt > 0 ? callsSum / cnt : 0;\n                const groupAvgBillmin = cnt > 0 ? billminSum / cnt : 0;\n                const callGap = callBenchmark !== null ? Math.round(groupAvgCalls - callBenchmark) : null;\n                const callBillminGap = callBillminBenchmark !== null ? Math.round((groupAvgBillmin - callBillminBenchmark) * 10) / 10 : null;\n                document.getElementById('tl-call-gap').textContent = callGap !== null ? (callGap > 0 ? '+' : '') + callGap : '--';\n                document.getElementById('tl-connect-gap').textContent = callBillminGap !== null ? (callBillminGap > 0 ? '+' : '') + callBillminGap.toFixed(1) : '--';\n                loadTLAgentTable(group);"
+    "                const processTarget = REAL_DATA.processTargets && REAL_DATA.processTargets[data.groupModule] ? REAL_DATA.processTargets[data.groupModule] : null;\n                const callBenchmark = processTarget && processTarget.artCallTimes !== undefined && processTarget.artCallTimes !== null ? processTarget.artCallTimes : null;\n                const callBillminBenchmark = processTarget && processTarget.callBillminRawTarget !== undefined && processTarget.callBillminRawTarget !== null ? processTarget.callBillminRawTarget : null;\n                const agentsForAvg = REAL_DATA.agentPerformance[group] || [];\n                let callsSum = 0, billminSum = 0, cnt = 0;\n                agentsForAvg.forEach(agent => {\n                    const dm = REAL_DATA.agentPerformanceByDate && REAL_DATA.agentPerformanceByDate[group] && REAL_DATA.agentPerformanceByDate[group][agent.name] ? REAL_DATA.agentPerformanceByDate[group][agent.name][selectedDate] : null;\n                    const c = dm && dm.calls !== undefined ? dm.calls : agent.calls;\n                    const b = dm && dm.callBillmin !== undefined ? dm.callBillmin : agent.callBillmin;\n                    if (c !== null && c !== undefined && b !== null && b !== undefined) { callsSum += c; billminSum += b; cnt += 1; }\n                });\n                const groupAvgCalls = cnt > 0 ? callsSum / cnt : 0;\n                const groupAvgBillmin = cnt > 0 ? billminSum / cnt : 0;\n                const callGap = callBenchmark !== null ? Math.round(groupAvgCalls - callBenchmark) : null;\n                const callBillminGap = callBillminBenchmark !== null ? Math.round((groupAvgBillmin - callBillminBenchmark) * 10) / 10 : null;\n                const repayTarget = (typeof displayTarget !== 'undefined') ? displayTarget : data.target;\n                const repayActual = (typeof displayActual !== 'undefined') ? displayActual : data.actual;\n                const repayGap = (repayActual !== null && repayActual !== undefined && repayTarget !== null && repayTarget !== undefined) ? (repayActual - repayTarget) : null;\n                const tlGapEl = document.getElementById('tl-gap-amount');\n                if (tlGapEl) tlGapEl.textContent = repayGap !== null ? ((repayGap > 0 ? '+' : '') + formatNumber(Math.round(repayGap))) : '--';\n                document.getElementById('tl-call-gap').textContent = callGap !== null ? (callGap > 0 ? '+' : '') + callGap : '--';\n                document.getElementById('tl-connect-gap').textContent = callBillminGap !== null ? (callBillminGap > 0 ? '+' : '') + callBillminGap.toFixed(1) : '--';\n                const tlGapMeta = document.getElementById('tl-gap-meta');\n                if (tlGapMeta) tlGapMeta.textContent = 'Target: ' + formatNumber(repayTarget) + ' | Actual: ' + formatNumber(repayActual);\n                const tlCallGapMeta = document.getElementById('tl-call-gap-meta');\n                if (tlCallGapMeta) tlCallGapMeta.textContent = 'Target: ' + (callBenchmark !== null ? callBenchmark.toFixed(0) : '--') + ' | Actual: ' + groupAvgCalls.toFixed(0);\n                const tlConnectGapMeta = document.getElementById('tl-connect-gap-meta');\n                if (tlConnectGapMeta) tlConnectGapMeta.textContent = 'Target: ' + (callBillminBenchmark !== null ? callBillminBenchmark.toFixed(1) : '--') + ' | Actual: ' + groupAvgBillmin.toFixed(1);\n                loadTLAgentTable(group);"
 )
 
 # STL: target met should follow weekly amount achievement (>=100%)
@@ -2955,6 +2987,236 @@ html = re.sub(
 )
 
 # ========================
+# v3.3: bilingual (EN/ZH) display layer
+# - Data and calculations unchanged
+# - Only UI text rendering switches by language
+# ========================
+html = html.replace("Collection Operations Report v3.2", "Collection Operations Report v3.3")
+
+html = html.replace(
+    "<p style=\"font-size: 14px; opacity: 0.9; margin-top: 4px;\">Generated: <span id=\"report-date\"></span> | Data Date: <span id=\"data-date\"></span></p>",
+    "<p style=\"font-size: 14px; opacity: 0.9; margin-top: 4px;\">Generated: <span id=\"report-date\"></span> | Data Date: <span id=\"data-date\"></span></p>\n                <div id=\"lang-switch\" style=\"margin-top:10px; display:flex; gap:8px;\">\n                    <button class=\"role-btn\" id=\"lang-en\" style=\"padding:4px 10px; font-size:12px;\" onclick=\"setLanguage('en')\">English</button>\n                    <button class=\"role-btn\" id=\"lang-zh\" style=\"padding:4px 10px; font-size:12px;\" onclick=\"setLanguage('zh')\">中文</button>\n                </div>"
+)
+
+i18n_inject = r"""
+        let currentLang = 'en';
+        const I18N_ZH = {
+            'Generated: ': '生成时间：',
+            'Data Date: ': '数据日期：',
+            'TL View': 'TL视图',
+            'STL View': 'STL视图',
+            'Data View': '数据视图',
+            'TL Daily Review': 'TL日度复盘',
+            'Group:': '组别：',
+            'Date:': '日期：',
+            '-- Select Group --': '-- 选择组别 --',
+            'Select a group to view daily performance': '请选择组别以查看日度表现',
+            'Use the Group selector above to get started': '请使用上方组别选择器开始',
+            'Target': '目标',
+            'Actual': '实际',
+            'Achievement Rate': '达成率',
+            'vs Module Avg': '对比模块均值',
+            'Daily Recovery Trend (Selected Month)': '日回收趋势（所选月份）',
+            'Unmet Target — Detail Review': '未达标明细复盘',
+            'Gap to Target': '目标差额',
+            'Call Gap': '通话差额',
+            'Conn/BillMin Gap': '接通分钟差额',
+            'Agent Level Drill-down': '坐席明细下钻',
+            'Agent': '坐席',
+            'Automated Conclusions': '自动结论',
+            'STL Weekly Review': 'STL周度复盘',
+            'Module:': '模块：',
+            '-- Select Module --': '-- 选择模块 --',
+            'Select a module to view weekly performance': '请选择模块以查看周度表现',
+            'Use the Module selector above to get started': '请使用上方模块选择器开始',
+            'Week Target': '周目标',
+            'Recovery Trend (Selected Month)': '回收趋势（所选月份）',
+            'Unmet Target — Group Drill-down': '未达标组下钻',
+            'Group': '组别',
+            'Call Loss': '失联率',
+            'Attendance': '出勤率',
+            'Under-performing': '连续未达标',
+            'Recovery Trend': '回收趋势',
+            'Agent Overview': '坐席总览',
+            'Group — Continuous Unmet Target (2+ Weeks)': '组别连续未达标（2周+）',
+            'Individual — Continuous Unmet Target (3+ Days)': '个人连续未达标（3天+）',
+            'Consecutive Weeks': '连续周数',
+            'Weekly Target': '周目标',
+            'Weekly Actual': '周实际',
+            'Weekly Gap': '周差额',
+            'Weekly Achievement': '周达成率',
+            'Consecutive Days': '连续天数',
+            'Daily Target': '日目标',
+            'Daily Actual': '日实际',
+            'Daily Gap': '日差额',
+            'Calls': '通话量',
+            '3+ consecutive days': '连续3天+',
+            '1–2 consecutive days': '连续1-2天',
+            '3+ consecutive weeks': '连续3周+',
+            '1–2 consecutive weeks': '连续1-2周',
+            'Groups with 2+ consecutive weeks below weekly target, sorted by consecutive weeks (descending).': '连续2周及以上未达周目标的组，按连续周数降序。',
+            'Agents with 3+ consecutive days below daily target, sorted by consecutive days (descending).': '连续3天及以上未达日目标的坐席，按连续天数降序。',
+            'No groups with 2+ consecutive unmet weeks': '暂无连续2周以上未达标组',
+            'No agents with 3+ consecutive unmet days': '暂无连续3天以上未达标坐席',
+            'No records found for current criteria': '当前条件下无数据',
+            'No records found for current threshold': '当前阈值下无数据',
+            'Recovery Trend by Module': '模块回收趋势',
+            'At-Risk Modules — Group Drill-down': '风险模块—组别下钻',
+            'No at-risk modules in current data.': '当前数据暂无风险模块',
+            'At Risk': '有风险',
+            'On Track': '达标中',
+            'Repay Target: Met': '回款目标：达标',
+            'Repay Target: Unmet': '回款目标：未达标',
+            'Process Target: Met': '过程目标：达标',
+            'Process Target: Unmet': '过程目标：未达标',
+            'Process Target: No Target': '过程目标：无目标',
+            'Show Top 10': '仅看前10',
+            'No agent data': '无坐席数据',
+            'No records available for selected date.': '所选日期暂无记录',
+            'Rank': '排名',
+            'Conn%': '接通率%',
+            'PTP%': 'PTP%',
+            'Attd%': '失联率%',
+            'Conservative': '保守预测',
+            'Simple Avg': '简单均值',
+            'Momentum (3-day)': '动量（近3天）',
+            'Month Target': '月目标',
+            'Gap to Close': '待弥补差额',
+            'Required Daily Avg': '所需日均',
+            'Module Total': '模块汇总',
+            'Module Target': '模块目标',
+            'Daily Target': '日目标',
+            'Today': '今日',
+            'Target achieved with ': '目标已达成，达成率',
+            'Performance is ': '表现较模块均值',
+            ' module average.': '。',
+            'above': '高于',
+            'below': '低于',
+            'Target gap of ': '目标差额 ',
+            '% below target': '% 低于目标',
+            'Call volume is ': '通话量较目标少 ',
+            ' calls below target. Review attendance and dial rate.': ' 通，建议复核出勤与拨号效率。',
+            'Connect rate is ': '接通率较基准低 ',
+            '% below benchmark. Review contact list quality and call timing.': '%，建议复核名单质量与外呼时段。',
+            ' agent(s) with 3+ consecutive unmet days require immediate coaching: ': ' 名连续3天以上未达标坐席需立即辅导：',
+            'Weekly target achieved with ': '周目标已达成，达成率',
+            'Week-over-week trend is ': '周环比趋势为',
+            '. Requires improvement.': '，需改进。',
+            'Weekly gap of ': '周差额 ',
+            ' calls/agent below benchmark. Root cause: insufficient outbound attempts due to either (a) agent absenteeism, (b) low dialer efficiency, or (c) inadequate contact list coverage.': ' 通/人低于基准。可能原因：出勤不足、外呼效率低或名单覆盖不足。',
+            ' minutes below benchmark. Root cause: poor contact quality — either (a) outdated phone numbers, (b) customers unreachable during working hours, or (c) ineffective calling scripts.': ' 分钟低于基准。可能原因：联系方式质量不足、工作时段难触达、或话术效果不佳。',
+            '% below benchmark. Root cause: weak negotiation skills — agents failing to (a) secure firm payment commitments, (b) explain consequences of non-payment, or (c) schedule callbacks at convenient times.': '% 低于基准。可能原因：谈判能力不足（承诺确认、后果说明、回访预约）。',
+            '% below benchmark. Root cause: either (a) low team morale, (b) inadequate attendance incentives, or (c) scheduling conflicts.': '% 低于基准。可能原因：士气偏低、激励不足或排班冲突。',
+            ' group(s) with 3+ consecutive unmet weeks: ': ' 个连续3周以上未达标组：',
+            '. Recommend immediate TL coaching intervention.': '。建议立即进行TL辅导干预。',
+            'Summary: Underperformance driven by ': '总结：未达标主要由以下因素驱动：',
+            '. STL should prioritize addressing these process gaps in weekly action plan.': '。建议STL在周行动计划中优先修复这些过程短板。'
+        };
+
+        function localizeText(text) {
+            if (!text || currentLang !== 'zh') return text;
+            let out = text;
+            Object.keys(I18N_ZH).forEach(k => {
+                out = out.split(k).join(I18N_ZH[k]);
+            });
+            out = out.replace(/MTD: /g, '当月累计：');
+            out = out.replace(/Avg Daily Target Rate:/g, '日均目标回款率：');
+            out = out.replace(/Natural Month Repay/g, '自然月回款');
+            out = out.replace(/MTD Actual \(Day (\d+)\)/g, '当月累计实际（第$1天）');
+            out = out.replace(/Daily Avg: /g, '日均：');
+            out = out.replace(/7-Day Avg: /g, '7日均值：');
+            out = out.replace(/Remaining Days: /g, '剩余天数：');
+            out = out.replace(/Show All \((\d+)\)/g, '查看全部（$1）');
+            return out;
+        }
+
+        function applyLanguage(root = document.body) {
+            if (currentLang !== 'zh') return;
+            if (!root) return;
+            const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+            const nodes = [];
+            let node = walker.nextNode();
+            while (node) {
+                const p = node.parentNode;
+                const tag = p && p.tagName ? p.tagName.toUpperCase() : '';
+                if (tag !== 'SCRIPT' && tag !== 'STYLE') nodes.push(node);
+                node = walker.nextNode();
+            }
+            nodes.forEach(n => {
+                n.nodeValue = localizeText(n.nodeValue);
+            });
+            document.title = localizeText(document.title);
+        }
+
+        function refreshLanguageButtons() {
+            const enBtn = document.getElementById('lang-en');
+            const zhBtn = document.getElementById('lang-zh');
+            if (!enBtn || !zhBtn) return;
+            enBtn.classList.toggle('active', currentLang === 'en');
+            zhBtn.classList.toggle('active', currentLang === 'zh');
+        }
+
+        function rerenderCurrentRole() {
+            if (currentRole === 'TL') {
+                initTLView();
+            } else if (currentRole === 'STL') {
+                initSTLView();
+            } else if (currentRole === 'Data') {
+                initDataView();
+                const activeSubtab = document.querySelector('.subtab-btn.active');
+                if (activeSubtab && activeSubtab.id === 'subtab-trend') loadTrendData();
+                else if (activeSubtab && activeSubtab.id === 'subtab-agent-overview') loadAgentOverviewData();
+                else loadAnomalyData();
+            }
+        }
+
+        function setLanguage(lang) {
+            const next = (lang === 'zh') ? 'zh' : 'en';
+            localStorage.setItem('collection_report_lang', next);
+            if (next === currentLang) return;
+            currentLang = next;
+            refreshLanguageButtons();
+            rerenderCurrentRole();
+            if (currentLang === 'zh') {
+                applyLanguage(document.body);
+            } else {
+                location.reload();
+            }
+        }
+
+        function initLanguageToggle() {
+            const saved = localStorage.getItem('collection_report_lang');
+            currentLang = (saved === 'zh') ? 'zh' : 'en';
+            refreshLanguageButtons();
+            if (currentLang === 'zh') {
+                applyLanguage(document.body);
+                const observer = new MutationObserver(() => applyLanguage(document.body));
+                observer.observe(document.body, { childList: true, subtree: true });
+            }
+        }
+"""
+
+html = html.replace(
+    "        function isM2Module(module) {",
+    i18n_inject + "\n\n        function isM2Module(module) {"
+)
+
+# Chart legend/series labels: switch by language at render time
+html = html.replace("legend: { data: ['Actual', 'Daily Target'], bottom: 0, itemGap: 16, textStyle: { fontSize: 11 } },",
+                    "legend: { data: [currentLang === 'zh' ? '实际值' : 'Actual', currentLang === 'zh' ? '日目标' : 'Daily Target'], bottom: 0, itemGap: 16, textStyle: { fontSize: 11 } },")
+html = html.replace("name: 'Actual',", "name: currentLang === 'zh' ? '实际值' : 'Actual',")
+html = html.replace("name: 'Daily Target',", "name: currentLang === 'zh' ? '日目标' : 'Daily Target',")
+html = html.replace("const legendData = ['Module Target'];", "const legendData = [currentLang === 'zh' ? '模块目标' : 'Module Target'];")
+html = html.replace("name: 'Module Target',", "name: currentLang === 'zh' ? '模块目标' : 'Module Target',")
+html = html.replace("name: 'Module Total',", "name: currentLang === 'zh' ? '模块汇总' : 'Module Total',")
+html = html.replace("legendData.unshift('Module Total');", "legendData.unshift(currentLang === 'zh' ? '模块汇总' : 'Module Total');")
+
+html = html.replace(
+    "        initTLView();",
+    "        initLanguageToggle();\n        initTLView();\n        if (currentLang === 'zh') applyLanguage(document.body);"
+)
+
+# ========================
 # Write output
 # ========================
 with open(HTML_OUT, 'w', encoding='utf-8') as f:
@@ -3084,7 +3346,7 @@ hard_checks = [
 ]
 
 soft_checks = [
-    ("Title v3.2",               'Collection Operations Report v3.2' in html),
+    ("Title v3.3",               'Collection Operations Report v3.3' in html),
     ("REAL_DATA present",        'const REAL_DATA = {' in html),
     ("No MOCK_DATA",             'MOCK_DATA.' not in html),
     ("No legacy moduleTarget var", "Math.round(moduleTarget)" not in html and "fill(moduleTarget)" not in html),

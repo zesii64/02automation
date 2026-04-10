@@ -1,0 +1,20 @@
+---
+description: Push to GitHub should not include .ipynb files
+alwaysApply: true
+---
+
+# 禁止在推送到 GitHub 时包含 notebook
+
+当用户在本项目内提出以下任一请求时：
+- `git push`
+- `push`
+- `推送到GitHub` / `提交到GitHub` / `push到github`
+
+我必须在执行 push 之前强制遵从：
+
+1. 先检查暂存区文件：运行 `git diff --cached --name-only`
+2. 如果暂存区中存在任何以 `.ipynb` 结尾的文件：
+   - 用 `git restore --staged "<path>.ipynb"` 取消暂存（保留工作区文件）
+   - 再次运行 `git diff --cached --name-only` 确认 `.ipynb` 已不在暂存区
+3. 仅在暂存区不包含 `.ipynb` 的情况下才允许继续执行 `git push origin master`
+

@@ -1,0 +1,7 @@
+{"role":"user","message":{"content":[{"type":"text","text":"<user_query>\n@c:\\Users\\zhangyuntian\\.cursor\\rules\\work-principles.mdc 是否在所有项目适用？\n</user_query>"}]}}
+{"role":"assistant","message":{"content":[{"type":"text","text":"我先读取你提到的 `work-principles.mdc` 内容，确认它的作用域说明，再给你一个明确结论。"}]}}
+{"role":"assistant","message":{"content":[{"type":"text","text":"是的，通常可视为**全项目适用**。关键依据有两点：\n\n- 文件位置在 `c:\\Users\\zhangyuntian\\.cursor\\rules\\`（用户级规则目录，不是某个项目内）\n- 文件头有 `alwaysApply: true`，表示应自动应用\n\n补充：如果某个项目里有更高优先级或更具体的规则（比如项目内 `.cursor/rules`），会按优先级叠加/覆盖部分行为。"}]}}
+{"role":"user","message":{"content":[{"type":"text","text":"<user_query>\n是否在本项目适用\n</user_query>"}]}}
+{"role":"assistant","message":{"content":[{"type":"text","text":"是，**在本项目适用**。\n\n你当前项目是 `d:\\05Drools`，而 `c:\\Users\\zhangyuntian\\.cursor\\rules\\work-principles.mdc` 属于用户级全局规则，且含 `alwaysApply: true`，因此会作用到这个项目。  \n同时，本项目自己的规则（如 `d:\\05Drools\\.cursor\\rules\\...`）也会一起生效；遇到冲突时通常以更具体/更高优先级规则为准。"}]}}
+{"role":"user","message":{"content":[{"type":"text","text":"<user_query>\n那为什么你回复的是否没有加— ฅ^••^ฅ\n</user_query>"}]}}
+{"role":"assistant","message":{"content":[{"type":"text","text":"因为我把前两次回答判定为「简短确认类回复」（是/否 + 一句说明），不属于你这条规则里定义的“实质性回答”，所以没加签名。  \n如果你希望**所有回复（包括简短确认）都加**，我后续可以统一加上。\n\n— ฅ^••^ฅ"}]}}

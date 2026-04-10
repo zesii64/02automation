@@ -1,0 +1,2 @@
+{"role":"user","message":{"content":[{"type":"text","text":"<user_query>\n在工作区中快速查找名为 CLAUDE.md 的文件路径。只返回存在的绝对路径列表；如果没有找到，返回“未找到”。\n</user_query>"}]}}
+{"role":"assistant","message":{"content":[{"type":"text","text":"正在工作区搜索名为 `CLAUDE.md` 的文件。"}]}}

@@ -1,0 +1,2 @@
+{"role":"user","message":{"content":[{"type":"text","text":"<user_query>\ntala现金贷产品的drools函数是什么\n</user_query>"}]}}
+{"role":"assistant","message":{"content":[{"type":"text","text":"我先在当前策略文件里快速定位与“Tala现金贷产品”相关的规则/函数定义，确认具体函数名后直接给你结论。"}]}}

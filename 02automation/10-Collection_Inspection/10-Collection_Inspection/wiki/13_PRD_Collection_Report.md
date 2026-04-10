@@ -97,13 +97,14 @@ The Collection Operations Report is a standalone HTML report serving the collect
 
 | Req ID | Requirement | Description | v1_0 Status |
 |--------|-------------|-------------|-------------|
-| DATA-01 | Sub-tabs | Two sub-tabs: Anomaly Detection, Recovery Trend | ✅ Done |
+| DATA-01 | Sub-tabs | Three sub-tabs: Under-performing, Recovery Trend, Agent Overview | ✅ Done |
 | DATA-02 | Anomaly Table | Agents/Groups with 3+ consecutive unmet days | ✅ Done |
 | DATA-03 | Anomaly Highlight | Red background for 3+ days | ✅ Done |
 | DATA-04 | Module Trend Charts | One chart card per module (2-column grid) | ❌ Wrong: single combined chart, not per-module cards |
 | DATA-05 | Risk Badge | "At Risk" (red) or "On Track" (green) per module | ❌ Missing |
 | DATA-06 | Risk Module Review | Show unmet groups for at-risk modules | ✅ Done (but tied to wrong chart layout) |
 | DATA-07 | Recovery Trend Target Line | Green dashed line showing daily target | ❌ Missing (no target line in trend chart) |
+| DATA-08 | Agent Overview | Date selector + per-module agent detail table; sort by selected-date actual repay (desc) within module | ✅ Done |
 
 ---
 
@@ -249,13 +250,16 @@ See [12_Data_Schema_Collection_Report.md](wiki/12_Data_Schema_Collection_Report.
 
 ### 8.3 Data Tab
 
-- [ ] Can switch between Anomaly and Trend sub-tabs
+- [ ] Can switch between Under-performing, Trend, and Agent Overview sub-tabs
 - [ ] Anomaly table shows all 3+ consecutive unmet cases
 - [ ] High-risk rows (3+ days) highlighted red
 - [ ] Each module has its own trend chart card
 - [ ] Charts in 2-column grid layout
 - [ ] Risk modules marked with "At Risk" badge
 - [ ] Risk module review section shows unmet groups
+- [ ] Agent Overview has its own date selector
+- [ ] Agent Overview displays agent details grouped by module
+- [ ] Within each module, agents are sorted by selected-date actual repay amount (high to low)
 
 ---
 

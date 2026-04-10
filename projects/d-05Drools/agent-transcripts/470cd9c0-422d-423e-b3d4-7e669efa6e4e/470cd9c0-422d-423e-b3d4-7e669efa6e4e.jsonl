@@ -1,0 +1,8 @@
+{"role":"user","message":{"content":[{"type":"text","text":"<user_query>\n现在全局rules是什么\n</user_query>"}]}}
+{"role":"assistant","message":{"content":[{"type":"text","text":"我先快速核对一下当前项目里生效的规则文件内容，再给你一份准确的“全局 rules”清单。"}]}}
+{"role":"assistant","message":{"content":[{"type":"text","text":"当前生效的“全局 rules”是这几条：\n\n- `d:\\05Drools\\.cursor\\rules\\drools-versioning-workflow.mdc`（`alwaysApply: true`）  \n  - 策略改动必须走**增量小版本文件**，默认不改历史已交付文件  \n  - 同一大版本只保留一个目录，小版本靠文件名区分  \n  - 每次增量要同步更新对应大版本下的 `VERSION_LOG.md`（新记录置顶）\n\n- 用户规则（始终遵守）  \n  - 所有 SQL 必须能在 **Hive** 环境运行  \n  - 回复语言使用**简体中文**\n\n另外还有一条**非全局默认**规则：\n\n- `d:\\05Drools\\.cursor\\rules\\drools-scenid-actionid-consistency.mdc`（`alwaysApply: false`）  \n  - 仅当你在消息里明确写了 `Validate` 才触发 scenId/getActionId 一致性校验。"}]}}
+{"role":"user","message":{"content":[{"type":"text","text":"<user_query>\n\"C:\\Users\\zhangyuntian\\.cursor\\rules\\work-principles.mdc\"这个文件是全局规则吗\n</user_query>"}]}}
+{"role":"assistant","message":{"content":[{"type":"text","text":"我先读一下这个文件的头部配置（尤其是 `alwaysApply` 和作用范围）再准确回答你。"}]}}
+{"role":"assistant","message":{"content":[{"type":"text","text":"是的，按路径来看它属于**用户级全局规则**：\n\n- 路径在 `C:\\Users\\zhangyuntian\\.cursor\\rules\\...`，这是全局规则目录（不是某个项目下的 `.cursor/rules`）。\n- 文件里也写了 `alwaysApply: true`，表示被加载后默认始终应用。\n\n补充区分一下：\n- **全局规则**：影响你所有项目（用户目录下）。\n- **工作区规则**：只影响当前项目，比如 `d:\\05Drools\\.cursor\\rules\\...`。"}]}}
+{"role":"user","message":{"content":[{"type":"text","text":"<user_query>\n这是一条全局规则\n</user_query>"}]}}
+{"role":"assistant","message":{"content":[{"type":"text","text":"对。放在 `C:\\Users\\zhangyuntian\\.cursor\\rules\\` 下的规则属于**用户级全局规则**，一般会跨所有工作区生效；若某个项目里还有 `工作区\\.cursor\\rules\\`，会和全局规则一起叠加，具体以各条规则里的 `alwaysApply`、描述和作用范围为准。\n\n— ฅ^••^ฅ"}]}}
