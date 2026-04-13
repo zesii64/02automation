@@ -658,12 +658,19 @@ for group in all_groups:
             if 'single_call_duration' in ap_a.columns and pd.notna(ap_a['single_call_duration']).any():
                 single_call_duration_val = float(ap_a['single_call_duration'].astype(float).mean())
 
-            if 'call_billhr' in ap_a.columns:
-                conn_val = float(ap_a['call_billhr'].astype(float).mean())
+            # Prefer direct connect_rate; fallback to connect-count ratio, then legacy call_billhr.
+            if 'connect_rate' in ap_a.columns and pd.notna(ap_a['connect_rate']).any():
+                conn_val = float(ap_a['connect_rate'].astype(float).mean())
                 conn_r = round(conn_val * 100, 1)
+            elif 'call_connect_times' in ap_a.columns:
+                connects = int(round(float(ap_a['call_connect_times'].astype(float).sum())))
+                conn_r = round(connects / calls * 100, 1) if calls > 0 else 0.0
             elif 'connect_times' in ap_a.columns:
                 connects = int(round(float(ap_a['connect_times'].astype(float).sum())))
                 conn_r = round(connects / calls * 100, 1) if calls > 0 else 0.0
+            elif 'call_billhr' in ap_a.columns and pd.notna(ap_a['call_billhr']).any():
+                conn_val = float(ap_a['call_billhr'].astype(float).mean())
+                conn_r = round(conn_val * 100, 1)
             else:
                 conn_r = 0.0
 
@@ -752,10 +759,14 @@ for group in all_groups:
             if 'cover_times' in ap_hist.columns:
                 agg_map['coverTimes'] = ('cover_times', lambda x: x.astype(float).sum())
 
-            if 'call_billhr' in ap_hist.columns:
-                agg_map['call_billhr'] = ('call_billhr', 'mean')
+            if 'connect_rate' in ap_hist.columns:
+                agg_map['connect_rate'] = ('connect_rate', 'mean')
+            if 'call_connect_times' in ap_hist.columns:
+                agg_map['call_connects'] = ('call_connect_times', lambda x: x.astype(float).sum())
             elif 'connect_times' in ap_hist.columns:
                 agg_map['connects'] = ('connect_times', lambda x: x.astype(float).sum())
+            if 'call_billhr' in ap_hist.columns:
+                agg_map['call_billhr'] = ('call_billhr', 'mean')
 
             # Raw call duration standard for process KPI judgment (call_billmin)
             if 'call_billmin' in ap_hist.columns:
@@ -778,11 +789,18 @@ for group in all_groups:
                 dt_str = pd.to_datetime(hr['dt']).strftime('%Y-%m-%d')
                 calls_d = int(round(float(hr['calls']))) if ('calls' in hr and pd.notna(hr['calls'])) else 0
 
-                if 'call_billhr' in hr and pd.notna(hr['call_billhr']):
+                if 'connect_rate' in hr and pd.notna(hr['connect_rate']):
+                    conn_r_d = round(float(hr['connect_rate']) * 100, 1)
+                elif 'call_connects' in hr and pd.notna(hr['call_connects']):
+                    connects_d = int(round(float(hr['call_connects'])))
+                    conn_r_d = round(connects_d / calls_d * 100, 1) if calls_d > 0 else 0.0
+                elif 'connects' in hr and pd.notna(hr['connects']):
+                    connects_d = int(round(float(hr['connects'])))
+                    conn_r_d = round(connects_d / calls_d * 100, 1) if calls_d > 0 else 0.0
+                elif 'call_billhr' in hr and pd.notna(hr['call_billhr']):
                     conn_r_d = round(float(hr['call_billhr']) * 100, 1)
                 else:
-                    connects_d = int(round(float(hr['connects']))) if ('connects' in hr and pd.notna(hr['connects'])) else 0
-                    conn_r_d = round(connects_d / calls_d * 100, 1) if calls_d > 0 else 0.0
+                    conn_r_d = 0.0
 
                 coverTimes_d = int(round(float(hr['coverTimes']))) if ('coverTimes' in hr and pd.notna(hr['coverTimes'])) else None
                 callTimes_d = int(round(float(hr['callTimes']))) if ('callTimes' in hr and pd.notna(hr['callTimes'])) else None
@@ -2375,23 +2393,20 @@ tl_load_fn = """\
 
             const getTodayStr = () => new Date().toISOString().split('T')[0];
             const isTodaySelection = (d) => d === getTodayStr();
-            const getRateCompareAtDate = (module, dateStr) => {
-                const trend = REAL_DATA.moduleDailyTrends && REAL_DATA.moduleDailyTrends[module] ? REAL_DATA.moduleDailyTrends[module] : null;
-                const rows = trend && trend.daily ? trend.daily : [];
+            const getGroupRateCompareAtDate = (groupId, dateStr) => {
+                const gData = REAL_DATA.tlData && REAL_DATA.tlData[groupId] ? REAL_DATA.tlData[groupId] : null;
+                const rows = gData && gData.days ? gData.days : [];
                 for (let i = 0; i < rows.length; i++) {
                     if (rows[i].date === dateStr) {
                         const r = rows[i];
-                        if (r.repayRate !== null && r.repayRate !== undefined && r.targetRepayRate !== null && r.targetRepayRate !== undefined) {
-                            return r;
+                        const groupRate = (r.nmRepayRate !== null && r.nmRepayRate !== undefined) ? r.nmRepayRate : r.repayRate;
+                        if (groupRate !== null && groupRate !== undefined && r.targetRepayRate !== null && r.targetRepayRate !== undefined) {
+                            return { actualRate: groupRate, targetRate: r.targetRepayRate };
                         }
                         return null;
                     }
                 }
                 return null;
-            };
-            const isRecoveryTrendAheadAtDate = (module, dateStr) => {
-                const row = getRateCompareAtDate(module, dateStr);
-                return !!(row && row.repayRate >= row.targetRepayRate);
             };
             const getGroupDailyTargetByDate = (groupId, dateStr) => {
                 const agents = REAL_DATA.agentPerformance[groupId] || [];
@@ -2446,9 +2461,8 @@ tl_load_fn = """\
             const vsAvgCard = document.getElementById('tl-module-avg') ? document.getElementById('tl-module-avg').closest('.metric-card') : null;
             if (vsAvgCard) vsAvgCard.style.display = 'none';
 
-            const moduleKey = data.groupModule;
-            const compareRow = getRateCompareAtDate(moduleKey, selectedDate);
-            const isMet = !!(compareRow && compareRow.repayRate >= compareRow.targetRepayRate);
+            const compareRow = getGroupRateCompareAtDate(group, selectedDate);
+            const isMet = !!(compareRow && compareRow.actualRate >= compareRow.targetRate);
             if (!compareRow) {
                 badge.innerHTML = '<span class=\"status-badge\" style=\"background:#f3f4f6;color:#6b7280;\">Repay Target: N/A</span>';
                 document.getElementById('tl-unmet-section').style.display = 'none';
