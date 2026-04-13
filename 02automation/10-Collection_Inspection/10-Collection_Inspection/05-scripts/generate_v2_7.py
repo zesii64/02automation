@@ -2225,6 +2225,91 @@ html = re.sub(
     count=1
 )
 
+risk_review_fn = """\
+        function loadRiskModuleReview() {
+            const riskModules = [];
+            getVisibleModules().forEach(module => {
+                const risk = calculateAtRisk(module);
+                if (risk.isAtRisk) riskModules.push(module);
+            });
+
+            riskModules.sort((a, b) => {
+                const riskA = calculateAtRisk(a);
+                const riskB = calculateAtRisk(b);
+                return riskA.conservativeAch - riskB.conservativeAch;
+            });
+
+            const reviewSection = document.getElementById('risk-module-review');
+            const content = document.getElementById('risk-module-content');
+            if (riskModules.length === 0) {
+                reviewSection.style.display = 'none';
+                return;
+            }
+
+            reviewSection.style.display = 'block';
+            content.innerHTML = '';
+
+            const headerHtml = '<div style="background: #fef3c7; border-left: 4px solid #d97706; padding: 12px; border-radius: 0 4px 4px 0; margin-bottom: 16px; font-size: 12px; color: #92400e;">' +
+                '<strong>Status Logic:</strong> On Track if natural-month actual repay rate ≥ daily target rate on REAL_DATA.dataDate (same as chart); otherwise At Risk. ' +
+                'Policy: RECOVERY_TREND_STATUS_POLICY.mode \\'rate_vs_target_cutoff\\' (alt: \\'mtd_linear\\').' +
+                '</div>';
+            content.innerHTML += headerHtml;
+
+            riskModules.forEach(module => {
+                const groups = (REAL_DATA.riskModuleGroups[module] || []).slice().sort((a, b) => {
+                    const av = (a.achievement !== null && a.achievement !== undefined) ? a.achievement : 999;
+                    const bv = (b.achievement !== null && b.achievement !== undefined) ? b.achievement : 999;
+                    return av - bv;
+                });
+
+                let html = '<div style="margin-bottom: 24px;">';
+                html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">';
+                html += '<h4 style="font-size: 14px; font-weight: 600; color: #991b1b;">Module ' + module + '</h4>';
+                html += '<span class="status-badge status-danger">At Risk</span>';
+                html += '</div>';
+
+                html += '<table style="width: 100%; border-collapse: collapse; font-size: 13px;">';
+                html += '<tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">' +
+                    '<th style="padding: 8px; text-align: left;">Group</th>' +
+                    '<th style="padding: 8px; text-align: right;">Target</th>' +
+                    '<th style="padding: 8px; text-align: right;">Actual</th>' +
+                    '<th style="padding: 8px; text-align: right;">Achievement</th>' +
+                    '<th style="padding: 8px; text-align: right;">Calls</th>' +
+                    '<th style="padding: 8px; text-align: right;">Conn%</th>' +
+                    '<th style="padding: 8px; text-align: right;">PTP%</th>' +
+                    '<th style="padding: 8px; text-align: right;">Call Loss%</th>' +
+                    '<th style="padding: 8px; text-align: right;">Attd%</th></tr>';
+                groups.forEach(g => {
+                    const achColor = (g.achievement !== null && g.achievement !== undefined && g.achievement < 90) ? '#ef4444' : '#22c55e';
+                    html += '<tr style="border-bottom: 1px solid #f1f5f9;">' +
+                        '<td style="padding: 8px;">' + g.group + '</td>' +
+                        '<td style="padding: 8px; text-align: right;">' + formatNumber(g.target) + '</td>' +
+                        '<td style="padding: 8px; text-align: right;">' + formatNumber(g.actual) + '</td>' +
+                        '<td style="padding: 8px; text-align: right; color: ' + achColor + '; font-weight: 600;">' + (g.achievement !== null && g.achievement !== undefined ? g.achievement.toFixed(1) + '%' : '--') + '</td>' +
+                        '<td style="padding: 8px; text-align: right;">' + (g.calls !== null && g.calls !== undefined ? g.calls : '--') + '</td>' +
+                        '<td style="padding: 8px; text-align: right;">' + (g.connectRate !== null && g.connectRate !== undefined ? g.connectRate.toFixed(1) + '%' : '--') + '</td>' +
+                        '<td style="padding: 8px; text-align: right;">' + (g.ptpRate !== null && g.ptpRate !== undefined ? g.ptpRate.toFixed(1) + '%' : '--') + '</td>' +
+                        '<td style="padding: 8px; text-align: right;">' + (g.callLossRate !== null && g.callLossRate !== undefined ? g.callLossRate.toFixed(1) + '%' : '--') + '</td>' +
+                        '<td style="padding: 8px; text-align: right;">' + (g.attendance !== null && g.attendance !== undefined ? g.attendance + '%' : '--') + '</td>' +
+                        '</tr>';
+                });
+                html += '</table></div>';
+                content.innerHTML += html;
+            });
+        }
+"""
+html = re.sub(
+    r"(?s)\n\s*function loadRiskModuleReview\(\) \{.*?\n\s*\}\n\s*\n\s*// ===================== INIT =====================",
+    "\n" + risk_review_fn + "\n\n        // ===================== INIT =====================",
+    html,
+    count=1
+)
+# Safety: avoid leaking `orderedTrendModules` scope into risk review.
+html = html.replace(
+    "const riskModules = [];\n            orderedTrendModules.forEach(module => {",
+    "const riskModules = [];\n            getVisibleModules().forEach(module => {"
+)
+
 html = html.replace(
     "                const risk = calculateAtRisk(module);\n                const isAtRisk = risk.isAtRisk;\n                const badgeClass = isAtRisk ? 'status-badge status-danger' : 'status-badge status-success';\n                const badgeText = isAtRisk ? 'At Risk' : 'On Track';",
     "                const risk = calculateAtRisk(module);\n                const badgeClass = risk.badgeClass;\n                const badgeText = risk.statusLabel;"
@@ -2253,6 +2338,334 @@ html = html.replace(
 html = html.replace(
     "            const isMet = data.achievement >= 100;",
     "            const isMet = data.achievement >= 100;"
+)
+
+# ---- 24.2 TL/STL dynamic status override by Recovery Trend + today target badge ----
+tl_init_date_selector_patch = """\
+            // Populate TL date selector from real agent_repay dates
+            const dateSel = document.getElementById('tl-date-select');
+            dateSel.innerHTML = '';
+            REAL_DATA.availableDates.forEach((dateStr, i) => {
+                const selected = i === 0 ? ' selected' : '';
+                dateSel.innerHTML += '<option value="' + dateStr + '"' + selected + '>' + dateStr + '</option>';
+            });
+"""
+tl_init_date_selector_new = """\
+            // Populate TL date selector from real agent_repay dates (+ today as selectable placeholder)
+            const dateSel = document.getElementById('tl-date-select');
+            dateSel.innerHTML = '';
+            const todayStr = new Date().toISOString().split('T')[0];
+            const selectorDates = (REAL_DATA.availableDates || []).slice();
+            if (!selectorDates.includes(todayStr)) selectorDates.unshift(todayStr);
+            selectorDates.forEach((dateStr, i) => {
+                const selected = i === 0 ? ' selected' : '';
+                dateSel.innerHTML += '<option value="' + dateStr + '"' + selected + '>' + dateStr + '</option>';
+            });
+"""
+html = html.replace(tl_init_date_selector_patch, tl_init_date_selector_new)
+
+tl_load_fn = """\
+        function loadTLData() {
+            const group = document.getElementById('tl-group-select').value;
+            const selectedDate = document.getElementById('tl-date-select').value;
+            const emptyState = document.getElementById('tl-empty-state');
+            const metricsContainer = document.getElementById('tl-metrics-container');
+            const chartCard = document.getElementById('tl-chart-card');
+            const conclusionsCard = document.getElementById('tl-conclusions-card');
+
+            const getTodayStr = () => new Date().toISOString().split('T')[0];
+            const isTodaySelection = (d) => d === getTodayStr();
+            const getRateCompareAtDate = (module, dateStr) => {
+                const trend = REAL_DATA.moduleDailyTrends && REAL_DATA.moduleDailyTrends[module] ? REAL_DATA.moduleDailyTrends[module] : null;
+                const rows = trend && trend.daily ? trend.daily : [];
+                for (let i = 0; i < rows.length; i++) {
+                    if (rows[i].date === dateStr) {
+                        const r = rows[i];
+                        if (r.repayRate !== null && r.repayRate !== undefined && r.targetRepayRate !== null && r.targetRepayRate !== undefined) {
+                            return r;
+                        }
+                        return null;
+                    }
+                }
+                return null;
+            };
+            const isRecoveryTrendAheadAtDate = (module, dateStr) => {
+                const row = getRateCompareAtDate(module, dateStr);
+                return !!(row && row.repayRate >= row.targetRepayRate);
+            };
+            const getGroupDailyTargetByDate = (groupId, dateStr) => {
+                const agents = REAL_DATA.agentPerformance[groupId] || [];
+                let sum = 0, cnt = 0;
+                agents.forEach(a => {
+                    const dm = REAL_DATA.agentPerformanceByDate && REAL_DATA.agentPerformanceByDate[groupId] && REAL_DATA.agentPerformanceByDate[groupId][a.name]
+                        ? REAL_DATA.agentPerformanceByDate[groupId][a.name][dateStr]
+                        : null;
+                    if (dm && dm.target !== null && dm.target !== undefined) { sum += Number(dm.target); cnt += 1; }
+                });
+                return cnt > 0 ? Math.round(sum) : null;
+            };
+
+            if (!group || !REAL_DATA.agentPerformance[group]) {
+                emptyState.style.display = 'block';
+                metricsContainer.style.display = 'none';
+                chartCard.style.display = 'none';
+                conclusionsCard.style.display = 'none';
+                document.getElementById('tl-unmet-section').style.display = 'none';
+                document.getElementById('tl-status-badge').innerHTML = '';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            metricsContainer.style.display = 'block';
+            chartCard.style.display = 'block';
+            conclusionsCard.style.display = 'block';
+
+            const data = REAL_DATA.tlData[group];
+            if (!data) return;
+
+            const badge = document.getElementById('tl-status-badge');
+            if (isTodaySelection(selectedDate)) {
+                const todayTargetAmt = getGroupDailyTargetByDate(group, selectedDate);
+                document.getElementById('tl-yesterday-target').textContent = todayTargetAmt !== null ? formatNumber(todayTargetAmt) : '--';
+                document.getElementById('tl-yesterday-actual').textContent = '--';
+                document.getElementById('tl-achievement-rate').textContent = '--';
+                badge.innerHTML = '<span class=\"status-badge\" style=\"background:#eff6ff;color:#1d4ed8;\">Today Repay Target: ' + (todayTargetAmt !== null ? formatNumber(todayTargetAmt) : '--') + '</span>';
+                document.getElementById('tl-unmet-section').style.display = 'none';
+                chartCard.style.display = 'none';
+                conclusionsCard.style.display = 'none';
+                const ctn = document.getElementById('tl-conclusions');
+                if (ctn) ctn.innerHTML = '';
+                return;
+            }
+
+            chartCard.style.display = 'block';
+            conclusionsCard.style.display = 'block';
+            document.getElementById('tl-yesterday-target').textContent = formatNumber(data.target);
+            document.getElementById('tl-yesterday-actual').textContent = formatNumber(data.actual);
+            document.getElementById('tl-achievement-rate').textContent = data.achievement.toFixed(1) + '%';
+            const vsAvgCard = document.getElementById('tl-module-avg') ? document.getElementById('tl-module-avg').closest('.metric-card') : null;
+            if (vsAvgCard) vsAvgCard.style.display = 'none';
+
+            const moduleKey = data.groupModule;
+            const compareRow = getRateCompareAtDate(moduleKey, selectedDate);
+            const isMet = !!(compareRow && compareRow.repayRate >= compareRow.targetRepayRate);
+            if (!compareRow) {
+                badge.innerHTML = '<span class=\"status-badge\" style=\"background:#f3f4f6;color:#6b7280;\">Repay Target: N/A</span>';
+                document.getElementById('tl-unmet-section').style.display = 'none';
+            } else if (isMet) {
+                badge.innerHTML = '<span class=\"status-badge status-success\">Repay Target: Met</span>';
+                document.getElementById('tl-unmet-section').style.display = 'none';
+            } else {
+                badge.innerHTML = '<span class=\"status-badge status-danger\">Repay Target: Unmet</span>';
+                document.getElementById('tl-unmet-section').style.display = 'block';
+                document.getElementById('tl-gap-amount').textContent = formatNumber(data.gap);
+                const processTarget = REAL_DATA.processTargets && REAL_DATA.processTargets[data.groupModule] ? REAL_DATA.processTargets[data.groupModule] : null;
+                const callBenchmark = processTarget && processTarget.artCallTimes !== undefined && processTarget.artCallTimes !== null ? processTarget.artCallTimes : null;
+                const callBillminBenchmark = processTarget && processTarget.callBillminRawTarget !== undefined && processTarget.callBillminRawTarget !== null ? processTarget.callBillminRawTarget : null;
+                const agentsForAvg = REAL_DATA.agentPerformance[group] || [];
+                let callsSum = 0, billminSum = 0, cnt = 0;
+                agentsForAvg.forEach(agent => {
+                    const dm = REAL_DATA.agentPerformanceByDate && REAL_DATA.agentPerformanceByDate[group] && REAL_DATA.agentPerformanceByDate[group][agent.name] ? REAL_DATA.agentPerformanceByDate[group][agent.name][selectedDate] : null;
+                    const c = dm && dm.artCallTimes !== undefined ? dm.artCallTimes : agent.artCallTimes;
+                    const b = dm && dm.callBillmin !== undefined ? dm.callBillmin : agent.callBillmin;
+                    if (c !== null && c !== undefined && b !== null && b !== undefined) { callsSum += c; billminSum += b; cnt += 1; }
+                });
+                const groupAvgCalls = cnt > 0 ? callsSum / cnt : 0;
+                const groupAvgBillmin = cnt > 0 ? billminSum / cnt : 0;
+                const processTargetMet = (callBenchmark !== null && callBillminBenchmark !== null) ? (groupAvgCalls >= callBenchmark && groupAvgBillmin >= callBillminBenchmark) : null;
+                const processTargetBadge = processTargetMet === null ? '<span class=\"status-badge\" style=\"background:#f3f4f6;color:#6b7280;\">Process Target: No Target</span>' : (processTargetMet ? '<span class=\"status-badge status-success\">Process Target: Met</span>' : '<span class=\"status-badge status-danger\">Process Target: Unmet</span>');
+                badge.innerHTML += ' <br>' + processTargetBadge;
+                const callGap = callBenchmark !== null ? Math.round(groupAvgCalls - callBenchmark) : null;
+                const callBillminGap = callBillminBenchmark !== null ? Math.round((groupAvgBillmin - callBillminBenchmark) * 10) / 10 : null;
+                const repayTarget = data.target;
+                const repayActual = data.actual;
+                const repayGap = (repayActual !== null && repayActual !== undefined && repayTarget !== null && repayTarget !== undefined) ? (repayActual - repayTarget) : null;
+                const tlGapEl = document.getElementById('tl-gap-amount');
+                if (tlGapEl) tlGapEl.textContent = repayGap !== null ? ((repayGap > 0 ? '+' : '') + formatNumber(Math.round(repayGap))) : '--';
+                document.getElementById('tl-call-gap').textContent = callGap !== null ? (callGap > 0 ? '+' : '') + callGap : '--';
+                document.getElementById('tl-connect-gap').textContent = callBillminGap !== null ? (callBillminGap > 0 ? '+' : '') + callBillminGap.toFixed(1) : '--';
+                const tlGapMeta = document.getElementById('tl-gap-meta');
+                if (tlGapMeta) tlGapMeta.textContent = 'Target: ' + formatNumber(repayTarget) + ' | Actual: ' + formatNumber(repayActual);
+                const tlCallGapMeta = document.getElementById('tl-call-gap-meta');
+                if (tlCallGapMeta) tlCallGapMeta.textContent = 'Target: ' + (callBenchmark !== null ? callBenchmark.toFixed(0) : '--') + ' | Actual: ' + groupAvgCalls.toFixed(0);
+                const tlConnectGapMeta = document.getElementById('tl-connect-gap-meta');
+                if (tlConnectGapMeta) tlConnectGapMeta.textContent = 'Target: ' + (callBillminBenchmark !== null ? callBillminBenchmark.toFixed(1) : '--') + ' | Actual: ' + groupAvgBillmin.toFixed(1);
+                loadTLAgentTable(group);
+            }
+
+            generateTLConclusions(data, isMet);
+            const selectedDateVal = document.getElementById('tl-date-select').value;
+            renderTLChart(group, selectedDateVal);
+        }
+"""
+html = re.sub(
+    r"(?s)\n\s*function loadTLData\(\) \{.*?\n\s*\}\n\s*\n\s*function loadTLAgentTable",
+    "\n" + tl_load_fn + "\n\n        function loadTLAgentTable",
+    html,
+    count=1
+)
+
+stl_load_fn = """\
+        function loadSTLData() {
+            const module = document.getElementById('stl-module-select').value;
+            const emptyState = document.getElementById('stl-empty-state');
+            const metricsContainer = document.getElementById('stl-metrics-container');
+            const chartCard = document.getElementById('stl-chart-card');
+            const conclusionsCard = document.getElementById('stl-conclusions-card');
+
+            const getTodayStr = () => new Date().toISOString().split('T')[0];
+            const weekEndDateFromLabel = (weekLabel) => {
+                if (!weekLabel) return null;
+                const year = String(REAL_DATA.dataDate || '').slice(0, 4);
+                const parts = String(weekLabel).split(' - ');
+                const endPart = parts.length > 1 ? parts[1] : parts[0];
+                const md = endPart.split('/');
+                if (md.length !== 2) return null;
+                const mm = String(parseInt(md[0], 10)).padStart(2, '0');
+                const dd = String(parseInt(md[1], 10)).padStart(2, '0');
+                return year + '-' + mm + '-' + dd;
+            };
+            const getRateCompareAtDate = (moduleKey, dateStr) => {
+                const trend = REAL_DATA.moduleDailyTrends && REAL_DATA.moduleDailyTrends[moduleKey] ? REAL_DATA.moduleDailyTrends[moduleKey] : null;
+                const rows = trend && trend.daily ? trend.daily : [];
+                let exact = null;
+                for (let i = 0; i < rows.length; i++) {
+                    if (rows[i].date === dateStr) { exact = rows[i]; break; }
+                }
+                if (exact && exact.repayRate !== null && exact.repayRate !== undefined && exact.targetRepayRate !== null && exact.targetRepayRate !== undefined) return exact;
+                let fallback = null;
+                for (let i = rows.length - 1; i >= 0; i--) {
+                    const r = rows[i];
+                    if (r.date > dateStr) continue;
+                    if (r.repayRate !== null && r.repayRate !== undefined && r.targetRepayRate !== null && r.targetRepayRate !== undefined) { fallback = r; break; }
+                }
+                return fallback;
+            };
+            const isRecoveryTrendAheadAtDate = (moduleKey, dateStr) => {
+                const row = getRateCompareAtDate(moduleKey, dateStr);
+                return !!(row && row.repayRate >= row.targetRepayRate);
+            };
+            const weekContainsDate = (weekLabel, dateStr) => {
+                if (!weekLabel || !dateStr) return false;
+                const md = String(dateStr).slice(5).replace('-', '/');
+                return String(weekLabel).includes(md);
+            };
+            const getModuleDailyTargetByDate = (moduleKey, dateStr) => {
+                const groupsInModule = (REAL_DATA.groups || []).filter(g => REAL_DATA.tlData[g] && REAL_DATA.tlData[g].groupModule === moduleKey);
+                let sum = 0, cnt = 0;
+                groupsInModule.forEach(groupId => {
+                    const agents = REAL_DATA.agentPerformance[groupId] || [];
+                    agents.forEach(a => {
+                        const dm = REAL_DATA.agentPerformanceByDate && REAL_DATA.agentPerformanceByDate[groupId] && REAL_DATA.agentPerformanceByDate[groupId][a.name]
+                            ? REAL_DATA.agentPerformanceByDate[groupId][a.name][dateStr]
+                            : null;
+                        if (dm && dm.target !== null && dm.target !== undefined) { sum += Number(dm.target); cnt += 1; }
+                    });
+                });
+                return cnt > 0 ? Math.round(sum) : null;
+            };
+
+            if (!module || !REAL_DATA.stlData[module]) {
+                emptyState.style.display = 'block';
+                metricsContainer.style.display = 'none';
+                chartCard.style.display = 'none';
+                conclusionsCard.style.display = 'none';
+                document.getElementById('stl-unmet-section').style.display = 'none';
+                document.getElementById('stl-status-badge').innerHTML = '';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            metricsContainer.style.display = 'block';
+            chartCard.style.display = 'block';
+            conclusionsCard.style.display = 'block';
+
+            const data = REAL_DATA.stlData[module];
+
+            const weekSel = document.getElementById('stl-week-select');
+            const weeksArr = data.weeks;
+            const selectedWeekLabel = weekSel ? weekSel.value : REAL_DATA.defaultStlWeek;
+            const selectedWeekPos = weeksArr.findIndex(w => w.weekLabel === selectedWeekLabel);
+            const weekIdx = selectedWeekPos >= 0 ? (weeksArr.length - 1 - selectedWeekPos) : 0;
+            const weekData = weeksArr[weeksArr.length - 1 - weekIdx] || weeksArr[weeksArr.length - 1];
+
+            const displayTarget = weekData ? weekData.target : data.target;
+            const displayActual = weekData ? weekData.actual : data.actual;
+            const displayAchievement = displayTarget > 0 ? (displayActual / displayTarget * 100) : 0;
+            const displayGap = Math.max(0, displayTarget - displayActual);
+
+            const compareDate = weekEndDateFromLabel(selectedWeekLabel) || REAL_DATA.dataDate;
+            const trendAhead = isRecoveryTrendAheadAtDate(module, compareDate);
+            const isMetByAchievement = displayAchievement >= 100;
+            const isMet = trendAhead || isMetByAchievement;
+
+            document.getElementById('stl-week-target').textContent = formatNumber(displayTarget);
+            document.getElementById('stl-week-actual').textContent = formatNumber(displayActual);
+            document.getElementById('stl-achievement-rate').textContent = displayAchievement.toFixed(1) + '%';
+            document.getElementById('stl-trend').textContent = data.trend;
+
+            const badge = document.getElementById('stl-status-badge');
+            if (isMet) {
+                badge.innerHTML = '<span class=\"status-badge status-success\">Weekly Repay Target: Met</span>';
+                document.getElementById('stl-unmet-section').style.display = 'none';
+            } else {
+                badge.innerHTML = '<span class=\"status-badge status-danger\">Weekly Repay Target: Unmet</span>';
+                document.getElementById('stl-unmet-section').style.display = 'block';
+                loadSTLGroupTable(module);
+            }
+
+            const processTarget = REAL_DATA.processTargets && REAL_DATA.processTargets[module] ? REAL_DATA.processTargets[module] : {};
+            const callBenchmark = processTarget.artCallTimes !== null && processTarget.artCallTimes !== undefined ? processTarget.artCallTimes : null;
+            const callBillminBenchmark = processTarget.callBillminRawTarget !== null && processTarget.callBillminRawTarget !== undefined ? processTarget.callBillminRawTarget : null;
+            const groupsForGap = REAL_DATA.groupPerformance[module] || [];
+            const selectedWeekLabelForGap = document.getElementById('stl-week-select') ? document.getElementById('stl-week-select').value : REAL_DATA.defaultStlWeek;
+            const weekRows = groupsForGap.map(g => {
+                const wm = REAL_DATA.groupPerformanceByWeek && REAL_DATA.groupPerformanceByWeek[module] && REAL_DATA.groupPerformanceByWeek[module][g.name] ? REAL_DATA.groupPerformanceByWeek[module][g.name][selectedWeekLabelForGap] : null;
+                return { calls: wm && wm.calls !== undefined ? wm.calls : g.calls, callBillmin: wm && wm.callBillmin !== undefined ? wm.callBillmin : g.callBillmin };
+            });
+            const avgCalls = weekRows.length > 0 ? weekRows.reduce((sum, r) => sum + (r.calls || 0), 0) / weekRows.length : 0;
+            const avgCallBillmin = weekRows.length > 0 ? weekRows.reduce((sum, r) => sum + (r.callBillmin || 0), 0) / weekRows.length : 0;
+            const hasProcessTarget = callBenchmark !== null && callBillminBenchmark !== null;
+            const callGap = hasProcessTarget ? (avgCalls - callBenchmark) : null;
+            const callBillminGap = hasProcessTarget ? (avgCallBillmin - callBillminBenchmark) : null;
+            const processTargetMet = hasProcessTarget ? (avgCalls >= callBenchmark) && (avgCallBillmin >= callBillminBenchmark) : null;
+            const processTargetBadge = processTargetMet === null ? '<span class=\"status-badge\" style=\"background:#f3f4f6;color:#6b7280;\">Process Target: No Target</span>' : (processTargetMet ? '<span class=\"status-badge status-success\">Process Target: Met</span>' : '<span class=\"status-badge status-danger\">Process Target: Unmet</span>');
+            badge.innerHTML += ' <br>' + processTargetBadge;
+            const stlGapEl = document.getElementById('stl-gap-amount');
+            if (stlGapEl) stlGapEl.textContent = (displayActual > displayTarget ? '+' : '') + formatNumber(Math.round(displayActual - displayTarget));
+            const stlCallGapEl = document.getElementById('stl-call-gap');
+            if (stlCallGapEl) stlCallGapEl.textContent = callGap !== null ? ((callGap > 0 ? '+' : '') + callGap.toFixed(0)) : '--';
+            const stlConnectGapEl = document.getElementById('stl-connect-gap');
+            if (stlConnectGapEl) stlConnectGapEl.textContent = callBillminGap !== null ? ((callBillminGap > 0 ? '+' : '') + callBillminGap.toFixed(1)) : '--';
+            const stlGapMeta = document.getElementById('stl-gap-meta');
+            if (stlGapMeta) stlGapMeta.textContent = 'Target: ' + formatNumber(displayTarget) + ' | Actual: ' + formatNumber(displayActual);
+            const stlCallGapMeta = document.getElementById('stl-call-gap-meta');
+            if (stlCallGapMeta) stlCallGapMeta.textContent = 'Target: ' + (callBenchmark !== null ? callBenchmark.toFixed(0) : '--') + ' | Actual: ' + avgCalls.toFixed(0);
+            const stlConnectGapMeta = document.getElementById('stl-connect-gap-meta');
+            if (stlConnectGapMeta) stlConnectGapMeta.textContent = 'Target: ' + (callBillminBenchmark !== null ? callBillminBenchmark.toFixed(1) : '--') + ' | Actual: ' + avgCallBillmin.toFixed(1);
+
+            const todayStr = getTodayStr();
+            if (weekContainsDate(selectedWeekLabel, todayStr)) {
+                const todayTargetAmt = getModuleDailyTargetByDate(module, todayStr);
+                const targetHtml = todayTargetAmt !== null ? formatNumber(todayTargetAmt) : '--';
+                badge.innerHTML += ' <br><span class=\"status-badge\" style=\"background:#eff6ff;color:#1d4ed8;\">Today Repay Target: ' + targetHtml + '</span>';
+            }
+
+            generateSTLConclusions(data, isMet, displayAchievement, displayGap);
+            renderSTLChart(data.weeks, weekIdx);
+        }
+"""
+html = re.sub(
+    r"(?s)\n\s*function loadSTLData\(\) \{.*?\n\s*\}\n\s*\n\s*function loadSTLGroupTable",
+    "\n" + stl_load_fn + "\n\n        function loadSTLGroupTable",
+    html,
+    count=1
+)
+
+# TL consecutive unmet days in drilldown should follow selected date history instead of fixed latest value
+html = html.replace(
+    "                const cd = agent.consecutiveDays;",
+    "                const hist = REAL_DATA.agentPerformanceByDate && REAL_DATA.agentPerformanceByDate[group] && REAL_DATA.agentPerformanceByDate[group][agent.name] ? REAL_DATA.agentPerformanceByDate[group][agent.name] : null;\n                const allDatesAsc = (REAL_DATA.availableDates || []).slice().reverse();\n                const anchorDate = document.getElementById('tl-date-select') ? document.getElementById('tl-date-select').value : REAL_DATA.dataDate;\n                const anchorIdx = allDatesAsc.indexOf(anchorDate);\n                let cd = 0;\n                if (hist && anchorIdx >= 0) {\n                    for (let i = anchorIdx; i >= 0; i--) {\n                        const d = allDatesAsc[i];\n                        const row = hist[d];\n                        if (!row || row.achievement === null || row.achievement === undefined) break;\n                        if (row.achievement < 100) cd += 1;\n                        else break;\n                    }\n                }"
 )
 
 # TL: process KPI gap cards should use call_billmin (remove %)
@@ -2405,10 +2818,6 @@ html = html.replace(
             }""",
 )
 
-html = html.replace(
-    "            getVisibleModules().forEach(module => {",
-    "            orderedTrendModules.forEach(module => {"
-)
 # `loadRiskModuleReview` must not depend on `orderedTrendModules` (scoped in `loadTrendChart`).
 html = html.replace(
     "        function loadRiskModuleReview() {\n            // Calculate At-Risk for all modules dynamically\n            const riskModules = [];\n            orderedTrendModules.forEach(module => {",
@@ -2473,11 +2882,6 @@ html = html.replace(
 html = html.replace(
     "const c = dm && dm.calls !== undefined ? dm.calls : agent.calls;",
     "const c = dm && dm.artCallTimes !== undefined ? dm.artCallTimes : agent.artCallTimes;")
-
-# When repay target is NOT met (TL else-branch), append process target badge to TL header
-html = html.replace(
-    "const callGap = callBenchmark !== null ? Math.round(groupAvgCalls - callBenchmark) : null;",
-    "const processTargetMet = (callBenchmark !== null && callBillminBenchmark !== null) ? (groupAvgCalls >= callBenchmark && groupAvgBillmin >= callBillminBenchmark) : null;\n                const processTargetBadge = processTargetMet === null ? '<span class=\"status-badge\" style=\"background:#f3f4f6;color:#6b7280;\">Process Target: No Target</span>' : (processTargetMet ? '<span class=\"status-badge status-success\">Process Target: Met</span>' : '<span class=\"status-badge status-danger\">Process Target: Unmet</span>');\n                badge.innerHTML += ' <br>' + processTargetBadge;\n                const callGap = callBenchmark !== null ? Math.round(groupAvgCalls - callBenchmark) : null;")
 
 # ---- STL Recovery Trend: enforce full-month axis + target continues ----
 stl_chart_fn = """\
@@ -3142,12 +3546,6 @@ body.theme-style_3 .status-danger {
 """,
 }
 
-# Optional alternate theme previews only (main deliverable is HTML_OUT = v3.3)
-THEME_OUTPUT_PATHS = {
-    "style_1_reference": os.path.join(os.path.dirname(HTML_OUT), "Collection_Operations_Report_v3_3_style_1_reference.html"),
-    "style_2_bauhaus": os.path.join(os.path.dirname(HTML_OUT), "Collection_Operations_Report_v3_3_style_2_bauhaus.html"),
-}
-
 # ========================
 # Write output
 # ========================
@@ -3156,14 +3554,7 @@ base_html = inject_chart_palette(base_html)
 with open(HTML_OUT, 'w', encoding='utf-8') as f:
     f.write(base_html)
 
-for _theme_key, _theme_path in THEME_OUTPUT_PATHS.items():
-    themed_html = inject_theme(html, _theme_key, THEME_CSS[_theme_key])
-    with open(_theme_path, "w", encoding="utf-8") as tf:
-        tf.write(themed_html)
-
 print(f"\nGenerated: {HTML_OUT}")
-for _theme_key, _theme_path in THEME_OUTPUT_PATHS.items():
-    print(f"  Theme preview {_theme_key} : {_theme_path}")
 print(f"  Data date   : {TL_LATEST_STR}")
 print(f"  Sub-modules : {modules_list}")
 print(f"  Groups      : {len(all_groups)}")

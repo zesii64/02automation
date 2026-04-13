@@ -197,26 +197,153 @@ def apply_data_view_patches(html: str) -> str:
         }"""
 
     new_load_anomaly = """        function loadAnomalyData() {
-            // Under-performing groups: 2+ consecutive unmet weeks (sorted by weeks desc)
+            const selectedDate = REAL_DATA.dataDate;
+            const selectedWeek = REAL_DATA.defaultStlWeek;
+            const datesAsc = (REAL_DATA.availableDates || []).slice().reverse();
+
+            const computeAgentStreakByDate = (groupId, agentName, anchorDate) => {
+                const hist = REAL_DATA.agentPerformanceByDate && REAL_DATA.agentPerformanceByDate[groupId] && REAL_DATA.agentPerformanceByDate[groupId][agentName]
+                    ? REAL_DATA.agentPerformanceByDate[groupId][agentName]
+                    : null;
+                if (!hist) return 0;
+                const endIdx = datesAsc.indexOf(anchorDate);
+                if (endIdx < 0) return 0;
+                let streak = 0;
+                for (let i = endIdx; i >= 0; i--) {
+                    const d = datesAsc[i];
+                    const row = hist[d];
+                    if (!row || row.achievement === null || row.achievement === undefined) break;
+                    if (row.achievement < 100) streak += 1;
+                    else break;
+                }
+                return streak;
+            };
+
+            const getAgentMetricsByDate = (groupId, agentName, anchorDate, fallback) => {
+                const dm = REAL_DATA.agentPerformanceByDate && REAL_DATA.agentPerformanceByDate[groupId] && REAL_DATA.agentPerformanceByDate[groupId][agentName]
+                    ? REAL_DATA.agentPerformanceByDate[groupId][agentName][anchorDate]
+                    : null;
+                return {
+                    target: dm && dm.target !== undefined ? dm.target : fallback.target,
+                    actual: dm && dm.actual !== undefined ? dm.actual : fallback.actual,
+                    achievement: dm && dm.achievement !== undefined ? dm.achievement : fallback.achievement,
+                    connectRate: dm && dm.connectRate !== undefined ? dm.connectRate : fallback.connectRate,
+                    coverTimes: dm && dm.coverTimes !== undefined ? dm.coverTimes : fallback.coverTimes,
+                    callTimes: dm && dm.callTimes !== undefined ? dm.callTimes : fallback.callTimes,
+                    artCallTimes: dm && dm.artCallTimes !== undefined ? dm.artCallTimes : fallback.artCallTimes,
+                    callBillmin: dm && dm.callBillmin !== undefined ? dm.callBillmin : fallback.callBillmin,
+                    singleCallDuration: dm && dm.singleCallDuration !== undefined ? dm.singleCallDuration : fallback.singleCallDuration,
+                    ptp: dm && dm.ptp !== undefined ? dm.ptp : fallback.ptp,
+                    callLossRate: dm && dm.callLossRate !== undefined ? dm.callLossRate : fallback.callLossRate,
+                    attendance: dm && dm.attendance !== undefined ? dm.attendance : fallback.attendance
+                };
+            };
+
+            const buildRecent3DayRows = (groupId, agentName, anchorDate, fallback) => {
+                const endIdx = datesAsc.indexOf(anchorDate);
+                if (endIdx < 0) return [];
+                const rows = [];
+                for (let i = endIdx; i >= 0 && rows.length < 3; i--) {
+                    const d = datesAsc[i];
+                    const metrics = getAgentMetricsByDate(groupId, agentName, d, fallback);
+                    rows.push({
+                        date: d,
+                        ...metrics
+                    });
+                }
+                return rows;
+            };
+
+            const buildRecent2WeekGroupRows = (module, groupName, anchorWeekLabel) => {
+                const weeks = (REAL_DATA.availableWeeks || []).slice();
+                if (weeks.length === 0) return [];
+                const anchorIdx = weeks.indexOf(anchorWeekLabel);
+                const endIdx = anchorIdx >= 0 ? anchorIdx : (weeks.length - 1);
+                const startIdx = Math.max(0, endIdx - 1);
+                const rows = [];
+                for (let i = endIdx; i >= startIdx; i--) {
+                    const weekLabel = weeks[i];
+                    const wm = REAL_DATA.groupPerformanceByWeek && REAL_DATA.groupPerformanceByWeek[module] && REAL_DATA.groupPerformanceByWeek[module][groupName]
+                        ? REAL_DATA.groupPerformanceByWeek[module][groupName][weekLabel]
+                        : null;
+                    if (!wm) continue;
+                    rows.push({
+                        weekLabel: weekLabel,
+                        target: wm.target,
+                        actual: wm.actual,
+                        achievement: wm.achievement,
+                        connectRate: wm.connectRate,
+                        coverTimes: wm.coverTimes,
+                        callTimes: wm.callTimes,
+                        artCallTimes: wm.artCallTimes,
+                        callBillmin: wm.callBillmin,
+                        singleCallDuration: wm.singleCallDuration,
+                        callLossRate: wm.callLossRate
+                    });
+                }
+                return rows;
+            };
+
+            const moduleSort = (a, b) => {
+                const rank = { 'S0': 0, 'S1': 1, 'S2': 2, 'M1': 3 };
+                const abase = String(a || '').split('-')[0];
+                const bbase = String(b || '').split('-')[0];
+                const ra = Object.prototype.hasOwnProperty.call(rank, abase) ? rank[abase] : 999;
+                const rb = Object.prototype.hasOwnProperty.call(rank, bbase) ? rank[bbase] : 999;
+                if (ra !== rb) return ra - rb;
+                return String(a || '').localeCompare(String(b || ''));
+            };
+
+            // Build under-performing groups from selected week map (2+ consecutive unmet weeks)
+            const groups = [];
+            (REAL_DATA.modules || []).filter(m => !isM2Module(m)).sort(moduleSort).forEach(module => {
+                const rows = REAL_DATA.groupPerformance[module] || [];
+                rows.forEach(group => {
+                    const cwMap = REAL_DATA.groupConsecutiveWeeksByWeek && REAL_DATA.groupConsecutiveWeeksByWeek[module] && REAL_DATA.groupConsecutiveWeeksByWeek[module][group.name]
+                        ? REAL_DATA.groupConsecutiveWeeksByWeek[module][group.name]
+                        : null;
+                    const streak = cwMap && cwMap[selectedWeek] !== undefined ? cwMap[selectedWeek] : (group.consecutiveWeeks || 0);
+                    if (streak < 2) return;
+                    const wm = REAL_DATA.groupPerformanceByWeek && REAL_DATA.groupPerformanceByWeek[module] && REAL_DATA.groupPerformanceByWeek[module][group.name]
+                        ? REAL_DATA.groupPerformanceByWeek[module][group.name][selectedWeek]
+                        : null;
+                    const weeklyTarget = wm && wm.target !== undefined ? wm.target : group.target;
+                    const weeklyActual = wm && wm.actual !== undefined ? wm.actual : group.actual;
+                    groups.push({
+                        module: module,
+                        name: group.name,
+                        weeks: streak,
+                        weeklyTarget: weeklyTarget || 0,
+                        weeklyActual: weeklyActual || 0
+                    });
+                });
+            });
+            groups.sort((a, b) => {
+                const mr = moduleSort(a.module, b.module);
+                if (mr !== 0) return mr;
+                return (b.weeks || 0) - (a.weeks || 0);
+            });
+
             const groupTbody = document.getElementById('anomaly-group-table');
             const groupEmpty = document.getElementById('anomaly-group-empty');
             groupTbody.innerHTML = '';
-            const groups = [...REAL_DATA.anomalyGroups]
-                .filter(g => !isM2Module(g.module))
-                .filter(g => (g.weeks || 0) >= 2)
-                .sort((a, b) => (b.weeks || 0) - (a.weeks || 0));
-
             if (groups.length === 0) {
                 groupEmpty.style.display = 'block';
             } else {
                 groupEmpty.style.display = 'none';
-                groups.forEach(item => {
+                let currentModule = '';
+                groups.forEach((item, idx) => {
+                    if (item.module !== currentModule) {
+                        currentModule = item.module;
+                        groupTbody.innerHTML += '<tr><td colspan=\"8\" style=\"padding:10px 12px; background:#eef2ff; color:#1e3a8a; font-weight:700;\">' + currentModule + '</td></tr>';
+                    }
                     const wTgt = item.weeklyTarget || 0;
                     const wAct = item.weeklyActual || 0;
                     const wAch = wTgt > 0 ? (wAct / wTgt * 100) : 0;
                     const achColor = wAch >= 100 ? '#22c55e' : wAch >= 90 ? '#d97706' : '#ef4444';
                     const wGap = Math.max(0, wTgt - wAct);
                     const rowClass = (item.weeks || 0) >= 3 ? 'drilldown-row red-row' : 'drilldown-row yellow-row';
+                    const detailId = 'anomaly-group-detail-' + idx;
                     groupTbody.innerHTML += '<tr class=\"' + rowClass + '\">' +
                         '<td style=\"padding: 12px; font-weight: 500;\">' + item.name + '</td>' +
                         '<td style=\"padding: 12px; text-align: center;\">' + item.module + '</td>' +
@@ -225,41 +352,159 @@ def apply_data_view_patches(html: str) -> str:
                         '<td style=\"padding: 12px; text-align: right;\">' + formatNumber(wAct) + '</td>' +
                         '<td style=\"padding: 12px; text-align: right; color: #ef4444; font-weight: 600;\">-' + formatNumber(wGap) + '</td>' +
                         '<td style=\"padding: 12px; text-align: right; color: ' + achColor + '; font-weight: 600;\">' + wAch.toFixed(1) + '%</td>' +
+                        '<td style=\"padding: 12px; text-align: center;\"><button onclick=\"toggleAnomalyGroupDetail(\\'' + detailId + '\\')\" style=\"border:1px solid #cbd5e1;background:#fff;color:#334155;padding:4px 8px;border-radius:6px;cursor:pointer;font-size:12px;\">Recent 2 Weeks</button></td>' +
                         '</tr>';
+
+                    const recentWeeks = buildRecent2WeekGroupRows(item.module, item.name, selectedWeek);
+                    let detailHtml = '<tr id=\"' + detailId + '\" style=\"display:none;background:#f8fafc;\">';
+                    detailHtml += '<td colspan=\"8\" style=\"padding:10px 12px;\">';
+                    detailHtml += '<div style=\"font-size:12px;color:#64748b;margin-bottom:8px;\">Drilldown (recent 2 weeks)</div>';
+                    detailHtml += '<div style=\"overflow-x:auto;\"><table style=\"width:100%; border-collapse:collapse; font-size:12px;\">';
+                    detailHtml += '<tr style=\"background:#eef2ff;border-bottom:1px solid #c7d2fe;\">'
+                        + '<th style=\"padding:6px 8px; text-align:left;\">Week</th>'
+                        + '<th style=\"padding:6px 8px; text-align:right;\">Weekly Target</th>'
+                        + '<th style=\"padding:6px 8px; text-align:right;\">Weekly Actual</th>'
+                        + '<th style=\"padding:6px 8px; text-align:right;\">Weekly Achievement</th>'
+                        + '<th style=\"padding:6px 8px; text-align:right;\">Conn. Rate</th>'
+                        + '<th style=\"padding:6px 8px; text-align:right;\">Cover Times</th>'
+                        + '<th style=\"padding:6px 8px; text-align:right;\">Call Times</th>'
+                        + '<th style=\"padding:6px 8px; text-align:right;\">Art Call Times</th>'
+                        + '<th style=\"padding:6px 8px; text-align:right;\">Call Billmin</th>'
+                        + '<th style=\"padding:6px 8px; text-align:right;\">Single Call Duration</th>'
+                        + '<th style=\"padding:6px 8px; text-align:right;\">Call Loss</th>'
+                        + '</tr>';
+                    recentWeeks.forEach(r => {
+                        const ach = (r.achievement !== null && r.achievement !== undefined) ? r.achievement.toFixed(1) + '%' : '--';
+                        detailHtml += '<tr style=\"border-bottom:1px solid #e2e8f0;\">'
+                            + '<td style=\"padding:6px 8px;\">' + r.weekLabel + '</td>'
+                            + '<td style=\"padding:6px 8px; text-align:right;\">' + (r.target !== null && r.target !== undefined ? formatNumber(r.target) : '--') + '</td>'
+                            + '<td style=\"padding:6px 8px; text-align:right;\">' + (r.actual !== null && r.actual !== undefined ? formatNumber(r.actual) : '--') + '</td>'
+                            + '<td style=\"padding:6px 8px; text-align:right;\">' + ach + '</td>'
+                            + '<td style=\"padding:6px 8px; text-align:right;\">' + (r.connectRate !== null && r.connectRate !== undefined ? r.connectRate.toFixed(1) + '%' : '--') + '</td>'
+                            + '<td style=\"padding:6px 8px; text-align:right;\">' + (r.coverTimes !== null && r.coverTimes !== undefined ? formatNumber(r.coverTimes) : '--') + '</td>'
+                            + '<td style=\"padding:6px 8px; text-align:right;\">' + (r.callTimes !== null && r.callTimes !== undefined ? formatNumber(r.callTimes) : '--') + '</td>'
+                            + '<td style=\"padding:6px 8px; text-align:right;\">' + (r.artCallTimes !== null && r.artCallTimes !== undefined ? formatNumber(r.artCallTimes) : '--') + '</td>'
+                            + '<td style=\"padding:6px 8px; text-align:right;\">' + (r.callBillmin !== null && r.callBillmin !== undefined ? r.callBillmin.toFixed(2) : '--') + '</td>'
+                            + '<td style=\"padding:6px 8px; text-align:right;\">' + (r.singleCallDuration !== null && r.singleCallDuration !== undefined ? r.singleCallDuration.toFixed(2) : '--') + '</td>'
+                            + '<td style=\"padding:6px 8px; text-align:right;\">' + (r.callLossRate !== null && r.callLossRate !== undefined ? r.callLossRate.toFixed(1) + '%' : '--') + '</td>'
+                            + '</tr>';
+                    });
+                    detailHtml += '</table></div></td></tr>';
+                    groupTbody.innerHTML += detailHtml;
                 });
             }
 
-            // Under-performing individuals: 3+ consecutive unmet days (sorted by days desc)
+            // Build under-performing individuals from selected date history (3+ consecutive unmet days)
+            const agents = [];
+            (REAL_DATA.groups || []).forEach(groupId => {
+                const module = REAL_DATA.tlData[groupId] ? REAL_DATA.tlData[groupId].groupModule : '';
+                if (isM2Module(module)) return;
+                const rows = REAL_DATA.agentPerformance[groupId] || [];
+                rows.forEach(agent => {
+                    const streak = computeAgentStreakByDate(groupId, agent.name, selectedDate);
+                    if (streak < 3) return;
+                    const m = getAgentMetricsByDate(groupId, agent.name, selectedDate, agent);
+                    agents.push({
+                        module: module,
+                        group: groupId,
+                        name: agent.name,
+                        days: streak,
+                        ...m
+                    });
+                });
+            });
+            agents.sort((a, b) => {
+                const mr = moduleSort(a.module, b.module);
+                if (mr !== 0) return mr;
+                return (b.days || 0) - (a.days || 0);
+            });
+
             const agentTbody = document.getElementById('anomaly-agent-table');
             const agentEmpty = document.getElementById('anomaly-agent-empty');
             agentTbody.innerHTML = '';
-            const agents = [...REAL_DATA.anomalyAgents]
-                .filter(a => !isM2Module(a.module))
-                .filter(a => (a.days || 0) >= 3)
-                .sort((a, b) => (b.days || 0) - (a.days || 0));
-
             if (agents.length === 0) {
                 agentEmpty.style.display = 'block';
             } else {
                 agentEmpty.style.display = 'none';
-                agents.forEach(item => {
-                    const dailyGap = Math.max(0, (item.dailyTarget || 0) - (item.dailyActual || 0));
+                let currentModule = '';
+                agents.forEach((item, idx) => {
+                    if (item.module !== currentModule) {
+                        currentModule = item.module;
+                        agentTbody.innerHTML += '<tr><td colspan=\"12\" style=\"padding:10px 12px; background:#eef2ff; color:#1e3a8a; font-weight:700;\">' + currentModule + '</td></tr>';
+                    }
+                    const dailyGap = Math.max(0, (item.target || 0) - (item.actual || 0));
                     const callLoss = (item.callLossRate !== null && item.callLossRate !== undefined) ? item.callLossRate.toFixed(1) + '%' : '--';
-                    agentTbody.innerHTML += '<tr class=\"drilldown-row red-row\">' +
+                    const rowId = 'anomaly-agent-row-' + idx;
+                    const detailId = 'anomaly-agent-detail-' + idx;
+                    agentTbody.innerHTML += '<tr id=\"' + rowId + '\" class=\"drilldown-row red-row\">' +
                         '<td style=\"padding: 12px; font-weight: 500;\">' + item.name + '</td>' +
                         '<td style=\"padding: 12px;\">' + item.group + '</td>' +
                         '<td style=\"padding: 12px; text-align: center;\">' + item.module + '</td>' +
                         '<td style=\"padding: 12px; text-align: center; font-weight: 700; color: #ef4444;\">' + item.days + '</td>' +
-                        '<td style=\"padding: 12px; text-align: right;\">' + formatNumber(item.dailyTarget) + '</td>' +
-                        '<td style=\"padding: 12px; text-align: right;\">' + formatNumber(item.dailyActual) + '</td>' +
+                        '<td style=\"padding: 12px; text-align: right;\">' + formatNumber(item.target) + '</td>' +
+                        '<td style=\"padding: 12px; text-align: right;\">' + formatNumber(item.actual) + '</td>' +
                         '<td style=\"padding: 12px; text-align: right; color: #ef4444; font-weight: 600;\">-' + formatNumber(dailyGap) + '</td>' +
-                        '<td style=\"padding: 12px; text-align: right;\">' + (item.calls !== null && item.calls !== undefined ? item.calls : '--') + '</td>' +
+                        '<td style=\"padding: 12px; text-align: right;\">' + (item.artCallTimes !== null && item.artCallTimes !== undefined ? formatNumber(item.artCallTimes) : '--') + '</td>' +
                         '<td style=\"padding: 12px; text-align: right;\">' + (item.connectRate !== null && item.connectRate !== undefined ? item.connectRate.toFixed(1) + '%' : '--') + '</td>' +
                         '<td style=\"padding: 12px; text-align: right;\">' + callLoss + '</td>' +
-                        '<td style=\"padding: 12px; text-align: right;\">' + item.attendance + '%</td>' +
+                        '<td style=\"padding: 12px; text-align: right;\">' + (item.attendance !== null && item.attendance !== undefined ? item.attendance + '%' : '--') + '</td>' +
+                        '<td style=\"padding: 12px; text-align: center;\"><button onclick=\"toggleAnomalyAgentDetail(\\'' + detailId + '\\')\" style=\"border:1px solid #cbd5e1;background:#fff;color:#334155;padding:4px 8px;border-radius:6px;cursor:pointer;font-size:12px;\">Recent 3 Days</button></td>' +
                         '</tr>';
+
+                    const recentRows = buildRecent3DayRows(item.group, item.name, selectedDate, item);
+                    let detailHtml = '<tr id=\"' + detailId + '\" style=\"display:none;background:#f8fafc;\">';
+                    detailHtml += '<td colspan=\"12\" style=\"padding:10px 12px;\">';
+                    detailHtml += '<div style=\"font-size:12px;color:#64748b;margin-bottom:8px;\">Drilldown (recent 3 days)</div>';
+                    detailHtml += '<div style=\"overflow-x:auto;\"><table style=\"width:100%; border-collapse:collapse; font-size:12px;\">';
+                    detailHtml += '<tr style=\"background:#eef2ff;border-bottom:1px solid #c7d2fe;\">'
+                        + '<th style=\"padding:6px 8px; text-align:left;\">Date</th>'
+                        + '<th style=\"padding:6px 8px; text-align:right;\">Target</th>'
+                        + '<th style=\"padding:6px 8px; text-align:right;\">Actual</th>'
+                        + '<th style=\"padding:6px 8px; text-align:right;\">Achievement</th>'
+                        + '<th style=\"padding:6px 8px; text-align:right;\">Conn. Rate</th>'
+                        + '<th style=\"padding:6px 8px; text-align:right;\">Cover Times</th>'
+                        + '<th style=\"padding:6px 8px; text-align:right;\">Call Times</th>'
+                        + '<th style=\"padding:6px 8px; text-align:right;\">Art Call Times</th>'
+                        + '<th style=\"padding:6px 8px; text-align:right;\">Call Billmin</th>'
+                        + '<th style=\"padding:6px 8px; text-align:right;\">Single Call Duration</th>'
+                        + '<th style=\"padding:6px 8px; text-align:right;\">PTP</th>'
+                        + '<th style=\"padding:6px 8px; text-align:right;\">Call Loss</th>'
+                        + '<th style=\"padding:6px 8px; text-align:right;\">Attendance</th>'
+                        + '</tr>';
+                    recentRows.forEach(r => {
+                        const ach = (r.achievement !== null && r.achievement !== undefined) ? r.achievement.toFixed(1) + '%' : '--';
+                        detailHtml += '<tr style=\"border-bottom:1px solid #e2e8f0;\">'
+                            + '<td style=\"padding:6px 8px;\">' + r.date + '</td>'
+                            + '<td style=\"padding:6px 8px; text-align:right;\">' + (r.target !== null && r.target !== undefined ? formatNumber(r.target) : '--') + '</td>'
+                            + '<td style=\"padding:6px 8px; text-align:right;\">' + (r.actual !== null && r.actual !== undefined ? formatNumber(r.actual) : '--') + '</td>'
+                            + '<td style=\"padding:6px 8px; text-align:right;\">' + ach + '</td>'
+                            + '<td style=\"padding:6px 8px; text-align:right;\">' + (r.connectRate !== null && r.connectRate !== undefined ? r.connectRate.toFixed(1) + '%' : '--') + '</td>'
+                            + '<td style=\"padding:6px 8px; text-align:right;\">' + (r.coverTimes !== null && r.coverTimes !== undefined ? formatNumber(r.coverTimes) : '--') + '</td>'
+                            + '<td style=\"padding:6px 8px; text-align:right;\">' + (r.callTimes !== null && r.callTimes !== undefined ? formatNumber(r.callTimes) : '--') + '</td>'
+                            + '<td style=\"padding:6px 8px; text-align:right;\">' + (r.artCallTimes !== null && r.artCallTimes !== undefined ? formatNumber(r.artCallTimes) : '--') + '</td>'
+                            + '<td style=\"padding:6px 8px; text-align:right;\">' + (r.callBillmin !== null && r.callBillmin !== undefined ? r.callBillmin.toFixed(2) : '--') + '</td>'
+                            + '<td style=\"padding:6px 8px; text-align:right;\">' + (r.singleCallDuration !== null && r.singleCallDuration !== undefined ? r.singleCallDuration.toFixed(2) : '--') + '</td>'
+                            + '<td style=\"padding:6px 8px; text-align:right;\">' + (r.ptp !== null && r.ptp !== undefined ? r.ptp.toFixed(1) + '%' : '--') + '</td>'
+                            + '<td style=\"padding:6px 8px; text-align:right;\">' + (r.callLossRate !== null && r.callLossRate !== undefined ? r.callLossRate.toFixed(1) + '%' : '--') + '</td>'
+                            + '<td style=\"padding:6px 8px; text-align:right;\">' + (r.attendance !== null && r.attendance !== undefined ? r.attendance + '%' : '--') + '</td>'
+                            + '</tr>';
+                    });
+                    detailHtml += '</table></div></td></tr>';
+                    agentTbody.innerHTML += detailHtml;
                 });
             }
+        }
+
+        function toggleAnomalyAgentDetail(rowId) {
+            const row = document.getElementById(rowId);
+            if (!row) return;
+            row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
+        }
+
+        function toggleAnomalyGroupDetail(rowId) {
+            const row = document.getElementById(rowId);
+            if (!row) return;
+            row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
         }"""
 
     html = html.replace(old_load_anomaly, new_load_anomaly)
@@ -534,6 +779,7 @@ def apply_data_view_patches(html: str) -> str:
                                 <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Weekly Actual</th>
                                 <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Weekly Gap</th>
                                 <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Weekly Achievement</th>
+                                <th style="padding: 12px; text-align: center; font-size: 12px; color: #64748b;">Drilldown</th>
                             </tr>"""
     html = html.replace(old_underperf_group_header, new_underperf_group_header)
 

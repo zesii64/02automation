@@ -436,6 +436,7 @@ body.theme-style_3 .status-danger {
                                 <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Weekly Actual</th>
                                 <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Weekly Gap</th>
                                 <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Weekly Achievement</th>
+                                <th style="padding: 12px; text-align: center; font-size: 12px; color: #64748b;">Drilldown</th>
                             </tr>
                         </thead>
                         <tbody id="anomaly-group-table"></tbody>
@@ -959,17 +960,19 @@ body.theme-style_3 .status-danger {
                 groupSel.innerHTML += '<option value="' + g + '">' + g + '</option>';
             });
 
-            // Populate TL date selector from real agent_repay dates
+            // Populate TL date selector from real agent_repay dates (+ today as selectable placeholder)
             const dateSel = document.getElementById('tl-date-select');
             dateSel.innerHTML = '';
-            REAL_DATA.availableDates.forEach((dateStr, i) => {
+            const todayStr = new Date().toISOString().split('T')[0];
+            const selectorDates = (REAL_DATA.availableDates || []).slice();
+            if (!selectorDates.includes(todayStr)) selectorDates.unshift(todayStr);
+            selectorDates.forEach((dateStr, i) => {
                 const selected = i === 0 ? ' selected' : '';
                 dateSel.innerHTML += '<option value="' + dateStr + '"' + selected + '>' + dateStr + '</option>';
             });
 
             loadTLData();
         }
-
         function loadTLData() {
             const group = document.getElementById('tl-group-select').value;
             const selectedDate = document.getElementById('tl-date-select').value;
@@ -977,6 +980,38 @@ body.theme-style_3 .status-danger {
             const metricsContainer = document.getElementById('tl-metrics-container');
             const chartCard = document.getElementById('tl-chart-card');
             const conclusionsCard = document.getElementById('tl-conclusions-card');
+
+            const getTodayStr = () => new Date().toISOString().split('T')[0];
+            const isTodaySelection = (d) => d === getTodayStr();
+            const getRateCompareAtDate = (module, dateStr) => {
+                const trend = REAL_DATA.moduleDailyTrends && REAL_DATA.moduleDailyTrends[module] ? REAL_DATA.moduleDailyTrends[module] : null;
+                const rows = trend && trend.daily ? trend.daily : [];
+                for (let i = 0; i < rows.length; i++) {
+                    if (rows[i].date === dateStr) {
+                        const r = rows[i];
+                        if (r.repayRate !== null && r.repayRate !== undefined && r.targetRepayRate !== null && r.targetRepayRate !== undefined) {
+                            return r;
+                        }
+                        return null;
+                    }
+                }
+                return null;
+            };
+            const isRecoveryTrendAheadAtDate = (module, dateStr) => {
+                const row = getRateCompareAtDate(module, dateStr);
+                return !!(row && row.repayRate >= row.targetRepayRate);
+            };
+            const getGroupDailyTargetByDate = (groupId, dateStr) => {
+                const agents = REAL_DATA.agentPerformance[groupId] || [];
+                let sum = 0, cnt = 0;
+                agents.forEach(a => {
+                    const dm = REAL_DATA.agentPerformanceByDate && REAL_DATA.agentPerformanceByDate[groupId] && REAL_DATA.agentPerformanceByDate[groupId][a.name]
+                        ? REAL_DATA.agentPerformanceByDate[groupId][a.name][dateStr]
+                        : null;
+                    if (dm && dm.target !== null && dm.target !== undefined) { sum += Number(dm.target); cnt += 1; }
+                });
+                return cnt > 0 ? Math.round(sum) : null;
+            };
 
             if (!group || !REAL_DATA.agentPerformance[group]) {
                 emptyState.style.display = 'block';
@@ -996,15 +1031,36 @@ body.theme-style_3 .status-danger {
             const data = REAL_DATA.tlData[group];
             if (!data) return;
 
+            const badge = document.getElementById('tl-status-badge');
+            if (isTodaySelection(selectedDate)) {
+                const todayTargetAmt = getGroupDailyTargetByDate(group, selectedDate);
+                document.getElementById('tl-yesterday-target').textContent = todayTargetAmt !== null ? formatNumber(todayTargetAmt) : '--';
+                document.getElementById('tl-yesterday-actual').textContent = '--';
+                document.getElementById('tl-achievement-rate').textContent = '--';
+                badge.innerHTML = '<span class="status-badge" style="background:#eff6ff;color:#1d4ed8;">Today Repay Target: ' + (todayTargetAmt !== null ? formatNumber(todayTargetAmt) : '--') + '</span>';
+                document.getElementById('tl-unmet-section').style.display = 'none';
+                chartCard.style.display = 'none';
+                conclusionsCard.style.display = 'none';
+                const ctn = document.getElementById('tl-conclusions');
+                if (ctn) ctn.innerHTML = '';
+                return;
+            }
+
+            chartCard.style.display = 'block';
+            conclusionsCard.style.display = 'block';
             document.getElementById('tl-yesterday-target').textContent = formatNumber(data.target);
             document.getElementById('tl-yesterday-actual').textContent = formatNumber(data.actual);
             document.getElementById('tl-achievement-rate').textContent = data.achievement.toFixed(1) + '%';
             const vsAvgCard = document.getElementById('tl-module-avg') ? document.getElementById('tl-module-avg').closest('.metric-card') : null;
             if (vsAvgCard) vsAvgCard.style.display = 'none';
 
-            const isMet = data.achievement >= 100;
-            const badge = document.getElementById('tl-status-badge');
-            if (isMet) {
+            const moduleKey = data.groupModule;
+            const compareRow = getRateCompareAtDate(moduleKey, selectedDate);
+            const isMet = !!(compareRow && compareRow.repayRate >= compareRow.targetRepayRate);
+            if (!compareRow) {
+                badge.innerHTML = '<span class="status-badge" style="background:#f3f4f6;color:#6b7280;">Repay Target: N/A</span>';
+                document.getElementById('tl-unmet-section').style.display = 'none';
+            } else if (isMet) {
                 badge.innerHTML = '<span class="status-badge status-success">Repay Target: Met</span>';
                 document.getElementById('tl-unmet-section').style.display = 'none';
             } else {
@@ -1029,8 +1085,8 @@ body.theme-style_3 .status-danger {
                 badge.innerHTML += ' <br>' + processTargetBadge;
                 const callGap = callBenchmark !== null ? Math.round(groupAvgCalls - callBenchmark) : null;
                 const callBillminGap = callBillminBenchmark !== null ? Math.round((groupAvgBillmin - callBillminBenchmark) * 10) / 10 : null;
-                const repayTarget = (typeof displayTarget !== 'undefined') ? displayTarget : data.target;
-                const repayActual = (typeof displayActual !== 'undefined') ? displayActual : data.actual;
+                const repayTarget = data.target;
+                const repayActual = data.actual;
                 const repayGap = (repayActual !== null && repayActual !== undefined && repayTarget !== null && repayTarget !== undefined) ? (repayActual - repayTarget) : null;
                 const tlGapEl = document.getElementById('tl-gap-amount');
                 if (tlGapEl) tlGapEl.textContent = repayGap !== null ? ((repayGap > 0 ? '+' : '') + formatNumber(Math.round(repayGap))) : '--';
@@ -1049,6 +1105,7 @@ body.theme-style_3 .status-danger {
             const selectedDateVal = document.getElementById('tl-date-select').value;
             renderTLChart(group, selectedDateVal);
         }
+
 
         function loadTLAgentTable(group) {
             const tbody = document.getElementById('tl-agent-table');
@@ -1078,7 +1135,20 @@ body.theme-style_3 .status-danger {
             });
 
             agents.forEach(agent => {
-                const cd = agent.consecutiveDays;
+                const hist = REAL_DATA.agentPerformanceByDate && REAL_DATA.agentPerformanceByDate[group] && REAL_DATA.agentPerformanceByDate[group][agent.name] ? REAL_DATA.agentPerformanceByDate[group][agent.name] : null;
+                const allDatesAsc = (REAL_DATA.availableDates || []).slice().reverse();
+                const anchorDate = document.getElementById('tl-date-select') ? document.getElementById('tl-date-select').value : REAL_DATA.dataDate;
+                const anchorIdx = allDatesAsc.indexOf(anchorDate);
+                let cd = 0;
+                if (hist && anchorIdx >= 0) {
+                    for (let i = anchorIdx; i >= 0; i--) {
+                        const d = allDatesAsc[i];
+                        const row = hist[d];
+                        if (!row || row.achievement === null || row.achievement === undefined) break;
+                        if (row.achievement < 100) cd += 1;
+                        else break;
+                    }
+                }
                 let rowClass = 'drilldown-row';
                 if (cd >= 3) rowClass += ' red-row';
                 else if (cd >= 1) rowClass += ' yellow-row';
@@ -1296,13 +1366,64 @@ body.theme-style_3 .status-danger {
 
             loadSTLData();
         }
-
         function loadSTLData() {
             const module = document.getElementById('stl-module-select').value;
             const emptyState = document.getElementById('stl-empty-state');
             const metricsContainer = document.getElementById('stl-metrics-container');
             const chartCard = document.getElementById('stl-chart-card');
             const conclusionsCard = document.getElementById('stl-conclusions-card');
+
+            const getTodayStr = () => new Date().toISOString().split('T')[0];
+            const weekEndDateFromLabel = (weekLabel) => {
+                if (!weekLabel) return null;
+                const year = String(REAL_DATA.dataDate || '').slice(0, 4);
+                const parts = String(weekLabel).split(' - ');
+                const endPart = parts.length > 1 ? parts[1] : parts[0];
+                const md = endPart.split('/');
+                if (md.length !== 2) return null;
+                const mm = String(parseInt(md[0], 10)).padStart(2, '0');
+                const dd = String(parseInt(md[1], 10)).padStart(2, '0');
+                return year + '-' + mm + '-' + dd;
+            };
+            const getRateCompareAtDate = (moduleKey, dateStr) => {
+                const trend = REAL_DATA.moduleDailyTrends && REAL_DATA.moduleDailyTrends[moduleKey] ? REAL_DATA.moduleDailyTrends[moduleKey] : null;
+                const rows = trend && trend.daily ? trend.daily : [];
+                let exact = null;
+                for (let i = 0; i < rows.length; i++) {
+                    if (rows[i].date === dateStr) { exact = rows[i]; break; }
+                }
+                if (exact && exact.repayRate !== null && exact.repayRate !== undefined && exact.targetRepayRate !== null && exact.targetRepayRate !== undefined) return exact;
+                let fallback = null;
+                for (let i = rows.length - 1; i >= 0; i--) {
+                    const r = rows[i];
+                    if (r.date > dateStr) continue;
+                    if (r.repayRate !== null && r.repayRate !== undefined && r.targetRepayRate !== null && r.targetRepayRate !== undefined) { fallback = r; break; }
+                }
+                return fallback;
+            };
+            const isRecoveryTrendAheadAtDate = (moduleKey, dateStr) => {
+                const row = getRateCompareAtDate(moduleKey, dateStr);
+                return !!(row && row.repayRate >= row.targetRepayRate);
+            };
+            const weekContainsDate = (weekLabel, dateStr) => {
+                if (!weekLabel || !dateStr) return false;
+                const md = String(dateStr).slice(5).replace('-', '/');
+                return String(weekLabel).includes(md);
+            };
+            const getModuleDailyTargetByDate = (moduleKey, dateStr) => {
+                const groupsInModule = (REAL_DATA.groups || []).filter(g => REAL_DATA.tlData[g] && REAL_DATA.tlData[g].groupModule === moduleKey);
+                let sum = 0, cnt = 0;
+                groupsInModule.forEach(groupId => {
+                    const agents = REAL_DATA.agentPerformance[groupId] || [];
+                    agents.forEach(a => {
+                        const dm = REAL_DATA.agentPerformanceByDate && REAL_DATA.agentPerformanceByDate[groupId] && REAL_DATA.agentPerformanceByDate[groupId][a.name]
+                            ? REAL_DATA.agentPerformanceByDate[groupId][a.name][dateStr]
+                            : null;
+                        if (dm && dm.target !== null && dm.target !== undefined) { sum += Number(dm.target); cnt += 1; }
+                    });
+                });
+                return cnt > 0 ? Math.round(sum) : null;
+            };
 
             if (!module || !REAL_DATA.stlData[module]) {
                 emptyState.style.display = 'block';
@@ -1321,7 +1442,6 @@ body.theme-style_3 .status-danger {
 
             const data = REAL_DATA.stlData[module];
 
-            // Get selected week data (W1 = most recent = weeks[last])
             const weekSel = document.getElementById('stl-week-select');
             const weeksArr = data.weeks;
             const selectedWeekLabel = weekSel ? weekSel.value : REAL_DATA.defaultStlWeek;
@@ -1333,7 +1453,11 @@ body.theme-style_3 .status-danger {
             const displayActual = weekData ? weekData.actual : data.actual;
             const displayAchievement = displayTarget > 0 ? (displayActual / displayTarget * 100) : 0;
             const displayGap = Math.max(0, displayTarget - displayActual);
-            const isMet = displayAchievement >= 100;
+
+            const compareDate = weekEndDateFromLabel(selectedWeekLabel) || REAL_DATA.dataDate;
+            const trendAhead = isRecoveryTrendAheadAtDate(module, compareDate);
+            const isMetByAchievement = displayAchievement >= 100;
+            const isMet = trendAhead || isMetByAchievement;
 
             document.getElementById('stl-week-target').textContent = formatNumber(displayTarget);
             document.getElementById('stl-week-actual').textContent = formatNumber(displayActual);
@@ -1365,7 +1489,7 @@ body.theme-style_3 .status-danger {
             const callGap = hasProcessTarget ? (avgCalls - callBenchmark) : null;
             const callBillminGap = hasProcessTarget ? (avgCallBillmin - callBillminBenchmark) : null;
             const processTargetMet = hasProcessTarget ? (avgCalls >= callBenchmark) && (avgCallBillmin >= callBillminBenchmark) : null;
-            const processTargetBadge = processTargetMet === null ? '<span class=\"status-badge\" style=\"background:#f3f4f6;color:#6b7280;\">Process Target: No Target</span>' : (processTargetMet ? '<span class=\"status-badge status-success\">Process Target: Met</span>' : '<span class=\"status-badge status-danger\">Process Target: Unmet</span>');
+            const processTargetBadge = processTargetMet === null ? '<span class="status-badge" style="background:#f3f4f6;color:#6b7280;">Process Target: No Target</span>' : (processTargetMet ? '<span class="status-badge status-success">Process Target: Met</span>' : '<span class="status-badge status-danger">Process Target: Unmet</span>');
             badge.innerHTML += ' <br>' + processTargetBadge;
             const stlGapEl = document.getElementById('stl-gap-amount');
             if (stlGapEl) stlGapEl.textContent = (displayActual > displayTarget ? '+' : '') + formatNumber(Math.round(displayActual - displayTarget));
@@ -1379,9 +1503,18 @@ body.theme-style_3 .status-danger {
             if (stlCallGapMeta) stlCallGapMeta.textContent = 'Target: ' + (callBenchmark !== null ? callBenchmark.toFixed(0) : '--') + ' | Actual: ' + avgCalls.toFixed(0);
             const stlConnectGapMeta = document.getElementById('stl-connect-gap-meta');
             if (stlConnectGapMeta) stlConnectGapMeta.textContent = 'Target: ' + (callBillminBenchmark !== null ? callBillminBenchmark.toFixed(1) : '--') + ' | Actual: ' + avgCallBillmin.toFixed(1);
+
+            const todayStr = getTodayStr();
+            if (weekContainsDate(selectedWeekLabel, todayStr)) {
+                const todayTargetAmt = getModuleDailyTargetByDate(module, todayStr);
+                const targetHtml = todayTargetAmt !== null ? formatNumber(todayTargetAmt) : '--';
+                badge.innerHTML += ' <br><span class="status-badge" style="background:#eff6ff;color:#1d4ed8;">Today Repay Target: ' + targetHtml + '</span>';
+            }
+
             generateSTLConclusions(data, isMet, displayAchievement, displayGap);
             renderSTLChart(data.weeks, weekIdx);
         }
+
 
         function loadSTLGroupTable(module) {
             const tbody = document.getElementById('stl-group-table');
@@ -1674,26 +1807,153 @@ body.theme-style_3 .status-danger {
         }
 
         function loadAnomalyData() {
-            // Under-performing groups: 2+ consecutive unmet weeks (sorted by weeks desc)
+            const selectedDate = REAL_DATA.dataDate;
+            const selectedWeek = REAL_DATA.defaultStlWeek;
+            const datesAsc = (REAL_DATA.availableDates || []).slice().reverse();
+
+            const computeAgentStreakByDate = (groupId, agentName, anchorDate) => {
+                const hist = REAL_DATA.agentPerformanceByDate && REAL_DATA.agentPerformanceByDate[groupId] && REAL_DATA.agentPerformanceByDate[groupId][agentName]
+                    ? REAL_DATA.agentPerformanceByDate[groupId][agentName]
+                    : null;
+                if (!hist) return 0;
+                const endIdx = datesAsc.indexOf(anchorDate);
+                if (endIdx < 0) return 0;
+                let streak = 0;
+                for (let i = endIdx; i >= 0; i--) {
+                    const d = datesAsc[i];
+                    const row = hist[d];
+                    if (!row || row.achievement === null || row.achievement === undefined) break;
+                    if (row.achievement < 100) streak += 1;
+                    else break;
+                }
+                return streak;
+            };
+
+            const getAgentMetricsByDate = (groupId, agentName, anchorDate, fallback) => {
+                const dm = REAL_DATA.agentPerformanceByDate && REAL_DATA.agentPerformanceByDate[groupId] && REAL_DATA.agentPerformanceByDate[groupId][agentName]
+                    ? REAL_DATA.agentPerformanceByDate[groupId][agentName][anchorDate]
+                    : null;
+                return {
+                    target: dm && dm.target !== undefined ? dm.target : fallback.target,
+                    actual: dm && dm.actual !== undefined ? dm.actual : fallback.actual,
+                    achievement: dm && dm.achievement !== undefined ? dm.achievement : fallback.achievement,
+                    connectRate: dm && dm.connectRate !== undefined ? dm.connectRate : fallback.connectRate,
+                    coverTimes: dm && dm.coverTimes !== undefined ? dm.coverTimes : fallback.coverTimes,
+                    callTimes: dm && dm.callTimes !== undefined ? dm.callTimes : fallback.callTimes,
+                    artCallTimes: dm && dm.artCallTimes !== undefined ? dm.artCallTimes : fallback.artCallTimes,
+                    callBillmin: dm && dm.callBillmin !== undefined ? dm.callBillmin : fallback.callBillmin,
+                    singleCallDuration: dm && dm.singleCallDuration !== undefined ? dm.singleCallDuration : fallback.singleCallDuration,
+                    ptp: dm && dm.ptp !== undefined ? dm.ptp : fallback.ptp,
+                    callLossRate: dm && dm.callLossRate !== undefined ? dm.callLossRate : fallback.callLossRate,
+                    attendance: dm && dm.attendance !== undefined ? dm.attendance : fallback.attendance
+                };
+            };
+
+            const buildRecent3DayRows = (groupId, agentName, anchorDate, fallback) => {
+                const endIdx = datesAsc.indexOf(anchorDate);
+                if (endIdx < 0) return [];
+                const rows = [];
+                for (let i = endIdx; i >= 0 && rows.length < 3; i--) {
+                    const d = datesAsc[i];
+                    const metrics = getAgentMetricsByDate(groupId, agentName, d, fallback);
+                    rows.push({
+                        date: d,
+                        ...metrics
+                    });
+                }
+                return rows;
+            };
+
+            const buildRecent2WeekGroupRows = (module, groupName, anchorWeekLabel) => {
+                const weeks = (REAL_DATA.availableWeeks || []).slice();
+                if (weeks.length === 0) return [];
+                const anchorIdx = weeks.indexOf(anchorWeekLabel);
+                const endIdx = anchorIdx >= 0 ? anchorIdx : (weeks.length - 1);
+                const startIdx = Math.max(0, endIdx - 1);
+                const rows = [];
+                for (let i = endIdx; i >= startIdx; i--) {
+                    const weekLabel = weeks[i];
+                    const wm = REAL_DATA.groupPerformanceByWeek && REAL_DATA.groupPerformanceByWeek[module] && REAL_DATA.groupPerformanceByWeek[module][groupName]
+                        ? REAL_DATA.groupPerformanceByWeek[module][groupName][weekLabel]
+                        : null;
+                    if (!wm) continue;
+                    rows.push({
+                        weekLabel: weekLabel,
+                        target: wm.target,
+                        actual: wm.actual,
+                        achievement: wm.achievement,
+                        connectRate: wm.connectRate,
+                        coverTimes: wm.coverTimes,
+                        callTimes: wm.callTimes,
+                        artCallTimes: wm.artCallTimes,
+                        callBillmin: wm.callBillmin,
+                        singleCallDuration: wm.singleCallDuration,
+                        callLossRate: wm.callLossRate
+                    });
+                }
+                return rows;
+            };
+
+            const moduleSort = (a, b) => {
+                const rank = { 'S0': 0, 'S1': 1, 'S2': 2, 'M1': 3 };
+                const abase = String(a || '').split('-')[0];
+                const bbase = String(b || '').split('-')[0];
+                const ra = Object.prototype.hasOwnProperty.call(rank, abase) ? rank[abase] : 999;
+                const rb = Object.prototype.hasOwnProperty.call(rank, bbase) ? rank[bbase] : 999;
+                if (ra !== rb) return ra - rb;
+                return String(a || '').localeCompare(String(b || ''));
+            };
+
+            // Build under-performing groups from selected week map (2+ consecutive unmet weeks)
+            const groups = [];
+            (REAL_DATA.modules || []).filter(m => !isM2Module(m)).sort(moduleSort).forEach(module => {
+                const rows = REAL_DATA.groupPerformance[module] || [];
+                rows.forEach(group => {
+                    const cwMap = REAL_DATA.groupConsecutiveWeeksByWeek && REAL_DATA.groupConsecutiveWeeksByWeek[module] && REAL_DATA.groupConsecutiveWeeksByWeek[module][group.name]
+                        ? REAL_DATA.groupConsecutiveWeeksByWeek[module][group.name]
+                        : null;
+                    const streak = cwMap && cwMap[selectedWeek] !== undefined ? cwMap[selectedWeek] : (group.consecutiveWeeks || 0);
+                    if (streak < 2) return;
+                    const wm = REAL_DATA.groupPerformanceByWeek && REAL_DATA.groupPerformanceByWeek[module] && REAL_DATA.groupPerformanceByWeek[module][group.name]
+                        ? REAL_DATA.groupPerformanceByWeek[module][group.name][selectedWeek]
+                        : null;
+                    const weeklyTarget = wm && wm.target !== undefined ? wm.target : group.target;
+                    const weeklyActual = wm && wm.actual !== undefined ? wm.actual : group.actual;
+                    groups.push({
+                        module: module,
+                        name: group.name,
+                        weeks: streak,
+                        weeklyTarget: weeklyTarget || 0,
+                        weeklyActual: weeklyActual || 0
+                    });
+                });
+            });
+            groups.sort((a, b) => {
+                const mr = moduleSort(a.module, b.module);
+                if (mr !== 0) return mr;
+                return (b.weeks || 0) - (a.weeks || 0);
+            });
+
             const groupTbody = document.getElementById('anomaly-group-table');
             const groupEmpty = document.getElementById('anomaly-group-empty');
             groupTbody.innerHTML = '';
-            const groups = [...REAL_DATA.anomalyGroups]
-                .filter(g => !isM2Module(g.module))
-                .filter(g => (g.weeks || 0) >= 2)
-                .sort((a, b) => (b.weeks || 0) - (a.weeks || 0));
-
             if (groups.length === 0) {
                 groupEmpty.style.display = 'block';
             } else {
                 groupEmpty.style.display = 'none';
-                groups.forEach(item => {
+                let currentModule = '';
+                groups.forEach((item, idx) => {
+                    if (item.module !== currentModule) {
+                        currentModule = item.module;
+                        groupTbody.innerHTML += '<tr><td colspan="8" style="padding:10px 12px; background:#eef2ff; color:#1e3a8a; font-weight:700;">' + currentModule + '</td></tr>';
+                    }
                     const wTgt = item.weeklyTarget || 0;
                     const wAct = item.weeklyActual || 0;
                     const wAch = wTgt > 0 ? (wAct / wTgt * 100) : 0;
                     const achColor = wAch >= 100 ? '#22c55e' : wAch >= 90 ? '#d97706' : '#ef4444';
                     const wGap = Math.max(0, wTgt - wAct);
                     const rowClass = (item.weeks || 0) >= 3 ? 'drilldown-row red-row' : 'drilldown-row yellow-row';
+                    const detailId = 'anomaly-group-detail-' + idx;
                     groupTbody.innerHTML += '<tr class="' + rowClass + '">' +
                         '<td style="padding: 12px; font-weight: 500;">' + item.name + '</td>' +
                         '<td style="padding: 12px; text-align: center;">' + item.module + '</td>' +
@@ -1702,41 +1962,159 @@ body.theme-style_3 .status-danger {
                         '<td style="padding: 12px; text-align: right;">' + formatNumber(wAct) + '</td>' +
                         '<td style="padding: 12px; text-align: right; color: #ef4444; font-weight: 600;">-' + formatNumber(wGap) + '</td>' +
                         '<td style="padding: 12px; text-align: right; color: ' + achColor + '; font-weight: 600;">' + wAch.toFixed(1) + '%</td>' +
+                        '<td style="padding: 12px; text-align: center;"><button onclick="toggleAnomalyGroupDetail(\'' + detailId + '\')" style="border:1px solid #cbd5e1;background:#fff;color:#334155;padding:4px 8px;border-radius:6px;cursor:pointer;font-size:12px;">Recent 2 Weeks</button></td>' +
                         '</tr>';
+
+                    const recentWeeks = buildRecent2WeekGroupRows(item.module, item.name, selectedWeek);
+                    let detailHtml = '<tr id="' + detailId + '" style="display:none;background:#f8fafc;">';
+                    detailHtml += '<td colspan="8" style="padding:10px 12px;">';
+                    detailHtml += '<div style="font-size:12px;color:#64748b;margin-bottom:8px;">Drilldown (recent 2 weeks)</div>';
+                    detailHtml += '<div style="overflow-x:auto;"><table style="width:100%; border-collapse:collapse; font-size:12px;">';
+                    detailHtml += '<tr style="background:#eef2ff;border-bottom:1px solid #c7d2fe;">'
+                        + '<th style="padding:6px 8px; text-align:left;">Week</th>'
+                        + '<th style="padding:6px 8px; text-align:right;">Weekly Target</th>'
+                        + '<th style="padding:6px 8px; text-align:right;">Weekly Actual</th>'
+                        + '<th style="padding:6px 8px; text-align:right;">Weekly Achievement</th>'
+                        + '<th style="padding:6px 8px; text-align:right;">Conn. Rate</th>'
+                        + '<th style="padding:6px 8px; text-align:right;">Cover Times</th>'
+                        + '<th style="padding:6px 8px; text-align:right;">Call Times</th>'
+                        + '<th style="padding:6px 8px; text-align:right;">Art Call Times</th>'
+                        + '<th style="padding:6px 8px; text-align:right;">Call Billmin</th>'
+                        + '<th style="padding:6px 8px; text-align:right;">Single Call Duration</th>'
+                        + '<th style="padding:6px 8px; text-align:right;">Call Loss</th>'
+                        + '</tr>';
+                    recentWeeks.forEach(r => {
+                        const ach = (r.achievement !== null && r.achievement !== undefined) ? r.achievement.toFixed(1) + '%' : '--';
+                        detailHtml += '<tr style="border-bottom:1px solid #e2e8f0;">'
+                            + '<td style="padding:6px 8px;">' + r.weekLabel + '</td>'
+                            + '<td style="padding:6px 8px; text-align:right;">' + (r.target !== null && r.target !== undefined ? formatNumber(r.target) : '--') + '</td>'
+                            + '<td style="padding:6px 8px; text-align:right;">' + (r.actual !== null && r.actual !== undefined ? formatNumber(r.actual) : '--') + '</td>'
+                            + '<td style="padding:6px 8px; text-align:right;">' + ach + '</td>'
+                            + '<td style="padding:6px 8px; text-align:right;">' + (r.connectRate !== null && r.connectRate !== undefined ? r.connectRate.toFixed(1) + '%' : '--') + '</td>'
+                            + '<td style="padding:6px 8px; text-align:right;">' + (r.coverTimes !== null && r.coverTimes !== undefined ? formatNumber(r.coverTimes) : '--') + '</td>'
+                            + '<td style="padding:6px 8px; text-align:right;">' + (r.callTimes !== null && r.callTimes !== undefined ? formatNumber(r.callTimes) : '--') + '</td>'
+                            + '<td style="padding:6px 8px; text-align:right;">' + (r.artCallTimes !== null && r.artCallTimes !== undefined ? formatNumber(r.artCallTimes) : '--') + '</td>'
+                            + '<td style="padding:6px 8px; text-align:right;">' + (r.callBillmin !== null && r.callBillmin !== undefined ? r.callBillmin.toFixed(2) : '--') + '</td>'
+                            + '<td style="padding:6px 8px; text-align:right;">' + (r.singleCallDuration !== null && r.singleCallDuration !== undefined ? r.singleCallDuration.toFixed(2) : '--') + '</td>'
+                            + '<td style="padding:6px 8px; text-align:right;">' + (r.callLossRate !== null && r.callLossRate !== undefined ? r.callLossRate.toFixed(1) + '%' : '--') + '</td>'
+                            + '</tr>';
+                    });
+                    detailHtml += '</table></div></td></tr>';
+                    groupTbody.innerHTML += detailHtml;
                 });
             }
 
-            // Under-performing individuals: 3+ consecutive unmet days (sorted by days desc)
+            // Build under-performing individuals from selected date history (3+ consecutive unmet days)
+            const agents = [];
+            (REAL_DATA.groups || []).forEach(groupId => {
+                const module = REAL_DATA.tlData[groupId] ? REAL_DATA.tlData[groupId].groupModule : '';
+                if (isM2Module(module)) return;
+                const rows = REAL_DATA.agentPerformance[groupId] || [];
+                rows.forEach(agent => {
+                    const streak = computeAgentStreakByDate(groupId, agent.name, selectedDate);
+                    if (streak < 3) return;
+                    const m = getAgentMetricsByDate(groupId, agent.name, selectedDate, agent);
+                    agents.push({
+                        module: module,
+                        group: groupId,
+                        name: agent.name,
+                        days: streak,
+                        ...m
+                    });
+                });
+            });
+            agents.sort((a, b) => {
+                const mr = moduleSort(a.module, b.module);
+                if (mr !== 0) return mr;
+                return (b.days || 0) - (a.days || 0);
+            });
+
             const agentTbody = document.getElementById('anomaly-agent-table');
             const agentEmpty = document.getElementById('anomaly-agent-empty');
             agentTbody.innerHTML = '';
-            const agents = [...REAL_DATA.anomalyAgents]
-                .filter(a => !isM2Module(a.module))
-                .filter(a => (a.days || 0) >= 3)
-                .sort((a, b) => (b.days || 0) - (a.days || 0));
-
             if (agents.length === 0) {
                 agentEmpty.style.display = 'block';
             } else {
                 agentEmpty.style.display = 'none';
-                agents.forEach(item => {
-                    const dailyGap = Math.max(0, (item.dailyTarget || 0) - (item.dailyActual || 0));
+                let currentModule = '';
+                agents.forEach((item, idx) => {
+                    if (item.module !== currentModule) {
+                        currentModule = item.module;
+                        agentTbody.innerHTML += '<tr><td colspan="12" style="padding:10px 12px; background:#eef2ff; color:#1e3a8a; font-weight:700;">' + currentModule + '</td></tr>';
+                    }
+                    const dailyGap = Math.max(0, (item.target || 0) - (item.actual || 0));
                     const callLoss = (item.callLossRate !== null && item.callLossRate !== undefined) ? item.callLossRate.toFixed(1) + '%' : '--';
-                    agentTbody.innerHTML += '<tr class="drilldown-row red-row">' +
+                    const rowId = 'anomaly-agent-row-' + idx;
+                    const detailId = 'anomaly-agent-detail-' + idx;
+                    agentTbody.innerHTML += '<tr id="' + rowId + '" class="drilldown-row red-row">' +
                         '<td style="padding: 12px; font-weight: 500;">' + item.name + '</td>' +
                         '<td style="padding: 12px;">' + item.group + '</td>' +
                         '<td style="padding: 12px; text-align: center;">' + item.module + '</td>' +
                         '<td style="padding: 12px; text-align: center; font-weight: 700; color: #ef4444;">' + item.days + '</td>' +
-                        '<td style="padding: 12px; text-align: right;">' + formatNumber(item.dailyTarget) + '</td>' +
-                        '<td style="padding: 12px; text-align: right;">' + formatNumber(item.dailyActual) + '</td>' +
+                        '<td style="padding: 12px; text-align: right;">' + formatNumber(item.target) + '</td>' +
+                        '<td style="padding: 12px; text-align: right;">' + formatNumber(item.actual) + '</td>' +
                         '<td style="padding: 12px; text-align: right; color: #ef4444; font-weight: 600;">-' + formatNumber(dailyGap) + '</td>' +
-                        '<td style="padding: 12px; text-align: right;">' + (item.calls !== null && item.calls !== undefined ? item.calls : '--') + '</td>' +
+                        '<td style="padding: 12px; text-align: right;">' + (item.artCallTimes !== null && item.artCallTimes !== undefined ? formatNumber(item.artCallTimes) : '--') + '</td>' +
                         '<td style="padding: 12px; text-align: right;">' + (item.connectRate !== null && item.connectRate !== undefined ? item.connectRate.toFixed(1) + '%' : '--') + '</td>' +
                         '<td style="padding: 12px; text-align: right;">' + callLoss + '</td>' +
-                        '<td style="padding: 12px; text-align: right;">' + item.attendance + '%</td>' +
+                        '<td style="padding: 12px; text-align: right;">' + (item.attendance !== null && item.attendance !== undefined ? item.attendance + '%' : '--') + '</td>' +
+                        '<td style="padding: 12px; text-align: center;"><button onclick="toggleAnomalyAgentDetail(\'' + detailId + '\')" style="border:1px solid #cbd5e1;background:#fff;color:#334155;padding:4px 8px;border-radius:6px;cursor:pointer;font-size:12px;">Recent 3 Days</button></td>' +
                         '</tr>';
+
+                    const recentRows = buildRecent3DayRows(item.group, item.name, selectedDate, item);
+                    let detailHtml = '<tr id="' + detailId + '" style="display:none;background:#f8fafc;">';
+                    detailHtml += '<td colspan="12" style="padding:10px 12px;">';
+                    detailHtml += '<div style="font-size:12px;color:#64748b;margin-bottom:8px;">Drilldown (recent 3 days)</div>';
+                    detailHtml += '<div style="overflow-x:auto;"><table style="width:100%; border-collapse:collapse; font-size:12px;">';
+                    detailHtml += '<tr style="background:#eef2ff;border-bottom:1px solid #c7d2fe;">'
+                        + '<th style="padding:6px 8px; text-align:left;">Date</th>'
+                        + '<th style="padding:6px 8px; text-align:right;">Target</th>'
+                        + '<th style="padding:6px 8px; text-align:right;">Actual</th>'
+                        + '<th style="padding:6px 8px; text-align:right;">Achievement</th>'
+                        + '<th style="padding:6px 8px; text-align:right;">Conn. Rate</th>'
+                        + '<th style="padding:6px 8px; text-align:right;">Cover Times</th>'
+                        + '<th style="padding:6px 8px; text-align:right;">Call Times</th>'
+                        + '<th style="padding:6px 8px; text-align:right;">Art Call Times</th>'
+                        + '<th style="padding:6px 8px; text-align:right;">Call Billmin</th>'
+                        + '<th style="padding:6px 8px; text-align:right;">Single Call Duration</th>'
+                        + '<th style="padding:6px 8px; text-align:right;">PTP</th>'
+                        + '<th style="padding:6px 8px; text-align:right;">Call Loss</th>'
+                        + '<th style="padding:6px 8px; text-align:right;">Attendance</th>'
+                        + '</tr>';
+                    recentRows.forEach(r => {
+                        const ach = (r.achievement !== null && r.achievement !== undefined) ? r.achievement.toFixed(1) + '%' : '--';
+                        detailHtml += '<tr style="border-bottom:1px solid #e2e8f0;">'
+                            + '<td style="padding:6px 8px;">' + r.date + '</td>'
+                            + '<td style="padding:6px 8px; text-align:right;">' + (r.target !== null && r.target !== undefined ? formatNumber(r.target) : '--') + '</td>'
+                            + '<td style="padding:6px 8px; text-align:right;">' + (r.actual !== null && r.actual !== undefined ? formatNumber(r.actual) : '--') + '</td>'
+                            + '<td style="padding:6px 8px; text-align:right;">' + ach + '</td>'
+                            + '<td style="padding:6px 8px; text-align:right;">' + (r.connectRate !== null && r.connectRate !== undefined ? r.connectRate.toFixed(1) + '%' : '--') + '</td>'
+                            + '<td style="padding:6px 8px; text-align:right;">' + (r.coverTimes !== null && r.coverTimes !== undefined ? formatNumber(r.coverTimes) : '--') + '</td>'
+                            + '<td style="padding:6px 8px; text-align:right;">' + (r.callTimes !== null && r.callTimes !== undefined ? formatNumber(r.callTimes) : '--') + '</td>'
+                            + '<td style="padding:6px 8px; text-align:right;">' + (r.artCallTimes !== null && r.artCallTimes !== undefined ? formatNumber(r.artCallTimes) : '--') + '</td>'
+                            + '<td style="padding:6px 8px; text-align:right;">' + (r.callBillmin !== null && r.callBillmin !== undefined ? r.callBillmin.toFixed(2) : '--') + '</td>'
+                            + '<td style="padding:6px 8px; text-align:right;">' + (r.singleCallDuration !== null && r.singleCallDuration !== undefined ? r.singleCallDuration.toFixed(2) : '--') + '</td>'
+                            + '<td style="padding:6px 8px; text-align:right;">' + (r.ptp !== null && r.ptp !== undefined ? r.ptp.toFixed(1) + '%' : '--') + '</td>'
+                            + '<td style="padding:6px 8px; text-align:right;">' + (r.callLossRate !== null && r.callLossRate !== undefined ? r.callLossRate.toFixed(1) + '%' : '--') + '</td>'
+                            + '<td style="padding:6px 8px; text-align:right;">' + (r.attendance !== null && r.attendance !== undefined ? r.attendance + '%' : '--') + '</td>'
+                            + '</tr>';
+                    });
+                    detailHtml += '</table></div></td></tr>';
+                    agentTbody.innerHTML += detailHtml;
                 });
             }
+        }
+
+        function toggleAnomalyAgentDetail(rowId) {
+            const row = document.getElementById(rowId);
+            if (!row) return;
+            row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
+        }
+
+        function toggleAnomalyGroupDetail(rowId) {
+            const row = document.getElementById(rowId);
+            if (!row) return;
+            row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
         }
 
         function initAgentOverviewDateSelector() {
@@ -2243,20 +2621,13 @@ body.theme-style_3 .status-danger {
                 compareTargetRate: compareRow ? compareRow.targetRepayRate : null
             };
         }
-
-
         function loadRiskModuleReview() {
-            // Calculate At-Risk for all modules dynamically
             const riskModules = [];
             getVisibleModules().forEach(module => {
                 const risk = calculateAtRisk(module);
-                risk.module = module;
-                if (risk.isAtRisk) {
-                    riskModules.push(module);
-                }
+                if (risk.isAtRisk) riskModules.push(module);
             });
 
-            // Sort risk modules by severity (lowest conservative achievement first)
             riskModules.sort((a, b) => {
                 const riskA = calculateAtRisk(a);
                 const riskB = calculateAtRisk(b);
@@ -2273,7 +2644,6 @@ body.theme-style_3 .status-danger {
             reviewSection.style.display = 'block';
             content.innerHTML = '';
 
-            // Update the header with At-Risk logic explanation
             const headerHtml = '<div style="background: #fef3c7; border-left: 4px solid #d97706; padding: 12px; border-radius: 0 4px 4px 0; margin-bottom: 16px; font-size: 12px; color: #92400e;">' +
                 '<strong>Status Logic:</strong> On Track if natural-month actual repay rate ≥ daily target rate on REAL_DATA.dataDate (same as chart); otherwise At Risk. ' +
                 'Policy: RECOVERY_TREND_STATUS_POLICY.mode \'rate_vs_target_cutoff\' (alt: \'mtd_linear\').' +
@@ -2281,67 +2651,18 @@ body.theme-style_3 .status-danger {
             content.innerHTML += headerHtml;
 
             riskModules.forEach(module => {
-                const risk = calculateAtRisk(module);
-                const groups = REAL_DATA.riskModuleGroups[module] || [];
-                groups.sort((a, b) => {
+                const groups = (REAL_DATA.riskModuleGroups[module] || []).slice().sort((a, b) => {
                     const av = (a.achievement !== null && a.achievement !== undefined) ? a.achievement : 999;
                     const bv = (b.achievement !== null && b.achievement !== undefined) ? b.achievement : 999;
                     return av - bv;
                 });
 
                 let html = '<div style="margin-bottom: 24px;">';
-
-                // Module summary header
                 html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">';
                 html += '<h4 style="font-size: 14px; font-weight: 600; color: #991b1b;">Module ' + module + '</h4>';
                 html += '<span class="status-badge status-danger">At Risk</span>';
                 html += '</div>';
 
-                // Projection summary
-                html += '<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px;">';
-                html += '<div style="background: #f8fafc; padding: 12px; border-radius: 6px; text-align: center;">';
-                html += '<div style="font-size: 16px; font-weight: 700; color: #1e293b;">' + formatNumber(risk.currentActual) + '</div>';
-                html += '<div style="font-size: 10px; color: #64748b;">MTD Actual (Day ' + risk.currentDay + ')</div>';
-                html += '</div>';
-                html += '<div style="background: #f8fafc; padding: 12px; border-radius: 6px; text-align: center;">';
-                html += '<div style="font-size: 16px; font-weight: 700; color: #1e293b;">' + formatNumber(risk.monthTarget) + '</div>';
-                html += '<div style="font-size: 10px; color: #64748b;">Month Target</div>';
-                html += '</div>';
-                html += '<div style="background: #fef2f2; padding: 12px; border-radius: 6px; text-align: center;">';
-                html += '<div style="font-size: 16px; font-weight: 700; color: #dc2626;">-' + formatNumber(risk.gap) + '</div>';
-                html += '<div style="font-size: 10px; color: #64748b;">Gap to Close</div>';
-                html += '</div>';
-                html += '<div style="background: #fef2f2; padding: 12px; border-radius: 6px; text-align: center;">';
-                html += '<div style="font-size: 16px; font-weight: 700; color: #dc2626;">' + formatNumber(risk.requiredDaily) + '</div>';
-                html += '<div style="font-size: 10px; color: #64748b;">Required Daily Avg</div>';
-                html += '</div>';
-                html += '</div>';
-
-                // Projection comparison
-                html += '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; font-size: 12px;">';
-                html += '<div style="background: #fef2f2; padding: 10px; border-radius: 4px; text-align: center; border: 1px solid #fecaca;">';
-                html += '<div style="font-weight: 600; color: #991b1b;">Conservative</div>';
-                html += '<div style="font-size: 14px; font-weight: 700; color: ' + (risk.conservativeAch >= 100 ? '#059669' : '#dc2626') + ';">' + formatNumber(risk.projectedConservative) + '</div>';
-                html += '<div style="color: #64748b;">(' + risk.conservativeAch.toFixed(1) + '%)</div>';
-                html += '</div>';
-                html += '<div style="background: #fffbeb; padding: 10px; border-radius: 4px; text-align: center; border: 1px solid #fde68a;">';
-                html += '<div style="font-weight: 600; color: #92400e;">Simple Avg</div>';
-                html += '<div style="font-size: 14px; font-weight: 700; color: ' + (risk.simpleAch >= 100 ? '#059669' : '#d97706') + ';">' + formatNumber(risk.projectedSimple) + '</div>';
-                html += '<div style="color: #64748b;">(' + risk.simpleAch.toFixed(1) + '%)</div>';
-                html += '</div>';
-                html += '<div style="background: #f0fdf4; padding: 10px; border-radius: 4px; text-align: center; border: 1px solid #bbf7d0;">';
-                html += '<div style="font-weight: 600; color: #166534;">Momentum (3-day)</div>';
-                html += '<div style="font-size: 14px; font-weight: 700; color: ' + (risk.momentumAch >= 100 ? '#059669' : '#65a30d') + ';">' + formatNumber(risk.projectedMomentum) + '</div>';
-                html += '<div style="color: #64748b;">(' + risk.momentumAch.toFixed(1) + '%)</div>';
-                html += '</div>';
-                html += '</div>';
-
-                // Historical comparison
-                html += '<div style="font-size: 11px; color: #64748b; margin-bottom: 12px;">';
-                html += 'Daily Avg: ' + formatNumber(risk.dailyAvg) + ' | 7-Day Avg: ' + formatNumber(risk.dailyTrend) + ' | Remaining Days: ' + risk.remainingDays;
-                html += '</div>';
-
-                // Group drill-down table
                 html += '<table style="width: 100%; border-collapse: collapse; font-size: 13px;">';
                 html += '<tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">' +
                     '<th style="padding: 8px; text-align: left;">Group</th>' +
@@ -2351,25 +2672,27 @@ body.theme-style_3 .status-danger {
                     '<th style="padding: 8px; text-align: right;">Calls</th>' +
                     '<th style="padding: 8px; text-align: right;">Conn%</th>' +
                     '<th style="padding: 8px; text-align: right;">PTP%</th>' +
+                    '<th style="padding: 8px; text-align: right;">Call Loss%</th>' +
                     '<th style="padding: 8px; text-align: right;">Attd%</th></tr>';
                 groups.forEach(g => {
-                    const achColor = g.achievement < 90 ? '#ef4444' : '#22c55e';
+                    const achColor = (g.achievement !== null && g.achievement !== undefined && g.achievement < 90) ? '#ef4444' : '#22c55e';
                     html += '<tr style="border-bottom: 1px solid #f1f5f9;">' +
                         '<td style="padding: 8px;">' + g.group + '</td>' +
                         '<td style="padding: 8px; text-align: right;">' + formatNumber(g.target) + '</td>' +
                         '<td style="padding: 8px; text-align: right;">' + formatNumber(g.actual) + '</td>' +
-                        '<td style="padding: 8px; text-align: right; color: ' + achColor + '; font-weight: 600;">' + g.achievement.toFixed(1) + '%</td>' +
-                        '<td style="padding: 8px; text-align: right;">' + g.calls + '</td>' +
-                        '<td style="padding: 8px; text-align: right;">' + g.connectRate.toFixed(1) + '%</td>' +
+                        '<td style="padding: 8px; text-align: right; color: ' + achColor + '; font-weight: 600;">' + (g.achievement !== null && g.achievement !== undefined ? g.achievement.toFixed(1) + '%' : '--') + '</td>' +
+                        '<td style="padding: 8px; text-align: right;">' + (g.calls !== null && g.calls !== undefined ? g.calls : '--') + '</td>' +
+                        '<td style="padding: 8px; text-align: right;">' + (g.connectRate !== null && g.connectRate !== undefined ? g.connectRate.toFixed(1) + '%' : '--') + '</td>' +
                         '<td style="padding: 8px; text-align: right;">' + (g.ptpRate !== null && g.ptpRate !== undefined ? g.ptpRate.toFixed(1) + '%' : '--') + '</td>' +
                         '<td style="padding: 8px; text-align: right;">' + (g.callLossRate !== null && g.callLossRate !== undefined ? g.callLossRate.toFixed(1) + '%' : '--') + '</td>' +
-                        '<td style="padding: 8px; text-align: right;">' + g.attendance + '%</td>' +
+                        '<td style="padding: 8px; text-align: right;">' + (g.attendance !== null && g.attendance !== undefined ? g.attendance + '%' : '--') + '</td>' +
                         '</tr>';
                 });
                 html += '</table></div>';
                 content.innerHTML += html;
             });
         }
+
 
         // ===================== INIT =====================
         document.getElementById('report-date').textContent = new Date().toISOString().split('T')[0];
