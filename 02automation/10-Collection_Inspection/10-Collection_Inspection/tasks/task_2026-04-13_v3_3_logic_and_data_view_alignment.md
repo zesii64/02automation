@@ -21,8 +21,8 @@ updated_at: 2026-04-13
 - [x] 现存风险已定位：TL 连接率字段映射仍存在旧字段优先问题。
 
 ## 状态
-- 已完成 `connectRate` 映射收口与关键日期回归。
-- `v3_3` 主产物已重新生成并通过内置校验。
+- 已完成 TL/STL selector 全联动的主逻辑修复（顶层 KPI、结论、表格、趋势图）。
+- 人工交互抽检已通过，当前进入提交阶段。
 
 ## 证据
 - 已落地：TL/STL drilldown 按 `achievement` 升序。
@@ -33,10 +33,15 @@ updated_at: 2026-04-13
 - 已落地：`agent_performance` 的 `connectRate` 映射改为优先 `connect_rate`，兼容 `call_connect_times/connect_times/call_billhr`。
 - 已验证：`2026-04-09`、`2026-04-12` 在产物中 `agentPerformanceByDate.*.connectRate` 与源表 `connect_rate` 一致（归一化键后 0 mismatch）。
 - 已验证：重新生成 `reports/Collection_Operations_Report_v3_3.html`，生成脚本 `Hard checks passed`。
+- 已落地：TL 顶部 3 卡改为按 `tl-date-select` 的所选日期取值（不再固定默认日）。
+- 已落地：TL recovery trend 按所选日期作为 cutoff（同月切换日期，曲线与数值同步变化）。
+- 已落地：STL trend 文案改为按所选周动态计算；STL group 表在周切换时强制刷新。
+- 已落地：STL recovery trend cutoff 改为 `min(所选周周末, dataDate)`，图表随周选择联动。
+- 已验证：人工交互抽检通过（TL 日期切换、STL 周切换下 KPI/表格/图表联动一致）。
 
 ## 下一步动作
-- 人工点开 `reports/Collection_Operations_Report_v3_3.html`，进行页面交互抽检（TL 日期切换、STL 周切换、Data View drilldown）。
-- 若抽检通过，进入提交阶段（按仓库规范整理 commit message）。
+- 提交本轮增量修复（`generate_v2_7.py` + `Collection_Operations_Report_v3_3.html` + 状态文档）。
+- 视需要推送到远端分支并发起后续评审。
 
 ## 交接说明
-本卡技术收口已完成；如继续推进，优先执行人工交互抽检，再进行提交。
+本卡功能与联动抽检已完成；接手时可直接执行提交/推送流程。

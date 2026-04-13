@@ -1,5 +1,5 @@
 """
-Collection Operations Report v3.3 - Real Data v3
+Collection Operations Report v3.4 - Real Data v3
 Base: Collection_Operations_Report_v2_2.html
 Data: 260318_output_automation_v3.xlsx
 Changes vs v2.4:
@@ -12,7 +12,7 @@ Changes vs v2.4:
   - Default TL date: 2026-03-21 (max common date across all agent sources)
   - Default STL week: most-recent complete week
   - Call Loss Rate column added to all agent/group tables
-Output: Collection_Operations_Report_v3_3.html
+Output: Collection_Operations_Report_v3_4.html
 """
 import pandas as pd
 import json
@@ -31,7 +31,7 @@ BASE       = r'd:/11automation/02automation/10-Collection_Inspection/10-Collecti
 EXCEL_PATH = BASE + r'/data/260318_output_automation_v3.xlsx'
 PROCESS_TARGET_PATH = BASE + r'/data/process_data_target.xlsx'
 HTML_IN    = BASE + r'/reports/Collection_Operations_Report_v2_2.html'
-HTML_OUT   = BASE + r'/reports/Collection_Operations_Report_v3_3.html'
+HTML_OUT   = BASE + r'/reports/Collection_Operations_Report_v3_4.html'
 
 # ========================
 # Load data
@@ -50,6 +50,8 @@ ptp_group    = pd.read_excel(xl, 'ptp_group_data',         index_col=0)
 cl_agent     = pd.read_excel(xl, 'call_loss_agent_data',   index_col=0)
 cl_group     = pd.read_excel(xl, 'call_loss_group_data',   index_col=0)
 nat_month    = pd.read_excel(xl, 'natural_month_repay',   index_col=0)
+attd_daily   = pd.read_excel(xl, 'attd_group_daily_data', index_col=0)
+attd_weekly  = pd.read_excel(xl, 'attd_group_week_data',  index_col=0)
 
 try:
     process_target_raw = pd.read_excel(PROCESS_TARGET_PATH, header=1)
@@ -67,6 +69,8 @@ group_repay['owner_group']= group_repay['owner_group'].str.strip()
 ptp_agent['owner_group']  = ptp_agent['owner_group'].str.strip()
 cl_agent['group_name']    = cl_agent['group_name'].str.strip()
 cl_group['group_name']    = cl_group['group_name'].str.strip()
+attd_daily['group_id']    = attd_daily['group_id'].astype(str).str.strip()
+attd_weekly['group_id']   = attd_weekly['group_id'].astype(str).str.strip()
 group_perf['week']        = group_perf['week'].astype(str)
 
 # Parse dates
@@ -77,11 +81,13 @@ agent_repay['dt']   = pd.to_datetime(agent_repay['dt'])
 ptp_agent['dt']     = pd.to_datetime(ptp_agent['dt'])
 cl_agent['dt']      = pd.to_datetime(cl_agent['dt'])
 nat_month['dt_biz'] = pd.to_datetime(nat_month['dt_biz'])
+attd_daily['dt']    = pd.to_datetime(attd_daily['dt'])
 
 group_repay['week'] = group_repay['week'].astype(str)
 ptp_group['week']   = ptp_group['week'].astype(str)
 cl_group['week']    = cl_group['week'].astype(str)
 group_perf['week']  = group_perf['week'].astype(str)
+attd_weekly['week'] = attd_weekly['week'].astype(str)
 
 data_warning_set = set()
 
@@ -122,6 +128,7 @@ group_repay['week'] = group_repay['week'].apply(normalize_week_label)
 ptp_group['week']   = ptp_group['week'].apply(normalize_week_label)
 cl_group['week']    = cl_group['week'].apply(normalize_week_label)
 group_perf['week']  = group_perf['week'].apply(normalize_week_label)
+attd_weekly['week'] = attd_weekly['week'].apply(normalize_week_label)
 
 # Core TL group list
 all_groups = sorted(tl_data['group_id'].unique().tolist())
@@ -219,6 +226,16 @@ def map_group_to_dtr(group):
 def norm(g):
     """Normalize group name for cross-sheet matching."""
     return str(g).replace(' ', '').replace('-', '') if pd.notna(g) else ''
+
+
+def normalize_attd_rate_pct(v):
+    """Normalize attendance rate to percentage [0,100]."""
+    if pd.isna(v):
+        return None
+    fv = float(v)
+    if fv <= 1.0:
+        fv = fv * 100
+    return round(fv, 1)
 
 def get_week_label(dt):
     dow            = dt.dayofweek
@@ -368,6 +385,8 @@ cl_agent['name_norm']    = cl_agent['owner_name'].apply(lambda x: str(x).strip()
 group_repay['grp_norm'] = group_repay['owner_group'].apply(norm)
 ptp_group['grp_norm']    = ptp_group['owner_group'].apply(norm)
 cl_group['grp_norm']     = cl_group['group_name'].apply(norm)
+attd_daily['grp_norm']   = attd_daily['group_id'].apply(norm)
+attd_weekly['grp_norm']  = attd_weekly['group_id'].apply(norm)
 
 # TL available dates: all dates from agent_repay
 available_dates = sorted(
@@ -512,6 +531,9 @@ for group in all_groups:
     group_rows   = tl_data[tl_data['group_id'] == group]
     group_module = extract_module_key(group)
     dtr_name     = map_group_to_dtr(group)
+    g_norm = norm(group)
+    dtr_norm = norm(dtr_name)
+    grp_norm_candidates = {g_norm, dtr_norm}
 
     if dtr_name in latest_dtr_agg.index:
         row   = latest_dtr_agg.loc[dtr_name]
@@ -544,6 +566,13 @@ for group in all_groups:
     module_target_nm = target_nm_dict.get(module_bucket, {})
     module_nm_daily  = module_nm_dict.get(group_module, {})
     group_nm_daily   = module_group_nm_dict.get(group_module, {}).get(group, {})
+    g_attd_daily = attd_daily[attd_daily['grp_norm'].isin(grp_norm_candidates)]
+    attd_daily_by_date = {}
+    if len(g_attd_daily) > 0:
+        for dt_key, day_df in g_attd_daily.groupby('dt'):
+            dt_str = pd.to_datetime(dt_key).strftime('%Y-%m-%d')
+            attd_vals = pd.to_numeric(day_df['attd_rate_8h'], errors='coerce').dropna()
+            attd_daily_by_date[dt_str] = normalize_attd_rate_pct(attd_vals.mean()) if len(attd_vals) > 0 else None
 
     days_series = []
     for day in range(1, DAYS_IN_MONTH + 1):
@@ -562,7 +591,8 @@ for group in all_groups:
             g_nm_rr = group_nm_daily.get(day, None) if in_cutoff else None
             days_series.append({'date': date_str, 'target': tgt, 'actual': act,
                                  'repayRate': rr, 'nmRepayRate': g_nm_rr,
-                                 'targetRepayRate': nm_trr, 'moduleRepayRate': nm_rr})
+                                 'targetRepayRate': nm_trr, 'moduleRepayRate': nm_rr,
+                                 'attendanceRate': attd_daily_by_date.get(date_str)})
         else:
             # targetRepayRate should be visible for full month, not capped by data cutoff day.
             nm_trr = module_target_nm.get(day, None)
@@ -570,7 +600,8 @@ for group in all_groups:
             g_nm_rr = group_nm_daily.get(day, None) if in_cutoff else None
             days_series.append({'date': date_str, 'target': None, 'actual': None,
                                  'repayRate': None, 'nmRepayRate': g_nm_rr,
-                                 'targetRepayRate': nm_trr, 'moduleRepayRate': nm_rr})
+                                 'targetRepayRate': nm_trr, 'moduleRepayRate': nm_rr,
+                                 'attendanceRate': attd_daily_by_date.get(date_str)})
 
     tl_data_js[group] = {
         'groupModule': group_module,
@@ -898,6 +929,12 @@ for mk in modules_list:
         cl_g_valid = cl_g['call_loss_rate'].dropna() if len(cl_g) > 0 else pd.Series(dtype=float)
         cl_rate = round(float(cl_g_valid.iloc[0]) * 100, 1) if len(cl_g_valid) > 0 else None
 
+        # Attendance from attd_group_week_data
+        attd_w = attd_weekly[(attd_weekly['grp_norm'].isin(grp_norm_candidates)) &
+                             (attd_weekly['week'] == DEFAULT_STL_WEEK)]
+        attd_w_valid = pd.to_numeric(attd_w['attd_rate_8h'], errors='coerce').dropna() if len(attd_w) > 0 else pd.Series(dtype=float)
+        attd = normalize_attd_rate_pct(attd_w_valid.mean()) if len(attd_w_valid) > 0 else None
+
         # Call metrics from group_performance
         gp_lw = group_perf[(group_perf['group_id'] == group) &
                            (group_perf['week'] == DEFAULT_STL_WEEK)]
@@ -944,15 +981,8 @@ for mk in modules_list:
             if 'single_call_duration' in gp_lw.columns and pd.notna(gp_lw['single_call_duration']).any():
                 single_call_duration_pa = float(gp_lw['single_call_duration'].iloc[0])
 
-            gtl = tl_data[(tl_data['group_id'] == group) & (tl_data['dt'] == TL_LATEST_DT)]
-            if len(gtl) > 0:
-                owner = float(gtl['ownercount'].iloc[0])
-                head  = float(gtl['headcount'].iloc[0])
-                attd  = round(head / owner * 100) if owner > 0 else 0
-            else:
-                attd = 0
         else:
-            calls_pa = conn_r = attd = 0
+            calls_pa = conn_r = 0
 
         # Weekly repay drill-down history (linked to STL week selector)
         gr_hist = group_repay[group_repay['grp_norm'].isin(grp_norm_candidates)]
@@ -1018,6 +1048,14 @@ for mk in modules_list:
                 clv = pd.to_numeric(cr['call_loss_rate'], errors='coerce')
                 week_map.setdefault(wk_label, {})
                 week_map[wk_label]['callLossRate'] = round(float(clv) * 100, 1) if pd.notna(clv) else None
+        attd_hist_week = attd_weekly[attd_weekly['grp_norm'].isin(grp_norm_candidates)]
+        if len(attd_hist_week) > 0:
+            attd_weekly_agg = (attd_hist_week.groupby('week', as_index=False)
+                               .agg(attendance=('attd_rate_8h', lambda x: pd.to_numeric(x, errors='coerce').mean())))
+            for _, ar in attd_weekly_agg.iterrows():
+                wk_label = week_str_to_display(str(ar['week']))
+                week_map.setdefault(wk_label, {})
+                week_map[wk_label]['attendance'] = normalize_attd_rate_pct(ar.get('attendance'))
         consecutive_map = build_consecutive_weeks_map(week_map)
         cw_default = int(consecutive_map.get(week_str_to_display(DEFAULT_STL_WEEK), 0))
 
@@ -1294,7 +1332,7 @@ old_tl_month_block = """\
 new_tl_month_block = """\
             // Selected month (YYYY-MM). X-axis shows full month; actual may be null for future days.
             const selectedMonth = selectedDate ? selectedDate.slice(0, 7) : REAL_DATA.dataDate.slice(0, 7); // YYYY-MM
-            const cutoffDate = REAL_DATA.dataDate;
+            const cutoffDate = (selectedDate && selectedDate < REAL_DATA.dataDate) ? selectedDate : REAL_DATA.dataDate;
 
             const dates = [];
             const series = [];
@@ -1521,7 +1559,7 @@ html = html.replace(old_stl_group_series, new_stl_group_series)
 # TL: ensure full-month x-axis + cutoffDate defined + target continues beyond actuals
 html = html.replace(
     "            const selectedMonth = selectedDate ? selectedDate.slice(0, 7) : ''; // YYYY-MM",
-    "            const selectedMonth = selectedDate ? selectedDate.slice(0, 7) : REAL_DATA.dataDate.slice(0, 7); // YYYY-MM\n            const cutoffDate = REAL_DATA.dataDate;"
+    "            const selectedMonth = selectedDate ? selectedDate.slice(0, 7) : REAL_DATA.dataDate.slice(0, 7); // YYYY-MM\n            const cutoffDate = (selectedDate && selectedDate < REAL_DATA.dataDate) ? selectedDate : REAL_DATA.dataDate;"
 )
 html = html.replace(
     "                monthData.forEach(d => dates.push(d.date.slice(5))); // MM-DD format",
@@ -1817,6 +1855,10 @@ html = html.replace(
 )
 
 # TL unmet section: add target/actual sub-lines under each gap card
+html = html.replace(
+    '<h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #991b1b;">Unmet Target — Detail Review</h3>\n                    <div style="display: flex; gap: 12px; margin-bottom: 20px;">',
+    '<h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #991b1b;">Unmet Target — Detail Review</h3>\n                    <div id="tl-unmet-attendance" style="font-size: 13px; color: #334155; margin-bottom: 12px;">Attendance: --</div>\n                    <div style="display: flex; gap: 12px; margin-bottom: 20px;">'
+)
 html = html.replace(
     '<div class="metric-value" id="tl-gap-amount">--</div>\n                            <div class="metric-label">Gap to Target</div>',
     '<div class="metric-value" id="tl-gap-amount">--</div>\n                            <div class="metric-label">Gap to Target</div>\n                            <div id="tl-gap-meta" style="font-size: 12px; color: #64748b; margin-top: 4px;">Target: -- | Actual: --</div>'
@@ -2437,6 +2479,12 @@ tl_load_fn = """\
 
             const data = REAL_DATA.tlData[group];
             if (!data) return;
+            const dayRows = data.days || [];
+            const selectedDay = dayRows.find(d => d.date === selectedDate) || null;
+            const displayTarget = selectedDay && selectedDay.target !== undefined && selectedDay.target !== null ? selectedDay.target : data.target;
+            const displayActual = selectedDay && selectedDay.actual !== undefined && selectedDay.actual !== null ? selectedDay.actual : data.actual;
+            const displayAchievement = displayTarget > 0 ? (displayActual / displayTarget * 100) : 0;
+            const displayGap = Math.max(0, displayTarget - displayActual);
 
             const badge = document.getElementById('tl-status-badge');
             if (isTodaySelection(selectedDate)) {
@@ -2455,9 +2503,9 @@ tl_load_fn = """\
 
             chartCard.style.display = 'block';
             conclusionsCard.style.display = 'block';
-            document.getElementById('tl-yesterday-target').textContent = formatNumber(data.target);
-            document.getElementById('tl-yesterday-actual').textContent = formatNumber(data.actual);
-            document.getElementById('tl-achievement-rate').textContent = data.achievement.toFixed(1) + '%';
+            document.getElementById('tl-yesterday-target').textContent = formatNumber(displayTarget);
+            document.getElementById('tl-yesterday-actual').textContent = formatNumber(displayActual);
+            document.getElementById('tl-achievement-rate').textContent = displayAchievement.toFixed(1) + '%';
             const vsAvgCard = document.getElementById('tl-module-avg') ? document.getElementById('tl-module-avg').closest('.metric-card') : null;
             if (vsAvgCard) vsAvgCard.style.display = 'none';
 
@@ -2472,7 +2520,7 @@ tl_load_fn = """\
             } else {
                 badge.innerHTML = '<span class=\"status-badge status-danger\">Repay Target: Unmet</span>';
                 document.getElementById('tl-unmet-section').style.display = 'block';
-                document.getElementById('tl-gap-amount').textContent = formatNumber(data.gap);
+                document.getElementById('tl-gap-amount').textContent = formatNumber(displayGap);
                 const processTarget = REAL_DATA.processTargets && REAL_DATA.processTargets[data.groupModule] ? REAL_DATA.processTargets[data.groupModule] : null;
                 const callBenchmark = processTarget && processTarget.artCallTimes !== undefined && processTarget.artCallTimes !== null ? processTarget.artCallTimes : null;
                 const callBillminBenchmark = processTarget && processTarget.callBillminRawTarget !== undefined && processTarget.callBillminRawTarget !== null ? processTarget.callBillminRawTarget : null;
@@ -2491,8 +2539,8 @@ tl_load_fn = """\
                 badge.innerHTML += ' <br>' + processTargetBadge;
                 const callGap = callBenchmark !== null ? Math.round(groupAvgCalls - callBenchmark) : null;
                 const callBillminGap = callBillminBenchmark !== null ? Math.round((groupAvgBillmin - callBillminBenchmark) * 10) / 10 : null;
-                const repayTarget = data.target;
-                const repayActual = data.actual;
+                const repayTarget = displayTarget;
+                const repayActual = displayActual;
                 const repayGap = (repayActual !== null && repayActual !== undefined && repayTarget !== null && repayTarget !== undefined) ? (repayActual - repayTarget) : null;
                 const tlGapEl = document.getElementById('tl-gap-amount');
                 if (tlGapEl) tlGapEl.textContent = repayGap !== null ? ((repayGap > 0 ? '+' : '') + formatNumber(Math.round(repayGap))) : '--';
@@ -2504,10 +2552,16 @@ tl_load_fn = """\
                 if (tlCallGapMeta) tlCallGapMeta.textContent = 'Target: ' + (callBenchmark !== null ? callBenchmark.toFixed(0) : '--') + ' | Actual: ' + groupAvgCalls.toFixed(0);
                 const tlConnectGapMeta = document.getElementById('tl-connect-gap-meta');
                 if (tlConnectGapMeta) tlConnectGapMeta.textContent = 'Target: ' + (callBillminBenchmark !== null ? callBillminBenchmark.toFixed(1) : '--') + ' | Actual: ' + groupAvgBillmin.toFixed(1);
-                loadTLAgentTable(group);
             }
 
-            generateTLConclusions(data, isMet);
+            loadTLAgentTable(group);
+            const tlViewData = Object.assign({}, data, {
+                target: displayTarget,
+                actual: displayActual,
+                achievement: displayAchievement,
+                gap: displayGap
+            });
+            generateTLConclusions(tlViewData, isMet);
             const selectedDateVal = document.getElementById('tl-date-select').value;
             renderTLChart(group, selectedDateVal);
         }
@@ -2607,6 +2661,10 @@ stl_load_fn = """\
             const displayActual = weekData ? weekData.actual : data.actual;
             const displayAchievement = displayTarget > 0 ? (displayActual / displayTarget * 100) : 0;
             const displayGap = Math.max(0, displayTarget - displayActual);
+            const prevWeekData = (selectedWeekPos > 0) ? weeksArr[selectedWeekPos - 1] : null;
+            const prevWeekActual = prevWeekData && prevWeekData.actual !== undefined && prevWeekData.actual !== null ? prevWeekData.actual : 0;
+            const displayTrendPct = prevWeekActual > 0 ? ((displayActual - prevWeekActual) / prevWeekActual * 100) : 0;
+            const displayTrend = (prevWeekActual > 0 ? ((displayTrendPct >= 0 ? '+' : '') + displayTrendPct.toFixed(1) + '%') : 'N/A');
 
             const compareDate = weekEndDateFromLabel(selectedWeekLabel) || REAL_DATA.dataDate;
             const trendAhead = isRecoveryTrendAheadAtDate(module, compareDate);
@@ -2616,7 +2674,7 @@ stl_load_fn = """\
             document.getElementById('stl-week-target').textContent = formatNumber(displayTarget);
             document.getElementById('stl-week-actual').textContent = formatNumber(displayActual);
             document.getElementById('stl-achievement-rate').textContent = displayAchievement.toFixed(1) + '%';
-            document.getElementById('stl-trend').textContent = data.trend;
+            document.getElementById('stl-trend').textContent = displayTrend;
 
             const badge = document.getElementById('stl-status-badge');
             if (isMet) {
@@ -2625,7 +2683,6 @@ stl_load_fn = """\
             } else {
                 badge.innerHTML = '<span class=\"status-badge status-danger\">Weekly Repay Target: Unmet</span>';
                 document.getElementById('stl-unmet-section').style.display = 'block';
-                loadSTLGroupTable(module);
             }
 
             const processTarget = REAL_DATA.processTargets && REAL_DATA.processTargets[module] ? REAL_DATA.processTargets[module] : {};
@@ -2665,7 +2722,14 @@ stl_load_fn = """\
                 badge.innerHTML += ' <br><span class=\"status-badge\" style=\"background:#eff6ff;color:#1d4ed8;\">Today Repay Target: ' + targetHtml + '</span>';
             }
 
-            generateSTLConclusions(data, isMet, displayAchievement, displayGap);
+            loadSTLGroupTable(module);
+            const stlViewData = Object.assign({}, data, {
+                target: displayTarget,
+                actual: displayActual,
+                achievement: displayAchievement,
+                trend: displayTrend
+            });
+            generateSTLConclusions(stlViewData, isMet, displayAchievement, displayGap);
             renderSTLChart(data.weeks, weekIdx);
         }
 """
@@ -2911,9 +2975,12 @@ stl_chart_fn = """\
             const endPart = weekParts.length > 1 ? weekParts[1] : weekParts[0];
             const monthStr = endPart.split('/')[0]; // Use week-end month for cross-month week labels
 
-            const cutoffDate = REAL_DATA.dataDate;
             const module = document.getElementById('stl-module-select').value;
             const selectedYearMonth = REAL_DATA.dataDate.slice(0, 4) + '-' + monthStr.padStart(2, '0'); // YYYY-MM
+            const endMd = endPart.split('/');
+            const endDay = endMd.length > 1 ? String(parseInt(endMd[1], 10)).padStart(2, '0') : '31';
+            const weekEndDate = selectedYearMonth.slice(0, 4) + '-' + monthStr.padStart(2, '0') + '-' + endDay;
+            const cutoffDate = weekEndDate < REAL_DATA.dataDate ? weekEndDate : REAL_DATA.dataDate;
 
             // Full-month labels: MM-DD
             const ymParts = selectedYearMonth.split('-');

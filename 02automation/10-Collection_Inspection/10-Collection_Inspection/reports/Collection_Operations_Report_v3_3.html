@@ -1027,6 +1027,12 @@ body.theme-style_3 .status-danger {
 
             const data = REAL_DATA.tlData[group];
             if (!data) return;
+            const dayRows = data.days || [];
+            const selectedDay = dayRows.find(d => d.date === selectedDate) || null;
+            const displayTarget = selectedDay && selectedDay.target !== undefined && selectedDay.target !== null ? selectedDay.target : data.target;
+            const displayActual = selectedDay && selectedDay.actual !== undefined && selectedDay.actual !== null ? selectedDay.actual : data.actual;
+            const displayAchievement = displayTarget > 0 ? (displayActual / displayTarget * 100) : 0;
+            const displayGap = Math.max(0, displayTarget - displayActual);
 
             const badge = document.getElementById('tl-status-badge');
             if (isTodaySelection(selectedDate)) {
@@ -1045,9 +1051,9 @@ body.theme-style_3 .status-danger {
 
             chartCard.style.display = 'block';
             conclusionsCard.style.display = 'block';
-            document.getElementById('tl-yesterday-target').textContent = formatNumber(data.target);
-            document.getElementById('tl-yesterday-actual').textContent = formatNumber(data.actual);
-            document.getElementById('tl-achievement-rate').textContent = data.achievement.toFixed(1) + '%';
+            document.getElementById('tl-yesterday-target').textContent = formatNumber(displayTarget);
+            document.getElementById('tl-yesterday-actual').textContent = formatNumber(displayActual);
+            document.getElementById('tl-achievement-rate').textContent = displayAchievement.toFixed(1) + '%';
             const vsAvgCard = document.getElementById('tl-module-avg') ? document.getElementById('tl-module-avg').closest('.metric-card') : null;
             if (vsAvgCard) vsAvgCard.style.display = 'none';
 
@@ -1062,7 +1068,7 @@ body.theme-style_3 .status-danger {
             } else {
                 badge.innerHTML = '<span class="status-badge status-danger">Repay Target: Unmet</span>';
                 document.getElementById('tl-unmet-section').style.display = 'block';
-                document.getElementById('tl-gap-amount').textContent = formatNumber(data.gap);
+                document.getElementById('tl-gap-amount').textContent = formatNumber(displayGap);
                 const processTarget = REAL_DATA.processTargets && REAL_DATA.processTargets[data.groupModule] ? REAL_DATA.processTargets[data.groupModule] : null;
                 const callBenchmark = processTarget && processTarget.artCallTimes !== undefined && processTarget.artCallTimes !== null ? processTarget.artCallTimes : null;
                 const callBillminBenchmark = processTarget && processTarget.callBillminRawTarget !== undefined && processTarget.callBillminRawTarget !== null ? processTarget.callBillminRawTarget : null;
@@ -1081,8 +1087,8 @@ body.theme-style_3 .status-danger {
                 badge.innerHTML += ' <br>' + processTargetBadge;
                 const callGap = callBenchmark !== null ? Math.round(groupAvgCalls - callBenchmark) : null;
                 const callBillminGap = callBillminBenchmark !== null ? Math.round((groupAvgBillmin - callBillminBenchmark) * 10) / 10 : null;
-                const repayTarget = data.target;
-                const repayActual = data.actual;
+                const repayTarget = displayTarget;
+                const repayActual = displayActual;
                 const repayGap = (repayActual !== null && repayActual !== undefined && repayTarget !== null && repayTarget !== undefined) ? (repayActual - repayTarget) : null;
                 const tlGapEl = document.getElementById('tl-gap-amount');
                 if (tlGapEl) tlGapEl.textContent = repayGap !== null ? ((repayGap > 0 ? '+' : '') + formatNumber(Math.round(repayGap))) : '--';
@@ -1094,10 +1100,16 @@ body.theme-style_3 .status-danger {
                 if (tlCallGapMeta) tlCallGapMeta.textContent = 'Target: ' + (callBenchmark !== null ? callBenchmark.toFixed(0) : '--') + ' | Actual: ' + groupAvgCalls.toFixed(0);
                 const tlConnectGapMeta = document.getElementById('tl-connect-gap-meta');
                 if (tlConnectGapMeta) tlConnectGapMeta.textContent = 'Target: ' + (callBillminBenchmark !== null ? callBillminBenchmark.toFixed(1) : '--') + ' | Actual: ' + groupAvgBillmin.toFixed(1);
-                loadTLAgentTable(group);
             }
 
-            generateTLConclusions(data, isMet);
+            loadTLAgentTable(group);
+            const tlViewData = Object.assign({}, data, {
+                target: displayTarget,
+                actual: displayActual,
+                achievement: displayAchievement,
+                gap: displayGap
+            });
+            generateTLConclusions(tlViewData, isMet);
             const selectedDateVal = document.getElementById('tl-date-select').value;
             renderTLChart(group, selectedDateVal);
         }
@@ -1206,7 +1218,7 @@ body.theme-style_3 .status-danger {
 
             // Filter to only show selected date's month
             const selectedMonth = selectedDate ? selectedDate.slice(0, 7) : REAL_DATA.dataDate.slice(0, 7); // YYYY-MM
-            const cutoffDate = REAL_DATA.dataDate;
+            const cutoffDate = (selectedDate && selectedDate < REAL_DATA.dataDate) ? selectedDate : REAL_DATA.dataDate;
 
             const dates = [];
             const series = [];
@@ -1449,6 +1461,10 @@ body.theme-style_3 .status-danger {
             const displayActual = weekData ? weekData.actual : data.actual;
             const displayAchievement = displayTarget > 0 ? (displayActual / displayTarget * 100) : 0;
             const displayGap = Math.max(0, displayTarget - displayActual);
+            const prevWeekData = (selectedWeekPos > 0) ? weeksArr[selectedWeekPos - 1] : null;
+            const prevWeekActual = prevWeekData && prevWeekData.actual !== undefined && prevWeekData.actual !== null ? prevWeekData.actual : 0;
+            const displayTrendPct = prevWeekActual > 0 ? ((displayActual - prevWeekActual) / prevWeekActual * 100) : 0;
+            const displayTrend = (prevWeekActual > 0 ? ((displayTrendPct >= 0 ? '+' : '') + displayTrendPct.toFixed(1) + '%') : 'N/A');
 
             const compareDate = weekEndDateFromLabel(selectedWeekLabel) || REAL_DATA.dataDate;
             const trendAhead = isRecoveryTrendAheadAtDate(module, compareDate);
@@ -1458,7 +1474,7 @@ body.theme-style_3 .status-danger {
             document.getElementById('stl-week-target').textContent = formatNumber(displayTarget);
             document.getElementById('stl-week-actual').textContent = formatNumber(displayActual);
             document.getElementById('stl-achievement-rate').textContent = displayAchievement.toFixed(1) + '%';
-            document.getElementById('stl-trend').textContent = data.trend;
+            document.getElementById('stl-trend').textContent = displayTrend;
 
             const badge = document.getElementById('stl-status-badge');
             if (isMet) {
@@ -1467,7 +1483,6 @@ body.theme-style_3 .status-danger {
             } else {
                 badge.innerHTML = '<span class="status-badge status-danger">Weekly Repay Target: Unmet</span>';
                 document.getElementById('stl-unmet-section').style.display = 'block';
-                loadSTLGroupTable(module);
             }
 
             const processTarget = REAL_DATA.processTargets && REAL_DATA.processTargets[module] ? REAL_DATA.processTargets[module] : {};
@@ -1507,7 +1522,14 @@ body.theme-style_3 .status-danger {
                 badge.innerHTML += ' <br><span class="status-badge" style="background:#eff6ff;color:#1d4ed8;">Today Repay Target: ' + targetHtml + '</span>';
             }
 
-            generateSTLConclusions(data, isMet, displayAchievement, displayGap);
+            loadSTLGroupTable(module);
+            const stlViewData = Object.assign({}, data, {
+                target: displayTarget,
+                actual: displayActual,
+                achievement: displayAchievement,
+                trend: displayTrend
+            });
+            generateSTLConclusions(stlViewData, isMet, displayAchievement, displayGap);
             renderSTLChart(data.weeks, weekIdx);
         }
 
@@ -1601,9 +1623,12 @@ body.theme-style_3 .status-danger {
             const endPart = weekParts.length > 1 ? weekParts[1] : weekParts[0];
             const monthStr = endPart.split('/')[0]; // Use week-end month for cross-month week labels
 
-            const cutoffDate = REAL_DATA.dataDate;
             const module = document.getElementById('stl-module-select').value;
             const selectedYearMonth = REAL_DATA.dataDate.slice(0, 4) + '-' + monthStr.padStart(2, '0'); // YYYY-MM
+            const endMd = endPart.split('/');
+            const endDay = endMd.length > 1 ? String(parseInt(endMd[1], 10)).padStart(2, '0') : '31';
+            const weekEndDate = selectedYearMonth.slice(0, 4) + '-' + monthStr.padStart(2, '0') + '-' + endDay;
+            const cutoffDate = weekEndDate < REAL_DATA.dataDate ? weekEndDate : REAL_DATA.dataDate;
 
             // Full-month labels: MM-DD
             const ymParts = selectedYearMonth.split('-');
