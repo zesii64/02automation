@@ -12,7 +12,7 @@ Changes vs v2.4:
   - Default TL date: 2026-03-21 (max common date across all agent sources)
   - Default STL week: most-recent complete week
   - Call Loss Rate column added to all agent/group tables
-Output: Collection_Operations_Report_v3_4.html
+Output: Collection_Operations_Report_v3_4_<TL最新日YYYY-MM-DD>.html
 """
 import pandas as pd
 import json
@@ -31,7 +31,7 @@ BASE       = r'd:/11automation/02automation/10-Collection_Inspection/10-Collecti
 EXCEL_PATH = BASE + r'/data/260318_output_automation_v3.xlsx'
 PROCESS_TARGET_PATH = BASE + r'/data/process_data_target.xlsx'
 HTML_IN    = BASE + r'/reports/Collection_Operations_Report_v2_2.html'
-HTML_OUT   = BASE + r'/reports/Collection_Operations_Report_v3_4.html'
+# HTML_OUT：在 TL_LATEST_STR（与目标/绩效对齐的 TL 最新日）确定后赋值
 
 # ========================
 # Load data
@@ -163,6 +163,8 @@ TL_LATEST_STR = TL_LATEST_DT.strftime('%Y-%m-%d')
 TL_LATEST_DAY = TL_LATEST_DT.day  # 21
 REPORT_YEAR = TL_LATEST_DT.year
 REPORT_MONTH = TL_LATEST_DT.month
+
+HTML_OUT = BASE + f'/reports/Collection_Operations_Report_v3_4_{TL_LATEST_STR}.html'
 
 # All weeks from group_repay
 all_weeks_sorted = sorted(group_repay['week'].unique(), key=week_start_dt)
