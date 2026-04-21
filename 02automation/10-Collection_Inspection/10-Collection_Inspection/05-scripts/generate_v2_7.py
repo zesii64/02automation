@@ -12,7 +12,7 @@ Changes vs v2.4:
   - Default TL date: 2026-03-21 (max common date across all agent sources)
   - Default STL week: most-recent complete week
   - Call Loss Rate column added to all agent/group tables
-Output: Collection_Operations_Report_v3_4_<TL最新日YYYY-MM-DD>.html
+Output: Collection_Operations_Report_v3_6_<TL最新日YYYY-MM-DD>.html
 """
 import pandas as pd
 import json
@@ -30,7 +30,7 @@ from view_data import apply_data_view_patches
 BASE       = r'd:/11automation/02automation/10-Collection_Inspection/10-Collection_Inspection'
 EXCEL_PATH = BASE + r'/data/260318_output_automation_v3.xlsx'
 PROCESS_TARGET_PATH = BASE + r'/data/process_data_target.xlsx'
-HTML_IN    = BASE + r'/reports/Collection_Operations_Report_v2_2.html'
+HTML_IN    = BASE + r'/reports/Collection_Operations_Report_v3_5.html'
 # HTML_OUT：在 TL_LATEST_STR（与目标/绩效对齐的 TL 最新日）确定后赋值
 
 # ========================
@@ -52,6 +52,8 @@ cl_group     = pd.read_excel(xl, 'call_loss_group_data',   index_col=0)
 nat_month    = pd.read_excel(xl, 'natural_month_repay',   index_col=0)
 attd_daily   = pd.read_excel(xl, 'attd_group_daily_data', index_col=0)
 attd_weekly  = pd.read_excel(xl, 'attd_group_week_data',  index_col=0)
+daily_target_agent_breakdown = pd.read_excel(xl, 'daily_target_agent_breakdown', index_col=0)
+week_target_group_breakdown  = pd.read_excel(xl, 'week_target_group_breakdown', index_col=0)
 
 try:
     process_target_raw = pd.read_excel(PROCESS_TARGET_PATH, header=1)
@@ -71,6 +73,9 @@ cl_agent['group_name']    = cl_agent['group_name'].str.strip()
 cl_group['group_name']    = cl_group['group_name'].str.strip()
 attd_daily['group_id']    = attd_daily['group_id'].astype(str).str.strip()
 attd_weekly['group_id']   = attd_weekly['group_id'].astype(str).str.strip()
+daily_target_agent_breakdown['owner_group'] = daily_target_agent_breakdown['owner_group'].astype(str).str.strip()
+daily_target_agent_breakdown['owner_name']  = daily_target_agent_breakdown['owner_name'].astype(str).str.strip()
+week_target_group_breakdown['owner_group']  = week_target_group_breakdown['owner_group'].astype(str).str.strip()
 group_perf['week']        = group_perf['week'].astype(str)
 
 # Parse dates
@@ -82,12 +87,14 @@ ptp_agent['dt']     = pd.to_datetime(ptp_agent['dt'])
 cl_agent['dt']      = pd.to_datetime(cl_agent['dt'])
 nat_month['dt_biz'] = pd.to_datetime(nat_month['dt_biz'])
 attd_daily['dt']    = pd.to_datetime(attd_daily['dt'])
+daily_target_agent_breakdown['dt'] = pd.to_datetime(daily_target_agent_breakdown['dt'])
 
 group_repay['week'] = group_repay['week'].astype(str)
 ptp_group['week']   = ptp_group['week'].astype(str)
 cl_group['week']    = cl_group['week'].astype(str)
 group_perf['week']  = group_perf['week'].astype(str)
 attd_weekly['week'] = attd_weekly['week'].astype(str)
+week_target_group_breakdown['week'] = week_target_group_breakdown['week'].astype(str)
 
 data_warning_set = set()
 
@@ -129,6 +136,7 @@ ptp_group['week']   = ptp_group['week'].apply(normalize_week_label)
 cl_group['week']    = cl_group['week'].apply(normalize_week_label)
 group_perf['week']  = group_perf['week'].apply(normalize_week_label)
 attd_weekly['week'] = attd_weekly['week'].apply(normalize_week_label)
+week_target_group_breakdown['week'] = week_target_group_breakdown['week'].apply(normalize_week_label)
 
 # Core TL group list
 all_groups = sorted(tl_data['group_id'].unique().tolist())
@@ -164,7 +172,7 @@ TL_LATEST_DAY = TL_LATEST_DT.day  # 21
 REPORT_YEAR = TL_LATEST_DT.year
 REPORT_MONTH = TL_LATEST_DT.month
 
-HTML_OUT = BASE + f'/reports/Collection_Operations_Report_v3_4_{TL_LATEST_STR}.html'
+HTML_OUT = BASE + f'/reports/Collection_Operations_Report_v3_6_{TL_LATEST_STR}.html'
 
 # All weeks from group_repay
 all_weeks_sorted = sorted(group_repay['week'].unique(), key=week_start_dt)
@@ -1251,6 +1259,158 @@ for mk in modules_list:
     ]
 
 # ========================
+# Extra drilldown payloads (v3.5 compatibility)
+# ========================
+today_dt = pd.Timestamp.now().normalize()
+norm_to_group = {norm(g): g for g in all_groups}
+
+today_agent_rows = agent_repay[agent_repay['dt'] == today_dt].copy()
+today_agent_target_by_group = {}
+today_agent_target_by_group_agent = {}
+if len(today_agent_rows) > 0:
+    today_agent_rows['grp_norm'] = today_agent_rows['owner_group'].apply(norm)
+    today_agent_rows['name_norm'] = today_agent_rows['owner_name'].apply(lambda x: str(x).strip().lower() if pd.notna(x) else '')
+
+    for g_norm, sub in today_agent_rows.groupby('grp_norm'):
+        canonical_group = norm_to_group.get(g_norm)
+        if not canonical_group:
+            continue
+        today_agent_target_by_group[canonical_group] = float(sub['target_repay_principal'].fillna(0).sum())
+        agent_target_map = {}
+        for _, row in sub.iterrows():
+            akey = str(row.get('name_norm', '')).strip().lower()
+            if not akey:
+                continue
+            agent_target_map[akey] = float(row.get('target_repay_principal', 0) or 0)
+        today_agent_target_by_group_agent[canonical_group] = agent_target_map
+
+# TL breakdown by date/group (for detailed table rendering)
+tl_breakdown_by_date = {}
+if len(daily_target_agent_breakdown) > 0:
+    daily_target_agent_breakdown['grp_norm'] = daily_target_agent_breakdown['owner_group'].apply(norm)
+    daily_target_agent_breakdown['name_norm'] = daily_target_agent_breakdown['owner_name'].apply(
+        lambda x: str(x).strip().lower() if pd.notna(x) else ''
+    )
+    # name_norm -> display name by group, aligned with agentPerformance keys
+    group_agent_name_map = {}
+    for g in all_groups:
+        mapping = {}
+        for a in agent_perf_js.get(g, []):
+            key = str(a.get('name', '')).strip().lower()
+            if key:
+                mapping[key] = a.get('name')
+        group_agent_name_map[g] = mapping
+
+    for _, row in daily_target_agent_breakdown.iterrows():
+        g_norm = row.get('grp_norm', '')
+        dt_val = row.get('dt')
+        if not g_norm or pd.isna(dt_val):
+            continue
+        g_canonical = norm_to_group.get(g_norm)
+        if not g_canonical:
+            continue
+        dt_key = pd.to_datetime(dt_val).strftime('%Y-%m-%d')
+        group_map = tl_breakdown_by_date.setdefault(g_canonical, {})
+        date_rows = group_map.setdefault(dt_key, {'caseStage': {}, 'principalStage': {}})
+
+        case_k = str(row.get('case_stage', '') or '')
+        principal_k = str(row.get('principal_stage', '') or '')
+        a_norm = str(row.get('name_norm', '') or '')
+        a_display = group_agent_name_map.get(g_canonical, {}).get(a_norm, str(row.get('owner_name', '') or '').strip() or '--')
+        owing = float(row.get('owing_principal', 0) or 0)
+        repay = float(row.get('repay_principal', 0) or 0)
+        if case_k:
+            k = f"{a_display}||{case_k}"
+            c = date_rows['caseStage'].setdefault(k, {
+                'agentName': a_display,
+                'dimensionValue': case_k,
+                'owingPrincipal': 0.0,
+                'repayPrincipal': 0.0
+            })
+            c['owingPrincipal'] += owing
+            c['repayPrincipal'] += repay
+        if principal_k:
+            k = f"{a_display}||{principal_k}"
+            p = date_rows['principalStage'].setdefault(k, {
+                'agentName': a_display,
+                'dimensionValue': principal_k,
+                'owingPrincipal': 0.0,
+                'repayPrincipal': 0.0
+            })
+            p['owingPrincipal'] += owing
+            p['repayPrincipal'] += repay
+
+    # Convert dict payload to sorted list payload with repayRate (JS expects agentName + dimensionValue)
+    for g in list(tl_breakdown_by_date.keys()):
+        for d in list(tl_breakdown_by_date[g].keys()):
+            for dim in ('caseStage', 'principalStage'):
+                rows = []
+                for _, vals in tl_breakdown_by_date[g][d][dim].items():
+                    owing = vals['owingPrincipal']
+                    repay = vals['repayPrincipal']
+                    rows.append({
+                        'agentName': vals['agentName'],
+                        'dimensionValue': vals['dimensionValue'],
+                        'owingPrincipal': round(owing, 2),
+                        'repayPrincipal': round(repay, 2),
+                        'repayRate': round((repay / owing * 100), 2) if owing > 0 else None
+                    })
+                rows.sort(key=lambda x: (x['dimensionValue'], x['agentName']))
+                tl_breakdown_by_date[g][d][dim] = rows
+
+# STL breakdown by week/module
+stl_breakdown_by_week = {}
+if len(week_target_group_breakdown) > 0:
+    week_target_group_breakdown['module_key'] = week_target_group_breakdown['owner_bucket'].apply(lambda x: module_key_to_bucket(str(x).strip()))
+    for _, row in week_target_group_breakdown.iterrows():
+        module_key = row.get('module_key')
+        week_label = row.get('week')
+        if not module_key or not week_label:
+            continue
+        module_map = stl_breakdown_by_week.setdefault(module_key, {})
+        week_map = module_map.setdefault(week_str_to_display(str(week_label)), {'caseStage': {}, 'principalStage': {}})
+
+        case_k = str(row.get('case_stage', '') or '')
+        principal_k = str(row.get('principal_stage', '') or '')
+        owing = float(row.get('owing_principal', 0) or 0)
+        repay = float(row.get('repay_principal', 0) or 0)
+
+        if case_k:
+            c = week_map['caseStage'].setdefault(case_k, {
+                'dimensionValue': case_k,
+                'owingPrincipal': 0.0,
+                'repayPrincipal': 0.0
+            })
+            c['owingPrincipal'] += owing
+            c['repayPrincipal'] += repay
+        if principal_k:
+            p = week_map['principalStage'].setdefault(principal_k, {
+                'dimensionValue': principal_k,
+                'owingPrincipal': 0.0,
+                'repayPrincipal': 0.0
+            })
+            p['owingPrincipal'] += owing
+            p['repayPrincipal'] += repay
+
+    for mk in list(stl_breakdown_by_week.keys()):
+        for wk in list(stl_breakdown_by_week[mk].keys()):
+            for dim in ('caseStage', 'principalStage'):
+                rows = []
+                for _, vals in stl_breakdown_by_week[mk][wk][dim].items():
+                    owing = vals['owingPrincipal']
+                    repay = vals['repayPrincipal']
+                    rows.append({
+                        'dimensionValue': vals['dimensionValue'],
+                        'owingPrincipal': round(owing, 2),
+                        'repayPrincipal': round(repay, 2),
+                        'repayRate': round((repay / owing * 100), 2) if owing > 0 else None
+                    })
+                rows.sort(key=lambda x: x['dimensionValue'])
+                stl_breakdown_by_week[mk][wk][dim] = rows
+
+has_stl_week_breakdown_data = len(stl_breakdown_by_week) > 0
+
+# ========================
 # Assemble REAL_DATA
 # ========================
 real_data = {
@@ -1273,7 +1433,12 @@ real_data = {
     'processTargets':    process_target_js,
     'riskModuleGroups':  risk_module_groups,
     'moduleDailyTrends': module_daily_js,
-    'moduleMonthly':     module_monthly_js
+    'moduleMonthly':     module_monthly_js,
+    'todayAgentTargetByGroup': today_agent_target_by_group,
+    'todayAgentTargetByGroupAgent': today_agent_target_by_group_agent,
+    'tlBreakdownByDate': tl_breakdown_by_date,
+    'stlBreakdownByWeek': stl_breakdown_by_week,
+    'hasStlWeekBreakdownData': has_stl_week_breakdown_data
 }
 
 class SafeEncoder(json.JSONEncoder):
@@ -1292,14 +1457,20 @@ print("Patching HTML...")
 with open(HTML_IN, 'r', encoding='utf-8') as f:
     html = f.read()
 
-# ---- 1. Replace MOCK_DATA block ----
-mock_marker = '        const MOCK_DATA = {'
+# ---- 1. Replace data block (MOCK_DATA or REAL_DATA template) ----
 role_marker = '        // ===================== ROLE SWITCHING ====================='
-mock_start  = html.index(mock_marker)
-mock_end    = html.index(role_marker)
-html = (html[:mock_start]
+mock_marker = '        const MOCK_DATA = {'
+real_marker = '        const REAL_DATA = {'
+if mock_marker in html:
+    data_start = html.index(mock_marker)
+elif real_marker in html:
+    data_start = html.index(real_marker)
+else:
+    raise ValueError("Data marker not found in template HTML (expected MOCK_DATA or REAL_DATA).")
+data_end = html.index(role_marker)
+html = (html[:data_start]
         + f'        const REAL_DATA = {real_data_json};\n\n        '
-        + html[mock_end:])
+        + html[data_end:])
 
 # ---- 2. MOCK_DATA. -> REAL_DATA. ----
 html = html.replace('MOCK_DATA.', 'REAL_DATA.')
@@ -2167,6 +2338,248 @@ html = html.replace(
     "                    conclusions.push('Call billmin is ' + Math.abs(connectGap).toFixed(1) + ' minutes below benchmark. Root cause: poor contact quality — either (a) outdated phone numbers, (b) customers unreachable during working hours, or (c) ineffective calling scripts.');"
 )
 
+tl_conclusion_fn = """\
+        function generateTLConclusions(data, isMet) {
+            const group = document.getElementById('tl-group-select') ? document.getElementById('tl-group-select').value : '';
+            const selectedDate = document.getElementById('tl-date-select') ? document.getElementById('tl-date-select').value : REAL_DATA.dataDate;
+            const agents = REAL_DATA.agentPerformance[group] || [];
+            const groupMeta = REAL_DATA.tlData[group] || {};
+            const moduleKey = groupMeta.groupModule || '';
+            const moduleGroups = (REAL_DATA.groups || []).filter(g => REAL_DATA.tlData[g] && REAL_DATA.tlData[g].groupModule === moduleKey);
+            const fmt = (v, d = 1, suffix = '') => (v === null || v === undefined || Number.isNaN(Number(v))) ? '--' : (Number(v).toFixed(d) + suffix);
+
+            const getAgentMetric = (groupId, agent, key) => {
+                const dm = REAL_DATA.agentPerformanceByDate && REAL_DATA.agentPerformanceByDate[groupId] && REAL_DATA.agentPerformanceByDate[groupId][agent.name]
+                    ? REAL_DATA.agentPerformanceByDate[groupId][agent.name][selectedDate]
+                    : null;
+                if (dm && dm[key] !== undefined && dm[key] !== null) return Number(dm[key]);
+                if (agent && agent[key] !== undefined && agent[key] !== null) return Number(agent[key]);
+                return null;
+            };
+
+            let tAch = 0, tAttd = 0, tConn = 0, tLoss = 0, tDial = 0, tCnt = 0;
+            agents.forEach(a => {
+                tAch += getAgentMetric(group, a, 'achievement') || 0;
+                tAttd += getAgentMetric(group, a, 'attendance') || 0;
+                tConn += getAgentMetric(group, a, 'connectRate') || 0;
+                tLoss += getAgentMetric(group, a, 'callLossRate') || 0;
+                tDial += getAgentMetric(group, a, 'artCallTimes') || 0;
+                tCnt += 1;
+            });
+            const teamCnt = Math.max(1, tCnt);
+            const teamAvg = { achievement: tAch / teamCnt, attendance: tAttd / teamCnt, connectRate: tConn / teamCnt, callLossRate: tLoss / teamCnt, artCallTimes: tDial / teamCnt };
+
+            let mDial = 0, mCnt = 0;
+            moduleGroups.forEach(gid => {
+                const rows = REAL_DATA.agentPerformance[gid] || [];
+                rows.forEach(a => {
+                    mDial += getAgentMetric(gid, a, 'artCallTimes') || 0;
+                    mCnt += 1;
+                });
+            });
+            const moduleAvgDial = mCnt > 0 ? (mDial / mCnt) : teamAvg.artCallTimes;
+
+            const laggingAgents = [...agents]
+                .map(a => ({
+                    name: a.name,
+                    achievement: getAgentMetric(group, a, 'achievement'),
+                    attendance: getAgentMetric(group, a, 'attendance'),
+                    connectRate: getAgentMetric(group, a, 'connectRate'),
+                    artCallTimes: getAgentMetric(group, a, 'artCallTimes'),
+                    gap: (getAgentMetric(group, a, 'target') || 0) - (getAgentMetric(group, a, 'actual') || 0)
+                }))
+                .sort((x, y) => {
+                    const ax = x.achievement !== null && x.achievement !== undefined ? x.achievement : 999;
+                    const ay = y.achievement !== null && y.achievement !== undefined ? y.achievement : 999;
+                    if (ax !== ay) return ax - ay;
+                    return (y.gap || 0) - (x.gap || 0);
+                })
+                .slice(0, 3);
+
+            const breakdownByDate = REAL_DATA.tlBreakdownByAgentByDate && REAL_DATA.tlBreakdownByAgentByDate[group]
+                ? REAL_DATA.tlBreakdownByAgentByDate[group][selectedDate]
+                : null;
+            const pickWeakDims = (rows) => {
+                const valid = (rows || []).filter(r => r.repayRate !== null && r.repayRate !== undefined);
+                if (valid.length === 0) return [];
+                const avg = valid.reduce((s, r) => s + Number(r.repayRate), 0) / valid.length;
+                return valid.filter(r => Number(r.repayRate) < avg)
+                    .sort((a, b) => Number(a.repayRate) - Number(b.repayRate))
+                    .slice(0, 2)
+                    .map(r => `${r.dimensionValue}(${fmt(r.repayRate, 1, '%')})`);
+            };
+            const weakCaseStages = pickWeakDims(breakdownByDate ? breakdownByDate.caseStage : []);
+            const weakPrincipalStages = pickWeakDims(breakdownByDate ? breakdownByDate.principalStage : []);
+
+            const peopleSummary = (teamAvg.attendance < 95 || teamAvg.artCallTimes < moduleAvgDial)
+                ? `People factor risk: attendance ${fmt(teamAvg.attendance, 1, '%')}, dial ${fmt(teamAvg.artCallTimes, 0)} (module avg ${fmt(moduleAvgDial, 0)}).`
+                : `People factors are stable on selected date.`;
+            const strategySummary = (weakCaseStages.length > 0 || weakPrincipalStages.length > 0)
+                ? `Stage preference imbalance (strategy): some agents/groups show declining contribution in overdue or amount stages. Action: adjust follow-up strategy and prioritize these stages.`
+                : `No clear stage preference imbalance detected from current breakdown data.`;
+            const toolSummary = (teamAvg.connectRate < 22 || teamAvg.callLossRate > 20)
+                ? `Tool usage risk: connect ${fmt(teamAvg.connectRate, 1, '%')}, call loss ${fmt(teamAvg.callLossRate, 1, '%')}; check phone channel quality and outreach time window.`
+                : `Tool usage appears stable (phone channel metrics in normal range).`;
+
+            const laggingHtml = laggingAgents.length === 0
+                ? '<div style="color:#6b7280;">No lagging agent identified for selected date.</div>'
+                : laggingAgents.map((a, idx) => `<div style="padding:6px 8px; border:1px solid #e5e7eb; border-radius:6px; margin-bottom:6px;">
+                        <b>#${idx + 1} ${a.name}</b> |
+                        Achv ${fmt(a.achievement, 1, '%')} |
+                        Attendance ${fmt(a.attendance, 1, '%')} |
+                        Dial ${fmt(a.artCallTimes, 0)} |
+                        Connect ${fmt(a.connectRate, 1, '%')} |
+                        Gap ${fmt(a.gap, 0)}
+                    </div>`).join('');
+
+            const tableHtml = `
+                <div style="font-size:12px; color:#111827; line-height:1.5;">
+                    <div style="font-weight:700; margin-bottom:8px;">TL conclusion = group-level overview + lagging agents</div>
+                    <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                        <tr style="background:#f8fafc;">
+                            <td style="border:1px solid #d1d5db; padding:8px; width:160px; font-weight:700;">Group overview</td>
+                            <td style="border:1px solid #d1d5db; padding:8px;">
+                                Group: <b>${group}</b> (${moduleKey || '--'}) @ ${selectedDate}<br>
+                                Achievement: <b>${fmt(teamAvg.achievement, 1, '%')}</b> | Attendance: <b>${fmt(teamAvg.attendance, 1, '%')}</b> | Dial: <b>${fmt(teamAvg.artCallTimes, 0)}</b>
+                            </td>
+                        </tr>
+                        <tr><td style="border:1px solid #d1d5db; padding:8px; font-weight:700;">People factors</td><td style="border:1px solid #d1d5db; padding:8px;">${peopleSummary}</td></tr>
+                        <tr>
+                            <td style="border:1px solid #d1d5db; padding:8px; font-weight:700;">Strategy factors</td>
+                            <td style="border:1px solid #d1d5db; padding:8px;">
+                                ${strategySummary}<br>
+                                Overdue stages with weak contribution: ${weakCaseStages.length ? weakCaseStages.join(', ') : '--'}<br>
+                                Amount stages with weak contribution: ${weakPrincipalStages.length ? weakPrincipalStages.join(', ') : '--'}
+                            </td>
+                        </tr>
+                        <tr><td style="border:1px solid #d1d5db; padding:8px; font-weight:700;">Tool factors</td><td style="border:1px solid #d1d5db; padding:8px;">${toolSummary}</td></tr>
+                        <tr><td style="border:1px solid #d1d5db; padding:8px; font-weight:700;">Environment/other</td><td style="border:1px solid #d1d5db; padding:8px;">If holiday/policy/system events occurred, use manual override for action priority.</td></tr>
+                        <tr><td style="border:1px solid #d1d5db; padding:8px; font-weight:700;">Lagging agents</td><td style="border:1px solid #d1d5db; padding:8px;">${laggingHtml}</td></tr>
+                    </table>
+                </div>
+            `;
+            document.getElementById('tl-conclusions').innerHTML = tableHtml;
+        }
+"""
+html = re.sub(
+    r"(?s)\n\s*function generateTLConclusions\(data, isMet\) \{.*?\n\s*\}\n\s*\n\s*function initSTLView",
+    "\n" + tl_conclusion_fn + "\n\n        function initSTLView",
+    html,
+    count=1
+)
+
+stl_conclusion_fn = """\
+        function generateSTLConclusions(data, isMet, displayAchievement, displayGap) {
+            const module = document.getElementById('stl-module-select').value;
+            const selectedWeekLabel = document.getElementById('stl-week-select') ? document.getElementById('stl-week-select').value : REAL_DATA.defaultStlWeek;
+            const groups = (REAL_DATA.groupPerformance[module] || []).map(g => {
+                const wm = REAL_DATA.groupPerformanceByWeek && REAL_DATA.groupPerformanceByWeek[module] && REAL_DATA.groupPerformanceByWeek[module][g.name]
+                    ? REAL_DATA.groupPerformanceByWeek[module][g.name][selectedWeekLabel]
+                    : null;
+                return wm || g;
+            });
+            const fmt = (v, d = 1, suffix = '') => (v === null || v === undefined || Number.isNaN(Number(v))) ? '--' : (Number(v).toFixed(d) + suffix);
+            const summarize = (list) => {
+                const n = Math.max(1, list.length);
+                return {
+                    achievement: list.reduce((s, g) => s + (Number(g.achievement) || 0), 0) / n,
+                    attendance: list.reduce((s, g) => s + (Number(g.attendance) || 0), 0) / n,
+                    connectRate: list.reduce((s, g) => s + (Number(g.connectRate) || 0), 0) / n,
+                    callLossRate: list.reduce((s, g) => s + (Number(g.callLossRate) || 0), 0) / n,
+                    calls: list.reduce((s, g) => s + (Number(g.calls) || 0), 0) / n
+                };
+            };
+            const moduleAvg = summarize(groups);
+            const allGroups = Object.keys(REAL_DATA.groupPerformance || {}).flatMap(k => REAL_DATA.groupPerformance[k] || []);
+            const allAvg = summarize(allGroups);
+
+            const laggingGroups = [...groups]
+                .map(g => ({
+                    name: g.name || '--',
+                    achievement: Number(g.achievement),
+                    attendance: Number(g.attendance),
+                    connectRate: Number(g.connectRate),
+                    calls: Number(g.calls),
+                    gap: (Number(g.target) || 0) - (Number(g.actual) || 0)
+                }))
+                .sort((a, b) => {
+                    const ax = a.achievement !== null && a.achievement !== undefined ? a.achievement : 999;
+                    const ay = b.achievement !== null && b.achievement !== undefined ? b.achievement : 999;
+                    if (ax !== ay) return ax - ay;
+                    return (b.gap || 0) - (a.gap || 0);
+                })
+                .slice(0, 3);
+
+            const bd = REAL_DATA.stlBreakdownByWeek && REAL_DATA.stlBreakdownByWeek[module] ? REAL_DATA.stlBreakdownByWeek[module][selectedWeekLabel] : null;
+            const pickWeakDims = (rows) => {
+                const valid = (rows || []).filter(r => r.repayRate !== null && r.repayRate !== undefined);
+                if (valid.length === 0) return [];
+                const avg = valid.reduce((s, r) => s + Number(r.repayRate), 0) / valid.length;
+                return valid.filter(r => Number(r.repayRate) < avg)
+                    .sort((a, b) => Number(a.repayRate) - Number(b.repayRate))
+                    .slice(0, 2)
+                    .map(r => `${r.dimensionValue}(${fmt(r.repayRate, 1, '%')})`);
+            };
+            const weakCaseStages = pickWeakDims(bd ? bd.caseStage : []);
+            const weakPrincipalStages = pickWeakDims(bd ? bd.principalStage : []);
+
+            const peopleSummary = (moduleAvg.attendance < 95 || moduleAvg.calls < allAvg.calls)
+                ? `People factor risk: attendance ${fmt(moduleAvg.attendance, 1, '%')}, calls ${fmt(moduleAvg.calls, 0)} (all-module avg ${fmt(allAvg.calls, 0)}).`
+                : `People factors are stable at module level this week.`;
+            const strategySummary = (weakCaseStages.length > 0 || weakPrincipalStages.length > 0)
+                ? `Stage preference imbalance (strategy): some agents/groups show declining contribution in overdue or amount stages. Action: adjust follow-up strategy and prioritize these stages.`
+                : `No clear stage preference imbalance detected from current breakdown data.`;
+            const toolSummary = (moduleAvg.connectRate < 22 || moduleAvg.callLossRate > 20)
+                ? `Tool usage risk: connect ${fmt(moduleAvg.connectRate, 1, '%')}, call loss ${fmt(moduleAvg.callLossRate, 1, '%')}; inspect channel quality and dialing schedule.`
+                : `Tool usage appears stable at module level.`;
+
+            const laggingHtml = laggingGroups.length === 0
+                ? '<div style="color:#6b7280;">No lagging group identified for selected week.</div>'
+                : laggingGroups.map((g, idx) => `<div style="padding:6px 8px; border:1px solid #e5e7eb; border-radius:6px; margin-bottom:6px;">
+                        <b>#${idx + 1} ${g.name}</b> |
+                        Achv ${fmt(g.achievement, 1, '%')} |
+                        Attendance ${fmt(g.attendance, 1, '%')} |
+                        Calls ${fmt(g.calls, 0)} |
+                        Connect ${fmt(g.connectRate, 1, '%')} |
+                        Gap ${fmt(g.gap, 0)}
+                    </div>`).join('');
+
+            const tableHtml = `
+                <div style="font-size:12px; color:#111827; line-height:1.5;">
+                    <div style="font-weight:700; margin-bottom:8px;">STL conclusion = module-level overview + lagging groups</div>
+                    <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                        <tr style="background:#f8fafc;">
+                            <td style="border:1px solid #d1d5db; padding:8px; width:160px; font-weight:700;">Module overview</td>
+                            <td style="border:1px solid #d1d5db; padding:8px;">
+                                Module: <b>${module}</b> @ ${selectedWeekLabel}<br>
+                                Achievement: <b>${fmt(moduleAvg.achievement, 1, '%')}</b> | Attendance: <b>${fmt(moduleAvg.attendance, 1, '%')}</b> | Calls: <b>${fmt(moduleAvg.calls, 0)}</b>
+                            </td>
+                        </tr>
+                        <tr><td style="border:1px solid #d1d5db; padding:8px; font-weight:700;">People factors</td><td style="border:1px solid #d1d5db; padding:8px;">${peopleSummary}</td></tr>
+                        <tr>
+                            <td style="border:1px solid #d1d5db; padding:8px; font-weight:700;">Strategy factors</td>
+                            <td style="border:1px solid #d1d5db; padding:8px;">
+                                ${strategySummary}<br>
+                                Overdue stages with weak contribution: ${weakCaseStages.length ? weakCaseStages.join(', ') : '--'}<br>
+                                Amount stages with weak contribution: ${weakPrincipalStages.length ? weakPrincipalStages.join(', ') : '--'}
+                            </td>
+                        </tr>
+                        <tr><td style="border:1px solid #d1d5db; padding:8px; font-weight:700;">Tool factors</td><td style="border:1px solid #d1d5db; padding:8px;">${toolSummary}</td></tr>
+                        <tr><td style="border:1px solid #d1d5db; padding:8px; font-weight:700;">Environment/other</td><td style="border:1px solid #d1d5db; padding:8px;">If holiday/policy/system events occurred, use manual override for action priority.</td></tr>
+                        <tr><td style="border:1px solid #d1d5db; padding:8px; font-weight:700;">Lagging groups</td><td style="border:1px solid #d1d5db; padding:8px;">${laggingHtml}</td></tr>
+                    </table>
+                </div>
+            `;
+            document.getElementById('stl-conclusions').innerHTML = tableHtml;
+        }
+"""
+html = re.sub(
+    r"(?s)\n\s*function generateSTLConclusions\(data, isMet, displayAchievement, displayGap\) \{.*?\n\s*\}\n\s*\n\s*// ===================== DATA VIEW =====================",
+    "\n" + stl_conclusion_fn + "\n\n        // ===================== DATA VIEW =====================",
+    html,
+    count=1
+)
+
 # ---- 24. Recovery Trend status: same metric as chart — repayRate vs targetRepayRate @ dataDate ----
 risk_status_fn = """\
         function calculateAtRisk(module) {
@@ -2764,7 +3177,7 @@ html = html.replace(
 # 1) TL agent drill-down table: sort by achievement (ascending, worst first)
 html = html.replace(
     "            const agents = REAL_DATA.agentPerformance[group] || [];\n",
-    "            const selectedDate = document.getElementById('tl-date-select') ? document.getElementById('tl-date-select').value : REAL_DATA.dataDate;\n            const agents = (REAL_DATA.agentPerformance[group] || []).filter(a => {\n                const dm = REAL_DATA.agentPerformanceByDate && REAL_DATA.agentPerformanceByDate[group] && REAL_DATA.agentPerformanceByDate[group][a.name]\n                    ? REAL_DATA.agentPerformanceByDate[group][a.name][selectedDate]\n                    : null;\n                return !!dm;\n            });\n            agents.sort((a, b) => {\n                const adm = REAL_DATA.agentPerformanceByDate && REAL_DATA.agentPerformanceByDate[group] && REAL_DATA.agentPerformanceByDate[group][a.name]\n                    ? REAL_DATA.agentPerformanceByDate[group][a.name][selectedDate]\n                    : null;\n                const bdm = REAL_DATA.agentPerformanceByDate && REAL_DATA.agentPerformanceByDate[group] && REAL_DATA.agentPerformanceByDate[group][b.name]\n                    ? REAL_DATA.agentPerformanceByDate[group][b.name][selectedDate]\n                    : null;\n                const av = (adm && adm.achievement !== null && adm.achievement !== undefined) ? adm.achievement : ((a.achievement !== null && a.achievement !== undefined) ? a.achievement : 999);\n                const bv = (bdm && bdm.achievement !== null && bdm.achievement !== undefined) ? bdm.achievement : ((b.achievement !== null && b.achievement !== undefined) ? b.achievement : 999);\n                return av - bv;\n            });\n"
+    "            const selectedDateForSort = (typeof selectedDate !== 'undefined' && selectedDate) ? selectedDate : (document.getElementById('tl-date-select') ? document.getElementById('tl-date-select').value : REAL_DATA.dataDate);\n            const agents = (REAL_DATA.agentPerformance[group] || []).filter(a => {\n                const dm = REAL_DATA.agentPerformanceByDate && REAL_DATA.agentPerformanceByDate[group] && REAL_DATA.agentPerformanceByDate[group][a.name]\n                    ? REAL_DATA.agentPerformanceByDate[group][a.name][selectedDateForSort]\n                    : null;\n                return !!dm;\n            });\n            agents.sort((a, b) => {\n                const adm = REAL_DATA.agentPerformanceByDate && REAL_DATA.agentPerformanceByDate[group] && REAL_DATA.agentPerformanceByDate[group][a.name]\n                    ? REAL_DATA.agentPerformanceByDate[group][a.name][selectedDateForSort]\n                    : null;\n                const bdm = REAL_DATA.agentPerformanceByDate && REAL_DATA.agentPerformanceByDate[group] && REAL_DATA.agentPerformanceByDate[group][b.name]\n                    ? REAL_DATA.agentPerformanceByDate[group][b.name][selectedDateForSort]\n                    : null;\n                const av = (adm && adm.achievement !== null && adm.achievement !== undefined) ? adm.achievement : ((a.achievement !== null && a.achievement !== undefined) ? a.achievement : 999);\n                const bv = (bdm && bdm.achievement !== null && bdm.achievement !== undefined) ? bdm.achievement : ((b.achievement !== null && b.achievement !== undefined) ? b.achievement : 999);\n                return av - bv;\n            });\n"
 )
 
 # 2) STL group drill-down table: sort by achievement (ascending, worst first)
@@ -3457,6 +3870,60 @@ html = html.replace(
     "        initLanguageToggle();\n        initTLView();\n        if (currentLang === 'zh') applyLanguage(document.body);"
 )
 
+# Avoid duplicate declaration crashes when template already contains language toggle blocks.
+html = re.sub(
+    r"\blet\s+currentLang\s*=\s*'en';",
+    "var currentLang = window.currentLang || 'en'; window.currentLang = currentLang;",
+    html
+)
+html = re.sub(
+    r"\bconst\s+I18N_ZH\s*=\s*\{",
+    "var I18N_ZH = window.I18N_ZH || {",
+    html
+)
+html = re.sub(
+    r"\bconst\s+ORIGINAL_TEXT\s*=\s*new\s+WeakMap\(\);",
+    "var ORIGINAL_TEXT = window.ORIGINAL_TEXT || new WeakMap(); window.ORIGINAL_TEXT = ORIGINAL_TEXT;",
+    html
+)
+html = re.sub(
+    r"\blet\s+languageObserver\s*=\s*null;",
+    "var languageObserver = window.languageObserver || null;",
+    html
+)
+html = re.sub(
+    r"\blet\s+ORIGINAL_TITLE\s*=\s*'';",
+    "var ORIGINAL_TITLE = window.ORIGINAL_TITLE || ''; window.ORIGINAL_TITLE = ORIGINAL_TITLE;",
+    html
+)
+
+def dedupe_language_blocks(html_text: str) -> str:
+    marker = "var I18N_ZH = window.I18N_ZH || {"
+    end_marker = "initializeLanguage();"
+    if marker not in html_text:
+        return html_text
+    cursor = 0
+    kept = False
+    chunks = []
+    while True:
+        start = html_text.find(marker, cursor)
+        if start == -1:
+            chunks.append(html_text[cursor:])
+            break
+        end = html_text.find(end_marker, start)
+        if end == -1:
+            chunks.append(html_text[cursor:])
+            break
+        end += len(end_marker)
+        chunks.append(html_text[cursor:start])
+        if not kept:
+            chunks.append(html_text[start:end])
+            kept = True
+        cursor = end
+    return ''.join(chunks)
+
+html = dedupe_language_blocks(html)
+
 
 def inject_theme(html_text: str, theme_key: str, css_text: str) -> str:
     themed = html_text.replace("<body>", f"<body class=\"theme-{theme_key}\">", 1)
@@ -3634,6 +4101,10 @@ body.theme-style_3 .status-danger {
 # ========================
 base_html = inject_theme(html, "style_3", THEME_CSS["style_3"])
 base_html = inject_chart_palette(base_html)
+base_html = dedupe_language_blocks(base_html)
+# Hotfix: tolerate duplicated injected blocks by downgrading declarations to var.
+base_html = re.sub(r"\bconst\s+([A-Za-z_$][A-Za-z0-9_$]*)\s*=", r"var \1 =", base_html)
+base_html = re.sub(r"\blet\s+([A-Za-z_$][A-Za-z0-9_$]*)\s*=", r"var \1 =", base_html)
 with open(HTML_OUT, 'w', encoding='utf-8') as f:
     f.write(base_html)
 
@@ -3808,4 +4279,3 @@ elif hard_ok:
 else:
     print("\nHard checks FAILED.")
 
-input("\nPress Enter to close...")

@@ -1,10 +1,10 @@
 # 任务：v3.3 逻辑与 Data View 收口
 
 task_id: task_2026-04-13_v3_3_logic_and_data_view_alignment
-status: done
+status: in_progress
 owner: 未分配
 created_at: 2026-04-13
-updated_at: 2026-04-13
+updated_at: 2026-04-20
 
 ## 目标
 - 收口 `Collection_Operations_Report_v3_3.html` 的判定口径、drilldown 展示与关键字段映射一致性。
@@ -45,3 +45,15 @@ updated_at: 2026-04-13
 
 ## 交接说明
 本卡功能与联动抽检已完成；接手时可直接执行提交/推送流程。
+
+## 会话快照（2026-04-20）
+- status: in_progress
+- evidence:
+  - 已并回 `v3_5` 关键能力到 `generate_v2_7.py`：today target / breakdown / 新 conclusion 格式。
+  - 已修复 `v3_6` 页面点击异常（重复声明导致初始化中断）；自动化检查无 page error。
+  - 已重生报告：`reports/Collection_Operations_Report_v3_6_2026-04-18.html`，人工检查通过。
+- next_actions:
+  - 业务侧再做 1 轮 TL/STL 关键路径抽检（角色切换、日期/周切换、结论联动）。
+  - 确认稳定后更新 `release_gate` 并决定提交范围。
+- handoff_note:
+  - 当前主产物以 `v3_6` 为准；后续再改结论或 breakdown，必须做“页面可点击性回归 + 控制台无报错”检查。
