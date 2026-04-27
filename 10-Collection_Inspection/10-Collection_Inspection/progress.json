@@ -1,0 +1,26 @@
+{
+  "last_updated": "2026-04-24",
+  "active_task": "task_2026-04-13_v3_3_logic_and_data_view_alignment.md",
+  "owner": "未分配",
+  "status": "in_progress",
+  "dual_review_gate": "not_run",
+  "current_focus": [
+    "JS SyntaxError 修复：HTML line 6857 toggleAgentOverviewModule \\''' -> \\''",
+    "view_data.py line 686 锚点修复：正确转义 onclick handler 内的单引号",
+    "Jinja2 模板迁移：已创建 tl_conclusions_renderer.py、templates/*.j2、data_contract.py（未接入 pipeline）"
+  ],
+  "recent_completed": [
+    "修复 HTML line 6857 toggleAgentOverviewModule \\''' -> \\''（SyntaxError）",
+    "修复 view_data.py line 686 锚点：'' -> \\''",
+    "修复 HTML line 3763 重复代码（v3_6_2026-04-21.html）",
+    "coarseModule 归一化注入（04-23 报告 doc-link 修复）"
+  ],
+  "next_actions": [
+    "【P0】回归验证：打开 04-23 HTML，控制台确认无 JS 语法错误",
+    "【P1】执行 python generate_v2_7.py 重新生成报告，验证所有 onclick 按钮可点击",
+    "【P2】Git 提交：view_data.py 锚点修复 + 04-23 HTML 修复"
+  ],
+  "blockers": [],
+  "open_questions": [],
+  "handoff_prompt": "view_data.py 的 onclick 引号转义是正确写法：\\' 用于 JS 字符串内。generate_v2_7.py 的 HTML_IN 已切换为 v3_6_2026-04-21.html。"
+}
