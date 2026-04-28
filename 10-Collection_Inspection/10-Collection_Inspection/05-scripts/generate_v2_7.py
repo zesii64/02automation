@@ -2094,15 +2094,27 @@ tl_conclusion_fn = """\
             var teamCnt = Math.max(1, tCnt);
             var teamAvg = { achievement: tAch / teamCnt, attendance: tAttd / teamCnt, connectRate: tConn / teamCnt, callLossRate: tLoss / teamCnt, artCallTimes: tDial / teamCnt };
 
-            var mDial = 0, mCnt = 0;
+            var mDial = 0, mAttd = 0, mConn = 0, mLoss = 0, mCnt = 0;
             moduleGroups.forEach(gid => {
                 var rows = REAL_DATA.agentPerformance[gid] || [];
                 rows.forEach(a => {
                     mDial += getAgentMetric(gid, a, 'artCallTimes') || 0;
+                    mAttd += getAgentMetric(gid, a, 'attendance') || 0;
+                    mConn += getAgentMetric(gid, a, 'connectRate') || 0;
+                    mLoss += getAgentMetric(gid, a, 'callLossRate') || 0;
                     mCnt += 1;
                 });
             });
             var moduleAvgDial = mCnt > 0 ? (mDial / mCnt) : teamAvg.artCallTimes;
+            var moduleAvgAttendance = mCnt > 0 ? (mAttd / mCnt) : teamAvg.attendance;
+            var moduleAvgConnectRate = mCnt > 0 ? (mConn / mCnt) : teamAvg.connectRate;
+            var moduleAvgCallLossRate = mCnt > 0 ? (mLoss / mCnt) : teamAvg.callLossRate;
+
+            // 容忍带配置（相对模块均值）
+            const ATTENDANCE_TOLERANCE = 2.0;   // pp
+            const CONNECT_TOLERANCE = 5.0;      // pp
+            const LOSS_TOLERANCE = 5.0;         // pp
+            const DIAL_TOLERANCE = 0.10;        // 10%
 
             var laggingAgents = [...agents]
                 .map(a => ({
@@ -2136,56 +2148,60 @@ tl_conclusion_fn = """\
             var weakCaseStages = pickWeakDims(breakdownByDate ? breakdownByDate.caseStage : []);
             var weakPrincipalStages = pickWeakDims(breakdownByDate ? breakdownByDate.principalStage : []);
 
-            var peopleSummary = (teamAvg.attendance < 95 || teamAvg.artCallTimes < moduleAvgDial)
-                ? `People factor risk: attendance ${fmt(teamAvg.attendance, 1, '%')}, dial ${fmt(teamAvg.artCallTimes, 0)} (module avg ${fmt(moduleAvgDial, 0)}).`
+            var peopleSummary = (teamAvg.attendance < moduleAvgAttendance - ATTENDANCE_TOLERANCE || teamAvg.artCallTimes < moduleAvgDial * (1 - DIAL_TOLERANCE))
+                ? `People factor risk: attendance ${fmt(teamAvg.attendance, 1, '%')} (module avg ${fmt(moduleAvgAttendance, 1, '%')}), dial ${fmt(teamAvg.artCallTimes, 0)} (module avg ${fmt(moduleAvgDial, 0)}).`
                 : `People factors are stable on selected date.`;
             var strategySummary = (weakCaseStages.length > 0 || weakPrincipalStages.length > 0)
                 ? `Stage preference imbalance (strategy): some agents/groups show declining contribution in overdue or amount stages. Action: adjust follow-up strategy and prioritize these stages.`
                 : `No clear stage preference imbalance detected from current breakdown data.`;
-            var toolSummary = (teamAvg.connectRate < 22 || teamAvg.callLossRate > 20)
-                ? `Tool usage risk: connect ${fmt(teamAvg.connectRate, 1, '%')}, call loss ${fmt(teamAvg.callLossRate, 1, '%')}; check phone channel quality and outreach time window.`
+            var toolSummary = (teamAvg.connectRate < moduleAvgConnectRate - CONNECT_TOLERANCE || teamAvg.callLossRate > moduleAvgCallLossRate + LOSS_TOLERANCE)
+                ? `Tool usage risk: connect ${fmt(teamAvg.connectRate, 1, '%')} (module avg ${fmt(moduleAvgConnectRate, 1, '%')}), call loss ${fmt(teamAvg.callLossRate, 1, '%')} (module avg ${fmt(moduleAvgCallLossRate, 1, '%')}); check phone channel quality and outreach time window.`
                 : `Tool usage appears stable (phone channel metrics in normal range).`;
 
             var peopleAction = '';
-            if (teamAvg.attendance < 95 && teamAvg.artCallTimes < moduleAvgDial) {
-                peopleAction = '排班核查：排查当日请假/缺勤原因，必要时启动临时调班或组内支援；同时约谈低产能人员，检查外呼系统分配与在线时长，排除系统故障。';
-            } else if (teamAvg.attendance < 95) {
-                peopleAction = '排班核查：排查当日请假/缺勤原因，必要时启动临时调班或组内支援。';
-            } else if (teamAvg.artCallTimes < moduleAvgDial) {
-                peopleAction = '产能跟进：约谈低产能人员，检查外呼系统分配与在线时长，排除系统故障。';
+            var attdLow = teamAvg.attendance < moduleAvgAttendance - ATTENDANCE_TOLERANCE;
+            var dialLow = teamAvg.artCallTimes < moduleAvgDial * (1 - DIAL_TOLERANCE);
+            if (attdLow && dialLow) {
+                peopleAction = 'Attendance & dial below module average. Check absenteeism and reallocate staff if needed; review low-productivity agents for system issues or idle time.';
+            } else if (attdLow) {
+                peopleAction = 'Attendance below module average. Check absenteeism and consider temporary shift adjustments or cross-group support.';
+            } else if (dialLow) {
+                peopleAction = 'Dial volume below module average. Follow up with low-productivity agents and review system allocation and online hours.';
             } else {
-                peopleAction = '人员状态正常，维持现有排班与产能监控。';
+                peopleAction = 'People metrics stable. Maintain current scheduling and productivity monitoring.';
             }
 
             var strategyAction = '';
             if (weakCaseStages.length > 0 && weakPrincipalStages.length > 0) {
-                strategyAction = '策略调整：优先加强 ' + weakCaseStages.join('、') + ' 阶段跟进；同时对 ' + weakPrincipalStages.join('、') + ' 金额段提高分配权重或定制催收策略。';
+                strategyAction = 'Reprioritize follow-up on stages ' + weakCaseStages.join(', ') + ' and increase weight for principal stages ' + weakPrincipalStages.join(', ') + '.';
             } else if (weakCaseStages.length > 0) {
-                strategyAction = '策略调整：优先加强 ' + weakCaseStages.join('、') + ' 阶段跟进，检查对应话术覆盖与培训落地。';
+                strategyAction = 'Reprioritize follow-up on stages ' + weakCaseStages.join(', ') + ' and verify script coverage and training.';
             } else if (weakPrincipalStages.length > 0) {
-                strategyAction = '金额聚焦：对 ' + weakPrincipalStages.join('、') + ' 金额段提高分配权重或定制催收策略。';
+                strategyAction = 'Increase allocation weight or customize collection strategy for principal stages ' + weakPrincipalStages.join(', ') + '.';
             } else {
-                strategyAction = '阶段分布正常，维持现有策略。';
+                strategyAction = 'Stage distribution normal. Maintain current strategy.';
             }
 
             var toolAction = '';
-            if (teamAvg.connectRate < 22 && teamAvg.callLossRate > 20) {
-                toolAction = '通道检查：检查号码质量与线路稳定性，尝试调整拨打时段；同时排查接通后掉线原因（线路/网络/话术），优化首句留存率。';
-            } else if (teamAvg.connectRate < 22) {
-                toolAction = '通道检查：检查号码质量与线路稳定性，尝试调整拨打时段（如避开当地午休/通勤高峰）。';
-            } else if (teamAvg.callLossRate > 20) {
-                toolAction = '掉线归因：排查接通后掉线原因（线路/网络/话术），优化首句留存率。';
+            var connLow = teamAvg.connectRate < moduleAvgConnectRate - CONNECT_TOLERANCE;
+            var lossHigh = teamAvg.callLossRate > moduleAvgCallLossRate + LOSS_TOLERANCE;
+            if (connLow && lossHigh) {
+                toolAction = 'Channel quality check: verify number quality and line stability; adjust dialing hours. Also investigate drop-off causes (line/network/script) to improve first-call retention.';
+            } else if (connLow) {
+                toolAction = 'Channel quality check: verify number quality and line stability; try adjusting dialing hours (e.g. avoid local rush hours).';
+            } else if (lossHigh) {
+                toolAction = 'Drop-off root cause: investigate post-connection drops (line/network/script) and optimize opening lines.';
             } else {
-                toolAction = '外呼通道稳定，保持当前线路配置。';
+                toolAction = 'Outbound channel stable. Maintain current line configuration.';
             }
 
-            var environmentAction = '如确认有影响，请在改进方案中记录并调整优先级。';
+            var environmentAction = 'If confirmed, document impact in improvement plan and adjust priority accordingly.';
 
             var laggingAction = '';
             if (laggingAgents.length === 0) {
-                laggingAction = '本组当日无落后人员，保持现有管理节奏。';
+                laggingAction = 'No lagging agents today. Maintain current management rhythm.';
             } else {
-                laggingAction = '逐个盯控：对落后人员启动一对一沟通，制定3-5天提升计划，每日复盘。';
+                laggingAction = 'One-on-one follow-up with lagging agents: ' + laggingAgents.map(a => a.name).join(', ') + '. Set 3-5 day improvement plan with daily check-ins.';
             }
 
             var laggingHtml = laggingAgents.length === 0
@@ -2199,18 +2215,35 @@ tl_conclusion_fn = """\
                         Gap ${fmt(a.gap, 0)}
                     </div>`).join('');
 
+            var laggingAction = '';
+            if (laggingAgents.length === 0) {
+                laggingAction = 'No lagging agents today. Maintain current management rhythm.';
+            } else {
+                laggingAction = 'One-on-one follow-up with lagging agents: ' + laggingAgents.map(a => a.name).join(', ') + '. Set 3-5 day improvement plan with daily check-ins.';
+            }
+
             var tableHtml = `
                 <div style="font-size:12px; color:#111827; line-height:1.5;">
                     <div style="font-weight:700; margin-bottom:8px;">TL conclusion = group-level overview + lagging agents</div>
                     <table style="width:100%; border-collapse:collapse; font-size:12px;">
                         <tr style="background:#f8fafc;">
-                            <td style="border:1px solid #d1d5db; padding:8px; width:160px; font-weight:700;">Group overview</td>
+                            <td style="border:1px solid #d1d5db; padding:8px; width:140px; font-weight:700;">Dimension</td>
+                            <td style="border:1px solid #d1d5db; padding:8px; font-weight:700;">Diagnosis</td>
+                            <td style="border:1px solid #d1d5db; padding:8px; font-weight:700; width:280px;">Suggested Action</td>
+                        </tr>
+                        <tr style="background:#f8fafc;">
+                            <td style="border:1px solid #d1d5db; padding:8px; font-weight:700;">Group overview</td>
                             <td style="border:1px solid #d1d5db; padding:8px;">
                                 Group: <b>${group}</b> (${moduleKey || '--'}) @ ${selectedDate}<br>
                                 Achievement: <b>${fmt(teamAvg.achievement, 1, '%')}</b> | Attendance: <b>${fmt(teamAvg.attendance, 1, '%')}</b> | Dial: <b>${fmt(teamAvg.artCallTimes, 0)}</b>
                             </td>
+                            <td style="border:1px solid #d1d5db; padding:8px; color:#065f46; background:#f0fdf4;">Continue monitoring core group metrics and watch gaps vs module average.</td>
                         </tr>
-                        <tr><td style="border:1px solid #d1d5db; padding:8px; font-weight:700;">People factors</td><td style="border:1px solid #d1d5db; padding:8px;">${peopleSummary}</td></tr>
+                        <tr>
+                            <td style="border:1px solid #d1d5db; padding:8px; font-weight:700;">People factors</td>
+                            <td style="border:1px solid #d1d5db; padding:8px;">${peopleSummary}</td>
+                            <td style="border:1px solid #d1d5db; padding:8px; color:#065f46; background:#f0fdf4;">${peopleAction}</td>
+                        </tr>
                         <tr>
                             <td style="border:1px solid #d1d5db; padding:8px; font-weight:700;">Strategy factors</td>
                             <td style="border:1px solid #d1d5db; padding:8px;">
@@ -2218,10 +2251,23 @@ tl_conclusion_fn = """\
                                 Overdue stages with weak contribution: ${weakCaseStages.length ? weakCaseStages.join(', ') : '--'}<br>
                                 Amount stages with weak contribution: ${weakPrincipalStages.length ? weakPrincipalStages.join(', ') : '--'}
                             </td>
+                            <td style="border:1px solid #d1d5db; padding:8px; color:#065f46; background:#f0fdf4;">${strategyAction}</td>
                         </tr>
-                        <tr><td style="border:1px solid #d1d5db; padding:8px; font-weight:700;">Tool factors</td><td style="border:1px solid #d1d5db; padding:8px;">${toolSummary}</td></tr>
-                        <tr><td style="border:1px solid #d1d5db; padding:8px; font-weight:700;">Environment/other</td><td style="border:1px solid #d1d5db; padding:8px;">If holiday/policy/system events occurred, use manual override for action priority.</td></tr>
-                        <tr><td style="border:1px solid #d1d5db; padding:8px; font-weight:700;">Lagging agents</td><td style="border:1px solid #d1d5db; padding:8px;">${laggingHtml}</td></tr>
+                        <tr>
+                            <td style="border:1px solid #d1d5db; padding:8px; font-weight:700;">Tool factors</td>
+                            <td style="border:1px solid #d1d5db; padding:8px;">${toolSummary}</td>
+                            <td style="border:1px solid #d1d5db; padding:8px; color:#065f46; background:#f0fdf4;">${toolAction}</td>
+                        </tr>
+                        <tr>
+                            <td style="border:1px solid #d1d5db; padding:8px; font-weight:700;">Environment/other</td>
+                            <td style="border:1px solid #d1d5db; padding:8px;">If holiday/policy/system events occurred, use manual override for action priority.</td>
+                            <td style="border:1px solid #d1d5db; padding:8px; color:#065f46; background:#f0fdf4;">${environmentAction}</td>
+                        </tr>
+                        <tr>
+                            <td style="border:1px solid #d1d5db; padding:8px; font-weight:700;">Lagging agents</td>
+                            <td style="border:1px solid #d1d5db; padding:8px;">${laggingHtml}</td>
+                            <td style="border:1px solid #d1d5db; padding:8px; color:#065f46; background:#f0fdf4;">${laggingAction}</td>
+                        </tr>
                     </table>${improvementPlanBlock}
                 </div>
             `;
@@ -2305,15 +2351,67 @@ stl_conclusion_fn = """\
             const weakCaseStages = pickWeakDims(bd ? bd.caseStage : []);
             const weakPrincipalStages = pickWeakDims(bd ? bd.principalStage : []);
 
-            const peopleSummary = (moduleAvg.attendance < 95 || moduleAvg.calls < allAvg.calls)
-                ? `People factor risk: attendance ${fmt(moduleAvg.attendance, 1, '%')}, calls ${fmt(moduleAvg.calls, 0)} (all-module avg ${fmt(allAvg.calls, 0)}).`
+            // 容忍带配置（相对全模块均值）
+            const ATTENDANCE_TOLERANCE = 2.0;
+            const CONNECT_TOLERANCE = 5.0;
+            const LOSS_TOLERANCE = 5.0;
+            const CALLS_TOLERANCE = 0.10;
+
+            const peopleSummary = (moduleAvg.attendance < allAvg.attendance - ATTENDANCE_TOLERANCE || moduleAvg.calls < allAvg.calls * (1 - CALLS_TOLERANCE))
+                ? `People factor risk: attendance ${fmt(moduleAvg.attendance, 1, '%')} (all-module avg ${fmt(allAvg.attendance, 1, '%')}), calls ${fmt(moduleAvg.calls, 0)} (all-module avg ${fmt(allAvg.calls, 0)}).`
                 : `People factors are stable at module level this week.`;
             const strategySummary = (weakCaseStages.length > 0 || weakPrincipalStages.length > 0)
                 ? `Stage preference imbalance (strategy): some agents/groups show declining contribution in overdue or amount stages. Action: adjust follow-up strategy and prioritize these stages.`
                 : `No clear stage preference imbalance detected from current breakdown data.`;
-            const toolSummary = (moduleAvg.connectRate < 22 || moduleAvg.callLossRate > 20)
-                ? `Tool usage risk: connect ${fmt(moduleAvg.connectRate, 1, '%')}, call loss ${fmt(moduleAvg.callLossRate, 1, '%')}; inspect channel quality and dialing schedule.`
+            const toolSummary = (moduleAvg.connectRate < allAvg.connectRate - CONNECT_TOLERANCE || moduleAvg.callLossRate > allAvg.callLossRate + LOSS_TOLERANCE)
+                ? `Tool usage risk: connect ${fmt(moduleAvg.connectRate, 1, '%')} (all-module avg ${fmt(allAvg.connectRate, 1, '%')}), call loss ${fmt(moduleAvg.callLossRate, 1, '%')} (all-module avg ${fmt(allAvg.callLossRate, 1, '%')}); inspect channel quality and dialing schedule.`
                 : `Tool usage appears stable at module level.`;
+
+            let peopleAction = '';
+            const attdLow = moduleAvg.attendance < allAvg.attendance - ATTENDANCE_TOLERANCE;
+            const callsLow = moduleAvg.calls < allAvg.calls * (1 - CALLS_TOLERANCE);
+            if (attdLow && callsLow) {
+                peopleAction = 'Attendance & calls below all-module average. Check absenteeism and reallocate staff if needed; review low-productivity groups for system issues or idle time.';
+            } else if (attdLow) {
+                peopleAction = 'Attendance below all-module average. Check absenteeism and consider cross-group support.';
+            } else if (callsLow) {
+                peopleAction = 'Call volume below all-module average. Follow up with low-productivity groups and review system allocation and online hours.';
+            } else {
+                peopleAction = 'People metrics stable. Maintain current scheduling and productivity monitoring.';
+            }
+
+            let strategyAction = '';
+            if (weakCaseStages.length > 0 && weakPrincipalStages.length > 0) {
+                strategyAction = 'Reprioritize follow-up on stages ' + weakCaseStages.join(', ') + ' and increase weight for principal stages ' + weakPrincipalStages.join(', ') + '.';
+            } else if (weakCaseStages.length > 0) {
+                strategyAction = 'Reprioritize follow-up on stages ' + weakCaseStages.join(', ') + ' and verify script coverage and training.';
+            } else if (weakPrincipalStages.length > 0) {
+                strategyAction = 'Increase allocation weight or customize collection strategy for principal stages ' + weakPrincipalStages.join(', ') + '.';
+            } else {
+                strategyAction = 'Stage distribution normal. Maintain current strategy.';
+            }
+
+            let toolAction = '';
+            const connLow = moduleAvg.connectRate < allAvg.connectRate - CONNECT_TOLERANCE;
+            const lossHigh = moduleAvg.callLossRate > allAvg.callLossRate + LOSS_TOLERANCE;
+            if (connLow && lossHigh) {
+                toolAction = 'Channel quality check: verify number quality and line stability; adjust dialing hours. Also investigate drop-off causes (line/network/script) to improve first-call retention.';
+            } else if (connLow) {
+                toolAction = 'Channel quality check: verify number quality and line stability; try adjusting dialing hours (e.g. avoid local rush hours).';
+            } else if (lossHigh) {
+                toolAction = 'Drop-off root cause: investigate post-connection drops (line/network/script) and optimize opening lines.';
+            } else {
+                toolAction = 'Outbound channel stable. Maintain current line configuration.';
+            }
+
+            const environmentAction = 'If confirmed, document impact in improvement plan and adjust priority accordingly.';
+
+            let laggingAction = '';
+            if (laggingGroups.length === 0) {
+                laggingAction = 'No lagging groups this week. Maintain current management rhythm.';
+            } else {
+                laggingAction = 'One-on-one follow-up with lagging groups: ' + laggingGroups.map(g => g.name).join(', ') + '. Set 3-5 day improvement plan with daily check-ins.';
+            }
 
             const laggingHtml = laggingGroups.length === 0
                 ? '<div style="color:#6b7280;">No lagging group identified for selected week.</div>'
@@ -2331,13 +2429,23 @@ stl_conclusion_fn = """\
                     <div style="font-weight:700; margin-bottom:8px;">STL conclusion = module-level overview + lagging groups</div>
                     <table style="width:100%; border-collapse:collapse; font-size:12px;">
                         <tr style="background:#f8fafc;">
-                            <td style="border:1px solid #d1d5db; padding:8px; width:160px; font-weight:700;">Module overview</td>
+                            <td style="border:1px solid #d1d5db; padding:8px; width:140px; font-weight:700;">Dimension</td>
+                            <td style="border:1px solid #d1d5db; padding:8px; font-weight:700;">Diagnosis</td>
+                            <td style="border:1px solid #d1d5db; padding:8px; font-weight:700; width:280px;">Suggested Action</td>
+                        </tr>
+                        <tr style="background:#f8fafc;">
+                            <td style="border:1px solid #d1d5db; padding:8px; font-weight:700;">Module overview</td>
                             <td style="border:1px solid #d1d5db; padding:8px;">
                                 Module: <b>${module}</b> @ ${selectedWeekLabel}<br>
                                 Achievement: <b>${fmt(moduleAvg.achievement, 1, '%')}</b> | Attendance: <b>${fmt(moduleAvg.attendance, 1, '%')}</b> | Calls: <b>${fmt(moduleAvg.calls, 0)}</b>
                             </td>
+                            <td style="border:1px solid #d1d5db; padding:8px; color:#065f46; background:#f0fdf4;">Continue monitoring core module metrics and watch gaps vs all-module average.</td>
                         </tr>
-                        <tr><td style="border:1px solid #d1d5db; padding:8px; font-weight:700;">People factors</td><td style="border:1px solid #d1d5db; padding:8px;">${peopleSummary}</td></tr>
+                        <tr>
+                            <td style="border:1px solid #d1d5db; padding:8px; font-weight:700;">People factors</td>
+                            <td style="border:1px solid #d1d5db; padding:8px;">${peopleSummary}</td>
+                            <td style="border:1px solid #d1d5db; padding:8px; color:#065f46; background:#f0fdf4;">${peopleAction}</td>
+                        </tr>
                         <tr>
                             <td style="border:1px solid #d1d5db; padding:8px; font-weight:700;">Strategy factors</td>
                             <td style="border:1px solid #d1d5db; padding:8px;">
@@ -2345,10 +2453,23 @@ stl_conclusion_fn = """\
                                 Overdue stages with weak contribution: ${weakCaseStages.length ? weakCaseStages.join(', ') : '--'}<br>
                                 Amount stages with weak contribution: ${weakPrincipalStages.length ? weakPrincipalStages.join(', ') : '--'}
                             </td>
+                            <td style="border:1px solid #d1d5db; padding:8px; color:#065f46; background:#f0fdf4;">${strategyAction}</td>
                         </tr>
-                        <tr><td style="border:1px solid #d1d5db; padding:8px; font-weight:700;">Tool factors</td><td style="border:1px solid #d1d5db; padding:8px;">${toolSummary}</td></tr>
-                        <tr><td style="border:1px solid #d1d5db; padding:8px; font-weight:700;">Environment/other</td><td style="border:1px solid #d1d5db; padding:8px;">If holiday/policy/system events occurred, use manual override for action priority.</td></tr>
-                        <tr><td style="border:1px solid #d1d5db; padding:8px; font-weight:700;">Lagging groups</td><td style="border:1px solid #d1d5db; padding:8px;">${laggingHtml}</td></tr>
+                        <tr>
+                            <td style="border:1px solid #d1d5db; padding:8px; font-weight:700;">Tool factors</td>
+                            <td style="border:1px solid #d1d5db; padding:8px;">${toolSummary}</td>
+                            <td style="border:1px solid #d1d5db; padding:8px; color:#065f46; background:#f0fdf4;">${toolAction}</td>
+                        </tr>
+                        <tr>
+                            <td style="border:1px solid #d1d5db; padding:8px; font-weight:700;">Environment/other</td>
+                            <td style="border:1px solid #d1d5db; padding:8px;">If holiday/policy/system events occurred, use manual override for action priority.</td>
+                            <td style="border:1px solid #d1d5db; padding:8px; color:#065f46; background:#f0fdf4;">${environmentAction}</td>
+                        </tr>
+                        <tr>
+                            <td style="border:1px solid #d1d5db; padding:8px; font-weight:700;">Lagging groups</td>
+                            <td style="border:1px solid #d1d5db; padding:8px;">${laggingHtml}</td>
+                            <td style="border:1px solid #d1d5db; padding:8px; color:#065f46; background:#f0fdf4;">${laggingAction}</td>
+                        </tr>
                     </table>${improvementPlanBlock}
                 </div>
             `;

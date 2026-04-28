@@ -190,3 +190,20 @@ updated_at: 2026-04-27
   - 【P2/长期】Jinja2 模板迁移（替换 fragile string-replacement 为结构化模板渲染）
 - blockers: []
 - handoff_note: 核心 JS 语法错误（toggleAgentOverviewModule 引号、stlChart 未定义）已全部解决，产物可正常使用。re.sub 锚点脆弱性已短期修复（放宽正则），长期需 Jinja2 迁移根治。
+
+## 会话快照（2026-04-28 当前）
+- status: in_progress
+- evidence:
+  - Conclusion 增加第三列 Suggested Action（TL 修复了之前 tableHtml 替换未命中导致的 action 缺失）
+  - Action 文案全改为英文（People/Strategy/Tool/Environment/Lagging）
+  - Lagging Action 带具体名单：TL 展示 agent 姓名，STL 展示 group 名
+  - 阈值动态化：attendance/connectRate/callLossRate/dial 从硬编码（95%/22%/20%）改为同模块/全模块均值 + 容忍带
+  - 容忍带配置：ATTENDANCE_TOLERANCE=2pp, CONNECT_TOLERANCE=5pp, LOSS_TOLERANCE=5pp, DIAL_TOLERANCE=10%
+- next_actions:
+  - 【P0】Git 提交并推送
+  - 【P1】重新生成报告验证 conclusion 渲染
+- blockers: []
+- handoff_note:
+  - generate_v2_7.py 中 TL 和 STL 的 conclusion 函数已完成重构
+  - Jinja2 模板（tl_conclusions.html.j2 / stl_conclusions.html.j2）已同步更新
+  - 动态判断逻辑已落地，容忍带为集中常量，便于后续微调

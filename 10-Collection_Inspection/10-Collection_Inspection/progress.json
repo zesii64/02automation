@@ -5,22 +5,22 @@
   "status": "in_progress",
   "dual_review_gate": "not_run",
   "current_focus": [
-    "v3_6 HTML 控制台报错清理完成，进入提交推送阶段"
+    "Conclusion 优化完成：Action 列、全英文文案、动态阈值判断、Lagging 带具体名单"
   ],
   "recent_completed": [
+    "Conclusion 重构：TL/STL 增加 Suggested Action 列；Action 全英文；Lagging 展示具体人名/组名；阈值从硬编码改为模块均值+容忍带",
     "人工检验通过，控制台无报错；stlChart 未定义与引号转义问题已闭环",
-    "重新生成 v3_6_2026-04-25.html，全部 6 处 toggle 调用均正确输出 \\'，Hard checks passed",
-    "修复模板 v3_6_2026-04-21.html 3处 onclick \"\" → \\'，解决 JS 单引号字符串内语法错误"
+    "重新生成 v3_6_2026-04-25.html，全部 6 处 toggle 调用均正确输出 \\'，Hard checks passed"
   ],
   "next_actions": [
-    "【P0】执行 Git 提交（范围：generate_v2_7.py、view_data.py、模板、产物）",
-    "【P1】Push 到 GitHub",
-    "【P2/长期】Jinja2 模板迁移（根治 re.sub 锚点脆弱性，plan 已存在 .claude/plans/radiant-watching-perlis.md）"
+    "【P0】Git 提交并推送（generate_v2_7.py、Jinja2 模板、tl_conclusions_renderer.py）",
+    "【P1】重新生成报告验证 conclusion 渲染效果（TL action 列、英文文案、动态判断）",
+    "【P2/长期】Jinja2 模板迁移（替换 fragile string-replacement 为结构化模板渲染）"
   ],
   "blockers": [
     "无阻塞"
   ],
   "open_questions": [
-    "SOFT_WARN 是否指向其他未修复的 onclick 引号问题？"
+    "容忍带数值（attendance 2pp / connect 5pp / loss 5pp / dial 10%）是否需要根据实际数据调参？"
   ]
 }
