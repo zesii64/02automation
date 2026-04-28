@@ -2069,7 +2069,21 @@ tl_conclusion_fn = """\
             var groupMeta = REAL_DATA.tlData[group] || {};
             var moduleKey = groupMeta.groupModule || '';
             var coarseModule = moduleKey.replace(/-Large|-Small/g, '');
-            var improvementPlanBlock = buildImprovementPlanBlock(coarseModule);
+            var TL_MODULE_IMPROVEMENT_PLAN_URL = {
+                'S0': 'https://doc.weixin.qq.com/sheet/e3_AGIATAbTANsCNWcq1Hf0CS76ZJaSp?scode=AGMA_AdxAAsFy3PXtQAagA5gaoAKA&tab=BB08J2',
+                'S1': 'https://doc.weixin.qq.com/sheet/e3_AGIATAbTANsCNKGdG4MPaQreE00Ga?scode=AGMA_AdxAAswoBPuhvAagA5gaoAKA&tab=BB08J2',
+                'S2': 'https://doc.weixin.qq.com/sheet/e3_AGIATAbTANsCNk6txUBU0SG2hZ9A0?scode=AGMA_AdxAAsARq92dVAagA5gaoAKA&tab=BB08J2',
+                'M1': 'https://doc.weixin.qq.com/sheet/e3_AGIATAbTANsCNs8XAuzKHQmq0m0W1?scode=AGMA_AdxAAsXVhLkssAagA5gaoAKA&tab=BB08J2'
+            };
+            var improvementPlanUrl = TL_MODULE_IMPROVEMENT_PLAN_URL[coarseModule] || '';
+            var improvementPlanBlock = '';
+            if (!isMet && improvementPlanUrl) {
+                improvementPlanBlock = '<div style="margin-top:10px; padding-top:10px; border-top:1px solid #e5e7eb; font-size:12px;">' +
+                    '<div style="color:#374151; font-weight:600; margin-bottom:4px;">改进方案 · Improvement plan</div>' +
+                    '<div style="color:#6b7280; font-size:11px; line-height:1.45; margin-bottom:6px;">在当前模块维度填写或跟踪改进动作（腾讯文档外链）。 / Fill in or track module-level improvement actions (Tencent Doc, external).</div>' +
+                    '<a href="' + improvementPlanUrl + '" target="_blank" rel="noopener noreferrer" style="color:#2563eb;">打开「' + coarseModule + '」模块改进方案 · Open ' + coarseModule + ' improvement plan (Tencent Doc)</a>' +
+                '</div>';
+            }
             var moduleGroups = (REAL_DATA.groups || []).filter(g => REAL_DATA.tlData[g] && REAL_DATA.tlData[g].groupModule === moduleKey);
             var fmt = (v, d = 1, suffix = '') => (v === null || v === undefined || Number.isNaN(Number(v))) ? '--' : (Number(v).toFixed(d) + suffix);
 
@@ -2298,7 +2312,7 @@ stl_conclusion_fn = """\
         function generateSTLConclusions(data, isMet, displayAchievement, displayGap) {
             const module = document.getElementById('stl-module-select').value;
             const moduleForPlan = (module === 'all' || !module) ? '' : module;
-            const improvementPlanBlock = buildImprovementPlanBlock(moduleForPlan);
+            const improvementPlanBlock = isMet ? '' : buildImprovementPlanBlock(moduleForPlan);
             const selectedWeekLabel = document.getElementById('stl-week-select') ? document.getElementById('stl-week-select').value : REAL_DATA.defaultStlWeek;
             const groups = (REAL_DATA.groupPerformance[module] || []).map(g => {
                 const wm = REAL_DATA.groupPerformanceByWeek && REAL_DATA.groupPerformanceByWeek[module] && REAL_DATA.groupPerformanceByWeek[module][g.name]
