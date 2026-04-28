@@ -178,3 +178,15 @@ updated_at: 2026-04-27
   - 【P2】Git 提交推送
 - blockers: []
 - handoff_note: 核心 SyntaxError 已解决。跨层转义规则：Python 三引号字符串 → 要输出 `\'`（JS 转义单引号），必须写 `\\\\'`（四个反斜杠）。
+
+## 会话快照（2026-04-28 保存）
+- status: in_progress
+- evidence:
+  - 修复 `generate_v2_7.py`：`stlChart` 声明缺失 + `renderSTLChart` 正则 `\n\s*\n\s*` 过于严格导致 re.sub 静默失效
+  - 重新生成 `v3_6_2026-04-27.html`，`var stlChart = null;` 已正确注入，resize handler 无 ReferenceError
+  - 用户人工检验通过，浏览器控制台已干净
+- next_actions:
+  - 【P0】Git 提交并推送当前修复
+  - 【P2/长期】Jinja2 模板迁移（替换 fragile string-replacement 为结构化模板渲染）
+- blockers: []
+- handoff_note: 核心 JS 语法错误（toggleAgentOverviewModule 引号、stlChart 未定义）已全部解决，产物可正常使用。re.sub 锚点脆弱性已短期修复（放宽正则），长期需 Jinja2 迁移根治。

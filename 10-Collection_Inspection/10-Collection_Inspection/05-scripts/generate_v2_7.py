@@ -2045,35 +2045,36 @@ html = html.replace(
 )
 
 tl_conclusion_fn = """\
-        const MODULE_IMPROVEMENT_PLAN_URL = {
-            S0: 'https://doc.weixin.qq.com/sheet/e3_AGIATAbTANsCNWcq1Hf0CS76ZJaSp?scode=AGMA_AdxAAsSXn1aiyAGIATAbTANs&tab=BB08J2',
-            S1: 'https://doc.weixin.qq.com/sheet/e3_AGIATAbTANsCNKGdG4MPaQreE00Ga?scode=AGMA_AdxAAs8sEUIewAagA5gaoAKA&tab=BB08J2',
-            S2: 'https://doc.weixin.qq.com/sheet/e3_AGIATAbTANsCNk6txUBU0SG2hZ9A0?scode=AGMA_AdxAAs0D7crFlAagA5gaoAKA&tab=BB08J2',
-            M1: 'https://doc.weixin.qq.com/sheet/e3_AGIATAbTANsCNs8XAuzKHQmq0m0W1?scode=AGMA_AdxAAsARFwfuoAagA5gaoAKA&tab=BB08J2'
-        };
-        function buildImprovementPlanBlock(moduleKey) {
-            const improvementPlanUrl = moduleKey && MODULE_IMPROVEMENT_PLAN_URL[moduleKey];
-            return improvementPlanUrl
-                ? `<div style="margin-top:10px; padding-top:10px; border-top:1px solid #e5e7eb; font-size:12px;">
-                        <div style="color:#374151; font-weight:600; margin-bottom:4px;">改进方案 · Improvement plan</div>
-                        <div style="color:#6b7280; font-size:11px; line-height:1.45; margin-bottom:6px;">在当前模块维度填写或跟踪改进动作（腾讯文档外链）。 / Fill in or track module-level improvement actions (Tencent Doc, external).</div>
-                        <a href="${improvementPlanUrl}" target="_blank" rel="noopener noreferrer" style="color:#2563eb;">打开「${moduleKey}」模块改进方案 · Open ${moduleKey} improvement plan (Tencent Doc)</a>
-                    </div>`
-                : '';
-        }
         function generateTLConclusions(data, isMet) {
-            const group = document.getElementById('tl-group-select') ? document.getElementById('tl-group-select').value : '';
-            const selectedDate = document.getElementById('tl-date-select') ? document.getElementById('tl-date-select').value : REAL_DATA.dataDate;
-            const agents = REAL_DATA.agentPerformance[group] || [];
-            const groupMeta = REAL_DATA.tlData[group] || {};
-            const moduleKey = groupMeta.groupModule || '';
-            const coarseModule = moduleKey.replace(/-Large|-Small/g, '');
-            const improvementPlanBlock = buildImprovementPlanBlock(coarseModule);
-            const moduleGroups = (REAL_DATA.groups || []).filter(g => REAL_DATA.tlData[g] && REAL_DATA.tlData[g].groupModule === moduleKey);
-            const fmt = (v, d = 1, suffix = '') => (v === null || v === undefined || Number.isNaN(Number(v))) ? '--' : (Number(v).toFixed(d) + suffix);
+            var group = document.getElementById('tl-group-select') ? document.getElementById('tl-group-select').value : '';
+            var selectedDate = document.getElementById('tl-date-select') ? document.getElementById('tl-date-select').value : REAL_DATA.dataDate;
+            var selectedDateForSort = (typeof selectedDate !== 'undefined' && selectedDate) ? selectedDate : (document.getElementById('tl-date-select') ? document.getElementById('tl-date-select').value : REAL_DATA.dataDate);
+            var agents = (REAL_DATA.agentPerformance[group] || []).filter(a => {
+                var dm = REAL_DATA.agentPerformanceByDate && REAL_DATA.agentPerformanceByDate[group] && REAL_DATA.agentPerformanceByDate[group][a.name]
+                    ? REAL_DATA.agentPerformanceByDate[group][a.name][selectedDateForSort]
+                    : null;
+                return !!dm;
+            });
+            agents.sort((a, b) => {
+                var adm = REAL_DATA.agentPerformanceByDate && REAL_DATA.agentPerformanceByDate[group] && REAL_DATA.agentPerformanceByDate[group][a.name]
+                    ? REAL_DATA.agentPerformanceByDate[group][a.name][selectedDateForSort]
+                    : null;
+                var bdm = REAL_DATA.agentPerformanceByDate && REAL_DATA.agentPerformanceByDate[group] && REAL_DATA.agentPerformanceByDate[group][b.name]
+                    ? REAL_DATA.agentPerformanceByDate[group][b.name][selectedDateForSort]
+                    : null;
+                var av = (adm && adm.achievement !== null && adm.achievement !== undefined) ? adm.achievement : ((a.achievement !== null && a.achievement !== undefined) ? a.achievement : 999);
+                var bv = (bdm && bdm.achievement !== null && bdm.achievement !== undefined) ? bdm.achievement : ((b.achievement !== null && b.achievement !== undefined) ? b.achievement : 999);
+                return av - bv;
+            });
+            var groupMeta = REAL_DATA.tlData[group] || {};
+            var moduleKey = groupMeta.groupModule || '';
+            var coarseModule = moduleKey.replace(/-Large|-Small/g, '');
+            var improvementPlanBlock = buildImprovementPlanBlock(coarseModule);
+            var moduleGroups = (REAL_DATA.groups || []).filter(g => REAL_DATA.tlData[g] && REAL_DATA.tlData[g].groupModule === moduleKey);
+            var fmt = (v, d = 1, suffix = '') => (v === null || v === undefined || Number.isNaN(Number(v))) ? '--' : (Number(v).toFixed(d) + suffix);
 
-            const getAgentMetric = (groupId, agent, key) => {
-                const dm = REAL_DATA.agentPerformanceByDate && REAL_DATA.agentPerformanceByDate[groupId] && REAL_DATA.agentPerformanceByDate[groupId][agent.name]
+            var getAgentMetric = (groupId, agent, key) => {
+                var dm = REAL_DATA.agentPerformanceByDate && REAL_DATA.agentPerformanceByDate[groupId] && REAL_DATA.agentPerformanceByDate[groupId][agent.name]
                     ? REAL_DATA.agentPerformanceByDate[groupId][agent.name][selectedDate]
                     : null;
                 if (dm && dm[key] !== undefined && dm[key] !== null) return Number(dm[key]);
@@ -2081,7 +2082,7 @@ tl_conclusion_fn = """\
                 return null;
             };
 
-            let tAch = 0, tAttd = 0, tConn = 0, tLoss = 0, tDial = 0, tCnt = 0;
+            var tAch = 0, tAttd = 0, tConn = 0, tLoss = 0, tDial = 0, tCnt = 0;
             agents.forEach(a => {
                 tAch += getAgentMetric(group, a, 'achievement') || 0;
                 tAttd += getAgentMetric(group, a, 'attendance') || 0;
@@ -2090,20 +2091,20 @@ tl_conclusion_fn = """\
                 tDial += getAgentMetric(group, a, 'artCallTimes') || 0;
                 tCnt += 1;
             });
-            const teamCnt = Math.max(1, tCnt);
-            const teamAvg = { achievement: tAch / teamCnt, attendance: tAttd / teamCnt, connectRate: tConn / teamCnt, callLossRate: tLoss / teamCnt, artCallTimes: tDial / teamCnt };
+            var teamCnt = Math.max(1, tCnt);
+            var teamAvg = { achievement: tAch / teamCnt, attendance: tAttd / teamCnt, connectRate: tConn / teamCnt, callLossRate: tLoss / teamCnt, artCallTimes: tDial / teamCnt };
 
-            let mDial = 0, mCnt = 0;
+            var mDial = 0, mCnt = 0;
             moduleGroups.forEach(gid => {
-                const rows = REAL_DATA.agentPerformance[gid] || [];
+                var rows = REAL_DATA.agentPerformance[gid] || [];
                 rows.forEach(a => {
                     mDial += getAgentMetric(gid, a, 'artCallTimes') || 0;
                     mCnt += 1;
                 });
             });
-            const moduleAvgDial = mCnt > 0 ? (mDial / mCnt) : teamAvg.artCallTimes;
+            var moduleAvgDial = mCnt > 0 ? (mDial / mCnt) : teamAvg.artCallTimes;
 
-            const laggingAgents = [...agents]
+            var laggingAgents = [...agents]
                 .map(a => ({
                     name: a.name,
                     achievement: getAgentMetric(group, a, 'achievement'),
@@ -2113,39 +2114,39 @@ tl_conclusion_fn = """\
                     gap: (getAgentMetric(group, a, 'target') || 0) - (getAgentMetric(group, a, 'actual') || 0)
                 }))
                 .sort((x, y) => {
-                    const ax = x.achievement !== null && x.achievement !== undefined ? x.achievement : 999;
-                    const ay = y.achievement !== null && y.achievement !== undefined ? y.achievement : 999;
+                    var ax = x.achievement !== null && x.achievement !== undefined ? x.achievement : 999;
+                    var ay = y.achievement !== null && y.achievement !== undefined ? y.achievement : 999;
                     if (ax !== ay) return ax - ay;
                     return (y.gap || 0) - (x.gap || 0);
                 })
                 .slice(0, 3);
 
-            const breakdownByDate = REAL_DATA.tlBreakdownByDate && REAL_DATA.tlBreakdownByDate[group]
+            var breakdownByDate = REAL_DATA.tlBreakdownByDate && REAL_DATA.tlBreakdownByDate[group]
                 ? REAL_DATA.tlBreakdownByDate[group][selectedDate]
                 : null;
-            const pickWeakDims = (rows) => {
-                const valid = (rows || []).filter(r => r.repayRate !== null && r.repayRate !== undefined);
+            var pickWeakDims = (rows) => {
+                var valid = (rows || []).filter(r => r.repayRate !== null && r.repayRate !== undefined);
                 if (valid.length === 0) return [];
-                const avg = valid.reduce((s, r) => s + Number(r.repayRate), 0) / valid.length;
+                var avg = valid.reduce((s, r) => s + Number(r.repayRate), 0) / valid.length;
                 return valid.filter(r => Number(r.repayRate) < avg)
                     .sort((a, b) => Number(a.repayRate) - Number(b.repayRate))
                     .slice(0, 2)
                     .map(r => `${r.dimensionValue}(${fmt(r.repayRate, 1, '%')})`);
             };
-            const weakCaseStages = pickWeakDims(breakdownByDate ? breakdownByDate.caseStage : []);
-            const weakPrincipalStages = pickWeakDims(breakdownByDate ? breakdownByDate.principalStage : []);
+            var weakCaseStages = pickWeakDims(breakdownByDate ? breakdownByDate.caseStage : []);
+            var weakPrincipalStages = pickWeakDims(breakdownByDate ? breakdownByDate.principalStage : []);
 
-            const peopleSummary = (teamAvg.attendance < 95 || teamAvg.artCallTimes < moduleAvgDial)
+            var peopleSummary = (teamAvg.attendance < 95 || teamAvg.artCallTimes < moduleAvgDial)
                 ? `People factor risk: attendance ${fmt(teamAvg.attendance, 1, '%')}, dial ${fmt(teamAvg.artCallTimes, 0)} (module avg ${fmt(moduleAvgDial, 0)}).`
                 : `People factors are stable on selected date.`;
-            const strategySummary = (weakCaseStages.length > 0 || weakPrincipalStages.length > 0)
+            var strategySummary = (weakCaseStages.length > 0 || weakPrincipalStages.length > 0)
                 ? `Stage preference imbalance (strategy): some agents/groups show declining contribution in overdue or amount stages. Action: adjust follow-up strategy and prioritize these stages.`
                 : `No clear stage preference imbalance detected from current breakdown data.`;
-            const toolSummary = (teamAvg.connectRate < 22 || teamAvg.callLossRate > 20)
+            var toolSummary = (teamAvg.connectRate < 22 || teamAvg.callLossRate > 20)
                 ? `Tool usage risk: connect ${fmt(teamAvg.connectRate, 1, '%')}, call loss ${fmt(teamAvg.callLossRate, 1, '%')}; check phone channel quality and outreach time window.`
                 : `Tool usage appears stable (phone channel metrics in normal range).`;
 
-            const laggingHtml = laggingAgents.length === 0
+            var laggingHtml = laggingAgents.length === 0
                 ? '<div style="color:#6b7280;">No lagging agent identified for selected date.</div>'
                 : laggingAgents.map((a, idx) => `<div style="padding:6px 8px; border:1px solid #e5e7eb; border-radius:6px; margin-bottom:6px;">
                         <b>#${idx + 1} ${a.name}</b> |
@@ -2156,7 +2157,7 @@ tl_conclusion_fn = """\
                         Gap ${fmt(a.gap, 0)}
                     </div>`).join('');
 
-            const tableHtml = `
+            var tableHtml = `
                 <div style="font-size:12px; color:#111827; line-height:1.5;">
                     <div style="font-weight:700; margin-bottom:8px;">TL conclusion = group-level overview + lagging agents</div>
                     <table style="width:100%; border-collapse:collapse; font-size:12px;">
@@ -2185,12 +2186,25 @@ tl_conclusion_fn = """\
             document.getElementById('tl-conclusions').innerHTML = tableHtml;
         }
 """
+# DEBUG: check before re.sub
+var_before = html.count('var MODULE_IMPROVEMENT_PLAN_URL')
+const_before = html.count('const MODULE_IMPROVEMENT_PLAN_URL')
+pattern_tl = r"(?s)\n\s*function generateTLConclusions\(data, isMet\) \{.*?\n\s*\}\n\s*\n\s*function initSTLView"
+m_before = re.search(pattern_tl, html)
+print(f"DEBUG before re.sub: var={var_before}, const={const_before}, tl_match={m_before is not None}", file=sys.stderr)
+
 html = re.sub(
     r"(?s)\n\s*function generateTLConclusions\(data, isMet\) \{.*?\n\s*\}\n\s*\n\s*function initSTLView",
     "\n" + tl_conclusion_fn + "\n\n        function initSTLView",
     html,
     count=1
 )
+
+# DEBUG: check after re.sub
+var_after = html.count('var MODULE_IMPROVEMENT_PLAN_URL')
+const_after = html.count('const MODULE_IMPROVEMENT_PLAN_URL')
+m_after = re.search(pattern_tl, html)
+print(f"DEBUG after re.sub: var={var_after}, const={const_after}, tl_match={m_after is not None}", file=sys.stderr)
 
 stl_conclusion_fn = """\
         function generateSTLConclusions(data, isMet, displayAchievement, displayGap) {
@@ -3228,8 +3242,8 @@ stl_chart_fn = """\
 
 # Replace the whole function body to avoid fragile string matching.
 html = re.sub(
-    r"(?s)\n\s*function renderSTLChart\(weeks, weekIdx\) \{.*?\n\s*\}\n\s*\n\s*function generateSTLConclusions",
-    "\n" + stl_chart_fn + "\n\n        function generateSTLConclusions",
+    r"(?s)\n\s*function renderSTLChart\(weeks, weekIdx\) \{.*?\n\s*\}\n\s*function generateSTLConclusions",
+    "\n        var stlChart = null;\n" + stl_chart_fn + "\n\n        function generateSTLConclusions",
     html,
     count=1
 )
@@ -3656,6 +3670,9 @@ def inject_theme(html_text: str, theme_key: str, css_text: str) -> str:
     return themed.replace("</head>", f"\n<style id=\"theme-{theme_key}\">\n{css_text}\n</style>\n</head>", 1)
 
 def inject_chart_palette(html_text: str) -> str:
+    # Skip if already injected (template may have been pre-modified)
+    if 'chart-palette-patch' in html_text:
+        return html_text
     chart_palette_js = """
 <script id="chart-palette-patch">
 (function () {
@@ -3828,9 +3845,9 @@ body.theme-style_3 .status-danger {
 base_html = inject_theme(html, "style_3", THEME_CSS["style_3"])
 base_html = inject_chart_palette(base_html)
 base_html = dedupe_language_blocks(base_html)
-# Hotfix: tolerate duplicated injected blocks by downgrading declarations to var.
-base_html = re.sub(r"\bconst\s+([A-Za-z_$][A-Za-z0-9_$]*)\s*=", r"var \1 =", base_html)
-base_html = re.sub(r"\blet\s+([A-Za-z_$][A-Za-z0-9_$]*)\s*=", r"var \1 =", base_html)
+# Hotfix REMOVED: was converting all const/let to var, causing duplicate MODULE_IMPROVEMENT_PLAN_URL
+# base_html = re.sub(r"\bconst\s+([A-Za-z_$][A-Za-z0-9_$]*)\s*=", r"var \1 =", base_html)
+# base_html = re.sub(r"\blet\s+([A-Za-z_$][A-Za-z0-9_$]*)\s*=", r"var \1 =", base_html)
 base_html = inject_pipeline_head_comment(
     base_html,
     contract_id=TEMPLATE_CONTRACT_ID,

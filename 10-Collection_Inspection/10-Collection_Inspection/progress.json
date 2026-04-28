@@ -5,21 +5,20 @@
   "status": "in_progress",
   "dual_review_gate": "not_run",
   "current_focus": [
-    "修复 v3_6 HTML 产物 line 6797 的 SyntaxError: Unexpected identifier 'toggleAgentOverviewModule'",
-    "Python 三引号字符串中 `\\'` 输出 `\\'` 到 JS 单引号字符串，实现合法转义"
+    "v3_6 HTML 控制台报错清理完成，进入提交推送阶段"
   ],
   "recent_completed": [
-    "修复 view_data.py 3处跨层引号转义（line 355/451/686），三引号中 `\\'` 输出裸单引号问题",
-    "修复模板 v3_6_2026-04-21.html 3处 onclick `''` → `\\'`，解决 JS 单引号字符串内语法错误",
-    "重新生成 v3_6_2026-04-25.html，全部 6 处 toggle 调用均正确输出 `\\'`，Hard checks passed"
+    "人工检验通过，控制台无报错；stlChart 未定义与引号转义问题已闭环",
+    "重新生成 v3_6_2026-04-25.html，全部 6 处 toggle 调用均正确输出 \\'，Hard checks passed",
+    "修复模板 v3_6_2026-04-21.html 3处 onclick \"\" → \\'，解决 JS 单引号字符串内语法错误"
   ],
   "next_actions": [
-    "【P1】排查剩余 SOFT_WARN: onclick no JS escape quotes 来源",
-    "【P2】浏览器抽检验证",
-    "【P2】Git 提交与推送"
+    "【P0】执行 Git 提交（范围：generate_v2_7.py、view_data.py、模板、产物）",
+    "【P1】Push 到 GitHub",
+    "【P2/长期】Jinja2 模板迁移（根治 re.sub 锚点脆弱性，plan 已存在 .claude/plans/radiant-watching-perlis.md）"
   ],
   "blockers": [
-    "核心 SyntaxError 已解决，无阻塞"
+    "无阻塞"
   ],
   "open_questions": [
     "SOFT_WARN 是否指向其他未修复的 onclick 引号问题？"
