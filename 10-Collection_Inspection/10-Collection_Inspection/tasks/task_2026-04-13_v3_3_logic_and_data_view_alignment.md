@@ -4,7 +4,7 @@ task_id: task_2026-04-13_v3_3_logic_and_data_view_alignment
 status: in_progress
 owner: 未分配
 created_at: 2026-04-13
-updated_at: 2026-04-24
+updated_at: 2026-04-27
 
 ## 目标
 - 收口 `Collection_Operations_Report_v3_3.html` 的判定口径、drilldown 展示与关键字段映射一致性。
@@ -80,3 +80,101 @@ updated_at: 2026-04-24
   - 【P2】Git 提交
 - blockers: []
 - handoff_note: 04-23 HTML 已直接修复，view_data.py 锚点已修复，下次生成不会再出现同一问题。
+
+## 会话快照（2026-04-27）
+- status: in_progress
+- evidence:
+  - force push 完成（c727f32 优化html生成逻辑，目前以v3_6-4-21为模板）
+  - force push 后发现 generate_v2_7.py、patch_utils.py、view_tl_stl.py、tl_conclusions_renderer.py、templates/、data_contract.py 等核心文件全部失踪
+  - 这些文件在 git 中显示为 untracked，从未提交过，不受 git 保护
+- next_actions:
+  - 【P0】确认 HTML 报告文件是否仍存在（reports/Collection_Operations_Report_v3_6_2026-04-23.html）
+  - 【P1】从 HTML 报告反推并重建 generate_v2_7.py
+  - 【P2】重建 patch_utils.py、tl_conclusions_renderer.py、view_tl_stl.py 等辅助文件
+- blockers:
+  - 核心生成脚本失踪，无法重新生成报告
+- handoff_note: 项目处于损坏状态，需先确认 HTML 报告资产完整性，再重建生成脚本。
+
+## 会话快照（2026-04-27 晚）
+- status: in_progress
+- evidence:
+  - 修复 tl_conclusion_fn 中 `\${improvementPlanBlock}` → `${improvementPlanBlock}`（Python普通字符串中 `\$` 不转义，导致字面量残留）
+  - 确认 STL re.sub 锚点 `// ===================== DATA VIEW` 正确匹配，`${improvementPlanBlock}` 在 STL 中已正确渲染为 HTML
+  - 确认模板 hotfix（lines 3845-3846）已注释，无重复 var MODULE_IMPROVEMENT_PLAN_URL
+- next_actions:
+  - 重新生成报告后验证 TL conclusions 中 `${improvementPlanBlock}` 无字面量残留
+  - 浏览器抽检文档链接可点击性
+  - 清理 DEBUG 代码（generate_v2_7.py 第 2189-2207 行）
+- blockers: []
+- handoff_note: TL conclusion 的 `\${improvementPlanBlock}` 是 Python 普通字符串中 `\$` 不转义导致的，已修复。STL 无此问题。重新生成后需验证。
+
+## 会话快照（2026-04-27 下午）
+- status: in_progress
+- evidence:
+  - 已从 commit 435ff104 恢复全部失踪文件：generate_v2_7.py、patch_utils.py、view_tl_stl.py、tl_conclusions_renderer.py、templates/*.j2、data_contract.py 等
+  - 已恢复 v3_6_2026-04-21.html（模板，5754行）和 v3_6_2026-04-23.html（HTML产物）
+  - 本次会话确认：re.sub 补丁链静默失效——29个 post_* + 9个 gen_* 锚点未找到
+  - 生成的 HTML v3_6_2026-04-25.html 有 2份 var MODULE_IMPROVEMENT_PLAN_URL（旧版未删除），导致 JS SyntaxError
+  - tl_conclusion_fn（含 const MODULE_IMPROVEMENT_PLAN_URL）未被 re.sub 插入到生成 HTML
+  - 模板 v3_6_2026-04-21.html 中 generateTLConclusions 函数使用 var，未被 tl_conclusion_fn（const）版本替换
+  - 文档链接问题根本原因：子模块（S1-Large/S2-Small 等）对应的 coarseModule 归一化已存在于模板中，但补丁机制失效
+- next_actions:
+  - 【P0】调试 tl_conclusion_fn re.sub：模板函数未被替换的根本原因
+  - 【P1】验证生成 HTML 无 JS 语法错误 + 文档链接可点击
+  - 【P2】执行 Jinja2 模板迁移（plan 文件已存在于 .claude/plans/radiant-watching-perlis.md）
+- blockers:
+  - re.sub 锚点失效导致生成的 HTML JS 语法错误，文档链接不可点击
+- handoff_note:
+  - 核心问题：字符串锚点脆弱性——HTML 模板与补丁锚点不匹配时静默失效
+  - generate_v2_7.py 已恢复，但补丁机制本身有根本性缺陷，需要 Jinja2 迁移
+  - Plan 文件已存在：.claude/plans/radiant-watching-perlis.md
+
+## 会话快照（2026-04-28 下午）
+- status: in_progress
+- evidence:
+  - view_data.py line 686 修复：8-pair \' → '' + module + ''
+  - 模板 v3_6_2026-04-21.html 修复 3 处 onclick：\'\'\'\'\'\'\'\' → '' + module + ''
+  - 04-25.html 生成后全部 16 个 toggleAgentOverviewModule onclick 无 0x5c (backslash)
+  - 仍报 JS SyntaxError: Unexpected string at line 6218
+  - line 6218 位于 <script> 块内（66668-14047872），内容是 Python source 字符串（section += '<button onclick=...>）但出现在 JS 上下文中，浏览器当作 JS 执行导致语法错误
+  - cross-validation 确认：'' + module + '' 在 JS 中合法（empty string concat），8 quotes 也合法
+- next_actions:
+  - 【P0】定位 line 6218 根因：Python source 字符串为何出现在 JS <script> 块内被当作 JS 执行
+  - 【P0】确认 '' 在 JS 单引号字符串中的语义
+  - 【P2】浏览器抽检
+- blockers:
+  - JS SyntaxError: Unexpected string at line 6218
+  - toggleAgentOverviewModule('' + module + '') 是否合法 JS？
+- handoff_note: backslash 问题已解决（模板+view_data.py 均已干净），但 line 6218 的 Python source 为何出现在 JS <script> 块内仍待定位。
+
+## 会话快照（2026-04-28 傍晚）
+- status: in_progress
+- evidence:
+  - view_data.py line 686: "..." 双引号字符串，\' 解析为两个单引号 ''，result = '' + module + ''（合法 JS）
+  - 模板 04-21.html 修复 3 处 onclick：已替换 \\'\\'\\'\\'\\'\\'\\'\\' 为 '' + module + ''
+  - 04-25.html 全部 16 个 onclick 无 backslash (0x5c) — 已验证 clean
+  - 但 line 6218 (HTML) 内容：section += '<button onclick="toggleAgentOverviewModule('' + module + '')"...>' （Python source），位于 <script> 块内，被浏览器当作 JS 解析
+  - 模板中相同 section += 写法也存在，浏览器均当作 JS 执行
+- next_actions:
+  - 【P0】定位 line 6218 根因：模板的 Python source 字符串为何保留在 HTML 中而非被生成脚本求值
+  - 【P0】修复 toggleAgentOverviewModule('' + module + '') 在 JS 单引号字符串中的引号问题
+  - 【P2】浏览器抽检验证
+- blockers:
+  - line 6218 报 SyntaxError: Unexpected string — Python source 字符串被当作 JS 执行
+  - 模板中 section += '<button onclick="...">' 是 Python 代码还是 JS？为何保留原样？
+- handoff_note: backslash 问题已彻底解决，但 JS 语法错误的根因已转变为"模板中的 Python source 字符串为何保留在 HTML 中未被求值"。
+
+## 会话快照（2026-04-28 晚间）
+- status: in_progress
+- evidence:
+  - 根因定位完成：跨层转义语义不一致——Python 三引号字符串中 `\'` 被解析为 `'`（裸单引号），而非 `\'`（JS 转义）
+  - 修复模板 `v3_6_2026-04-21.html` 3处：JS 单引号字符串内 `''` → `\'`
+  - 修复 `view_data.py` 3处（line 355/451/686）：三引号字符串中 `\'` → `\\'`（输出 `\'` 到 JS）
+  - 重新生成 `v3_6_2026-04-25.html`，全部 6 处 toggle 调用均正确输出 `\'`，Hard checks passed
+  - 遗留 SOFT_WARN: onclick no JS escape quotes，待排查
+- next_actions:
+  - 【P1】排查 SOFT_WARN 来源
+  - 【P2】浏览器抽检验证
+  - 【P2】Git 提交推送
+- blockers: []
+- handoff_note: 核心 SyntaxError 已解决。跨层转义规则：Python 三引号字符串 → 要输出 `\'`（JS 转义单引号），必须写 `\\\\'`（四个反斜杠）。

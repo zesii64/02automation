@@ -352,7 +352,7 @@ def apply_data_view_patches(html: str) -> str:
                         '<td style=\"padding: 12px; text-align: right;\">' + formatNumber(wAct) + '</td>' +
                         '<td style=\"padding: 12px; text-align: right; color: #ef4444; font-weight: 600;\">-' + formatNumber(wGap) + '</td>' +
                         '<td style=\"padding: 12px; text-align: right; color: ' + achColor + '; font-weight: 600;\">' + wAch.toFixed(1) + '%</td>' +
-                        '<td style=\"padding: 12px; text-align: center;\"><button onclick=\"toggleAnomalyGroupDetail('' + detailId + '')\" style=\"border:1px solid #cbd5e1;background:#fff;color:#334155;padding:4px 8px;border-radius:6px;cursor:pointer;font-size:12px;\">Recent 2 Weeks</button></td>' +
+                        '<td style=\"padding: 12px; text-align: center;\"><button onclick=\"toggleAnomalyGroupDetail(\\' + detailId + \\')\" style=\"border:1px solid #cbd5e1;background:#fff;color:#334155;padding:4px 8px;border-radius:6px;cursor:pointer;font-size:12px;\">Recent 2 Weeks</button></td>' +
                         '</tr>';
 
                     const recentWeeks = buildRecent2WeekGroupRows(item.module, item.name, selectedWeek);
@@ -448,7 +448,7 @@ def apply_data_view_patches(html: str) -> str:
                         '<td style=\"padding: 12px; text-align: right;\">' + (item.connectRate !== null && item.connectRate !== undefined ? item.connectRate.toFixed(1) + '%' : '--') + '</td>' +
                         '<td style=\"padding: 12px; text-align: right;\">' + callLoss + '</td>' +
                         '<td style=\"padding: 12px; text-align: right;\">' + (item.attendance !== null && item.attendance !== undefined ? item.attendance + '%' : '--') + '</td>' +
-                        '<td style=\"padding: 12px; text-align: center;\"><button onclick=\"toggleAnomalyAgentDetail('' + detailId + '')\" style=\"border:1px solid #cbd5e1;background:#fff;color:#334155;padding:4px 8px;border-radius:6px;cursor:pointer;font-size:12px;\">Recent 3 Days</button></td>' +
+                        '<td style=\"padding: 12px; text-align: center;\"><button onclick=\"toggleAnomalyAgentDetail(\\' + detailId + \\')\" style=\"border:1px solid #cbd5e1;background:#fff;color:#334155;padding:4px 8px;border-radius:6px;cursor:pointer;font-size:12px;\">Recent 3 Days</button></td>' +
                         '</tr>';
 
                     const recentRows = buildRecent3DayRows(item.group, item.name, selectedDate, item);
@@ -683,7 +683,7 @@ def apply_data_view_patches(html: str) -> str:
                     if (rows.length > showTopN) {
                         const btnText = expanded ? 'Show Top 10' : ('Show All (' + rows.length + ')');
                         section += '<div style=\"display:flex; justify-content:flex-end; margin-top:10px;\">'
-                            + '<button onclick="toggleAgentOverviewModule(\'' + module + '\')" style="border:1px solid #cbd5e1; background:#fff; color:#334155; padding:6px 10px; border-radius:6px; cursor:pointer; font-size:12px;">'
+                            + '<button onclick="toggleAgentOverviewModule(\\'' + module + '\\')" style="border:1px solid #cbd5e1; background:#fff; color:#334155; padding:6px 10px; border-radius:6px; cursor:pointer; font-size:12px;">'
                             + btnText
                             + '</button></div>';
                     }
