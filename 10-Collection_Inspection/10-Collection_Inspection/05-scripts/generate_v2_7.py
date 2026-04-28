@@ -2146,6 +2146,48 @@ tl_conclusion_fn = """\
                 ? `Tool usage risk: connect ${fmt(teamAvg.connectRate, 1, '%')}, call loss ${fmt(teamAvg.callLossRate, 1, '%')}; check phone channel quality and outreach time window.`
                 : `Tool usage appears stable (phone channel metrics in normal range).`;
 
+            var peopleAction = '';
+            if (teamAvg.attendance < 95 && teamAvg.artCallTimes < moduleAvgDial) {
+                peopleAction = '排班核查：排查当日请假/缺勤原因，必要时启动临时调班或组内支援；同时约谈低产能人员，检查外呼系统分配与在线时长，排除系统故障。';
+            } else if (teamAvg.attendance < 95) {
+                peopleAction = '排班核查：排查当日请假/缺勤原因，必要时启动临时调班或组内支援。';
+            } else if (teamAvg.artCallTimes < moduleAvgDial) {
+                peopleAction = '产能跟进：约谈低产能人员，检查外呼系统分配与在线时长，排除系统故障。';
+            } else {
+                peopleAction = '人员状态正常，维持现有排班与产能监控。';
+            }
+
+            var strategyAction = '';
+            if (weakCaseStages.length > 0 && weakPrincipalStages.length > 0) {
+                strategyAction = '策略调整：优先加强 ' + weakCaseStages.join('、') + ' 阶段跟进；同时对 ' + weakPrincipalStages.join('、') + ' 金额段提高分配权重或定制催收策略。';
+            } else if (weakCaseStages.length > 0) {
+                strategyAction = '策略调整：优先加强 ' + weakCaseStages.join('、') + ' 阶段跟进，检查对应话术覆盖与培训落地。';
+            } else if (weakPrincipalStages.length > 0) {
+                strategyAction = '金额聚焦：对 ' + weakPrincipalStages.join('、') + ' 金额段提高分配权重或定制催收策略。';
+            } else {
+                strategyAction = '阶段分布正常，维持现有策略。';
+            }
+
+            var toolAction = '';
+            if (teamAvg.connectRate < 22 && teamAvg.callLossRate > 20) {
+                toolAction = '通道检查：检查号码质量与线路稳定性，尝试调整拨打时段；同时排查接通后掉线原因（线路/网络/话术），优化首句留存率。';
+            } else if (teamAvg.connectRate < 22) {
+                toolAction = '通道检查：检查号码质量与线路稳定性，尝试调整拨打时段（如避开当地午休/通勤高峰）。';
+            } else if (teamAvg.callLossRate > 20) {
+                toolAction = '掉线归因：排查接通后掉线原因（线路/网络/话术），优化首句留存率。';
+            } else {
+                toolAction = '外呼通道稳定，保持当前线路配置。';
+            }
+
+            var environmentAction = '如确认有影响，请在改进方案中记录并调整优先级。';
+
+            var laggingAction = '';
+            if (laggingAgents.length === 0) {
+                laggingAction = '本组当日无落后人员，保持现有管理节奏。';
+            } else {
+                laggingAction = '逐个盯控：对落后人员启动一对一沟通，制定3-5天提升计划，每日复盘。';
+            }
+
             var laggingHtml = laggingAgents.length === 0
                 ? '<div style="color:#6b7280;">No lagging agent identified for selected date.</div>'
                 : laggingAgents.map((a, idx) => `<div style="padding:6px 8px; border:1px solid #e5e7eb; border-radius:6px; margin-bottom:6px;">
