@@ -234,3 +234,16 @@ updated_at: 2026-04-27
 - blockers: []
 - handoff_note:
   - master 已包含最新修复；下次生成报告前确保 generate_v2_7.py 和模板 v3_6_2026-04-21.html 一致
+
+## 会话快照（2026-04-29 P1清理）
+- status: completed
+- evidence:
+  - 删除 test_import.py、run_v3_5.log
+  - 清理 generate_v2_7.py DEBUG块（line 2291-2309）
+  - 删除全部71个历史版本脚本（run_daily_report_v*/run_cashloan_report_v*/run_inspection_all_in_one_v*）
+  - commit 32336ce 已推送 master
+- next_actions:
+  - 【P2/长期】Jinja2 模板迁移
+  - 【P3/长期】Agent 级精准诊断
+- blockers: []
+- handoff_note: P0+P1全部完成，仓库已清理，v3_6体系稳定可用
