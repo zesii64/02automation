@@ -2,18 +2,17 @@
   "last_updated": "2026-04-29",
   "active_task": "task_2026-04-13_v3_3_logic_and_data_view_alignment.md",
   "owner": "未分配",
-  "status": "in_progress",
+  "status": "completed",
   "dual_review_gate": "not_run",
   "current_focus": [
-    "P0 抽检已完成，进入 P1 清理阶段"
+    "P0+P1 全部完成，v3.6 体系稳定，仓库已清理"
   ],
   "recent_completed": [
+    "P1 清理完成：删除71个历史版本脚本 + 清理DEBUG代码 + 删除临时文件 + 推送 master",
     "P0 抽检完成：重新生成报告验证 conclusion 渲染（英文 action、动态阈值、lagging 名单、文档链接可点击性）",
-    "Conclusion 重构：TL/STL 增加 Suggested Action 列；Action 全英文；Lagging 展示具体人名/组名；阈值从硬编码改为模块均值+容忍带",
-    "人工检验通过，控制台无报错；stlChart 未定义与引号转义问题已闭环"
+    "Conclusion 重构：TL/STL 增加 Suggested Action 列；Action 全英文；Lagging 展示具体人名/组名；阈值从硬编码改为模块均值+容忍带"
   ],
   "next_actions": [
-    "【P1】清理临时 debug/test 脚本",
     "【P2/长期】Jinja2 模板迁移（替换 fragile string-replacement 为结构化模板渲染）",
     "【P3/长期】Agent 级精准诊断：每个 lagging agent 的短板归因到 People/Strategy/Tool 维度，生成个性化 conclusion"
   ],
