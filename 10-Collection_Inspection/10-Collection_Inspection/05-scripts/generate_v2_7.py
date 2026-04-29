@@ -2288,25 +2288,12 @@ tl_conclusion_fn = """\
             document.getElementById('tl-conclusions').innerHTML = tableHtml;
         }
 """
-# DEBUG: check before re.sub
-var_before = html.count('var MODULE_IMPROVEMENT_PLAN_URL')
-const_before = html.count('const MODULE_IMPROVEMENT_PLAN_URL')
-pattern_tl = r"(?s)\n\s*function generateTLConclusions\(data, isMet\) \{.*?\n\s*\}\n\s*\n\s*function initSTLView"
-m_before = re.search(pattern_tl, html)
-print(f"DEBUG before re.sub: var={var_before}, const={const_before}, tl_match={m_before is not None}", file=sys.stderr)
-
 html = re.sub(
     r"(?s)\n\s*function generateTLConclusions\(data, isMet\) \{.*?\n\s*\}\n\s*\n\s*function initSTLView",
     "\n" + tl_conclusion_fn + "\n\n        function initSTLView",
     html,
     count=1
 )
-
-# DEBUG: check after re.sub
-var_after = html.count('var MODULE_IMPROVEMENT_PLAN_URL')
-const_after = html.count('const MODULE_IMPROVEMENT_PLAN_URL')
-m_after = re.search(pattern_tl, html)
-print(f"DEBUG after re.sub: var={var_after}, const={const_after}, tl_match={m_after is not None}", file=sys.stderr)
 
 stl_conclusion_fn = """\
         function generateSTLConclusions(data, isMet, displayAchievement, displayGap) {

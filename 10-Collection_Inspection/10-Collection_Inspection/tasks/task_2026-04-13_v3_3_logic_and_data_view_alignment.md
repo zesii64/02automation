@@ -208,6 +208,18 @@ updated_at: 2026-04-27
   - Jinja2 模板（tl_conclusions.html.j2 / stl_conclusions.html.j2）已同步更新
   - 动态判断逻辑已落地，容忍带为集中常量，便于后续微调
 
+## 长期规划：Agent 级 Conclusion 诊断（方案三）
+- 目标：从 group/module 级结论下沉到 agent 级精准诊断
+- 具体需求：
+  - 每个 lagging agent 的短板归因到 People/Strategy/Tool 具体维度
+  - 例如：Agent A — attendance OK, connect rate low → Tool issue → 建议切换线路测试
+  - Action 不再统一，而是根据 agent 个人指标组合生成个性化建议
+- 依赖：
+  - 当前方案一（规则映射）已跑稳
+  - 需要业务方确认归因逻辑（避免误判）
+- 优先级：P2（等方案一稳定后启动）
+- 状态：backlog
+
 ## 会话快照（2026-04-28 晚）
 - status: in_progress
 - evidence:

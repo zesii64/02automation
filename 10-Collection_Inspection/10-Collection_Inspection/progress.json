@@ -1,21 +1,21 @@
 {
-  "last_updated": "2026-04-28",
+  "last_updated": "2026-04-29",
   "active_task": "task_2026-04-13_v3_3_logic_and_data_view_alignment.md",
   "owner": "未分配",
   "status": "in_progress",
   "dual_review_gate": "not_run",
   "current_focus": [
-    "TL 模块级改进链接修复已合并到 master，待重新生成最终报告"
+    "P0 抽检已完成，进入 P1 清理阶段"
   ],
   "recent_completed": [
-    "修复 TL conclusion 链接：恢复按模块区分（S0/S1/S2/M1），粗略匹配子模块；STL 保持统一链接；已合并到 master",
-    "TL/STL target met 时不展示改进方案链接（isMet ? '' : buildImprovementPlanBlock(...)）",
-    "Conclusion 重构：TL/STL 增加 Suggested Action 列；Action 全英文；Lagging 展示具体人名/组名；阈值从硬编码改为模块均值+容忍带"
+    "P0 抽检完成：重新生成报告验证 conclusion 渲染（英文 action、动态阈值、lagging 名单、文档链接可点击性）",
+    "Conclusion 重构：TL/STL 增加 Suggested Action 列；Action 全英文；Lagging 展示具体人名/组名；阈值从硬编码改为模块均值+容忍带",
+    "人工检验通过，控制台无报错；stlChart 未定义与引号转义问题已闭环"
   ],
   "next_actions": [
-    "【P0】重新生成报告验证 conclusion 渲染效果（TL action 列、英文文案、动态判断、模块链接）",
-    "【P1】清理 debug/test 脚本（05-scripts/debug_*.py、test_*.py 等临时文件）",
-    "【P2/长期】Jinja2 模板迁移（替换 fragile string-replacement 为结构化模板渲染）"
+    "【P1】清理临时 debug/test 脚本",
+    "【P2/长期】Jinja2 模板迁移（替换 fragile string-replacement 为结构化模板渲染）",
+    "【P3/长期】Agent 级精准诊断：每个 lagging agent 的短板归因到 People/Strategy/Tool 维度，生成个性化 conclusion"
   ],
   "blockers": [
     "无阻塞"
