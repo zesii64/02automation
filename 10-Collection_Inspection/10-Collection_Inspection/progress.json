@@ -8,9 +8,9 @@
     "P0+P1 全部完成，v3.6 体系稳定，仓库已清理"
   ],
   "recent_completed": [
+    "修复 TL view daily breakdown 跨月日期匹配 bug：g_dtr.index.day == day 同时命中3月28和4月28，导致4月28被覆盖为644000；改为精确日期匹配后修正为485642",
     "P1 清理完成：删除71个历史版本脚本 + 清理DEBUG代码 + 删除临时文件 + 推送 master",
-    "P0 抽检完成：重新生成报告验证 conclusion 渲染（英文 action、动态阈值、lagging 名单、文档链接可点击性）",
-    "Conclusion 重构：TL/STL 增加 Suggested Action 列；Action 全英文；Lagging 展示具体人名/组名；阈值从硬编码改为模块均值+容忍带"
+    "P0 抽检完成：重新生成报告验证 conclusion 渲染（英文 action、动态阈值、lagging 名单、文档链接可点击性）"
   ],
   "next_actions": [
     "【P2/长期】Jinja2 模板迁移（替换 fragile string-replacement 为结构化模板渲染）",

@@ -672,7 +672,7 @@ for group in all_groups:
     for day in range(1, DAYS_IN_MONTH + 1):
         date_str = f'{REPORT_YEAR}-{REPORT_MONTH:02d}-{day:02d}'
         in_cutoff = day <= TL_LATEST_DAY
-        day_rows = g_dtr[g_dtr.index.day == day]
+        day_rows = g_dtr[g_dtr.index == pd.Timestamp(date_str)]
         if len(day_rows) > 0:
             r   = day_rows.iloc[0]
             tgt = round(float(r['target'])) if in_cutoff else None
