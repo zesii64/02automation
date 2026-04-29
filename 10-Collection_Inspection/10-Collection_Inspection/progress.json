@@ -2,18 +2,18 @@
   "last_updated": "2026-04-29",
   "active_task": "task_2026-04-13_v3_3_logic_and_data_view_alignment.md",
   "owner": "未分配",
-  "status": "completed",
+  "status": "in_progress",
   "dual_review_gate": "not_run",
   "current_focus": [
-    "自动化 pipeline 方案已确定（方案A：本地Windows定时任务），等待AccessKey/API调通后继续"
+    "基线模板剥离计划已执行完毕，产物验证通过",
+    "当前进入自动化Pipeline实现阶段"
   ],
   "recent_completed": [
-    "修复 TL view daily breakdown 跨月日期匹配 bug：g_dtr.index.day == day 同时命中3月28和4月28，导致4月28被覆盖为644000；改为精确日期匹配后修正为485642",
-    "P1 清理完成：删除71个历史版本脚本 + 清理DEBUG代码 + 删除临时文件 + 推送 master",
-    "P0 抽检完成：重新生成报告验证 conclusion 渲染（英文 action、动态阈值、lagging 名单、文档链接可点击性）"
+    "基线模板剥离完成：生成 templates/Collection_Operations_Report_base.html，修复 tl-connect-gap 锚点，产物验证全部9个补丁元素各恰好出现1次",
+    "阶段一完成：清理4-21污染模板（Data View/TL View/STL View重复模块去重）",
+    "根因定位：脚本补丁逻辑非幂等，4-21模板保留单次补丁产物导致二次叠加"
   ],
   "next_actions": [
-    "【P0/阻塞】配置阿里云 AccessKey，测试 Function Compute API 取数（test_api.py 待跑通）",
     "【P1】实现 get_write_data_from_dataworks.py（本地run_sql替换）",
     "【P2】编写 run_pipeline.py（取数→生成HTML→分发）",
     "【P3】Windows Task Scheduler 定时配置",

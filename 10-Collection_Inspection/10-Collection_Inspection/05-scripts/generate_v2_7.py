@@ -77,7 +77,7 @@ opt = lambda html, old, new: optional_replace(html, old, new, "optional")
 BASE       = r'd:/11automation/02automation/10-Collection_Inspection/10-Collection_Inspection'
 EXCEL_PATH = BASE + r'/data/260318_output_automation_v3.xlsx'
 PROCESS_TARGET_PATH = BASE + r'/data/process_data_target.xlsx'
-HTML_IN    = BASE + r'/reports/Collection_Operations_Report_v3_6_2026-04-21.html'
+HTML_IN    = BASE + r'/templates/Collection_Operations_Report_base.html'
 # HTML_OUT：在 TL_LATEST_STR（与目标/绩效对齐的 TL 最新日）确定后赋值
 
 # ========================
@@ -1451,11 +1451,47 @@ for g in all_groups:
 # STL breakdown by week/module
 stl_breakdown_by_week = {}
 if len(week_target_group_breakdown) > 0:
-    week_target_group_breakdown['module_key'] = week_target_group_breakdown['owner_bucket'].apply(lambda x: module_key_to_bucket(str(x).strip()))
+    def _resolve_module_key_from_group_name(g):
+        g_upper = str(g).strip().upper()
+        if 'LARGE' in g_upper:
+            prefix = g_upper.split('-')[0] if '-' in g_upper else g_upper.split('_')[0]
+            return f"{prefix}-Large"
+        if 'SMALL' in g_upper:
+            prefix = g_upper.split('-')[0] if '-' in g_upper else g_upper.split('_')[0]
+            return f"{prefix}-Small"
+        return extract_module_key(g)
+
+    # Build mapping for cross-sheet group name matching (e.g. S0-A Bucket -> S0- A Module)
+    norm_prefix_to_group = {}
+    for g in all_groups:
+        norm_prefix_to_group[norm(g)] = g
+        g_clean = re.sub(r'(Module|Bucket)$', '', g, flags=re.IGNORECASE).strip()
+        norm_prefix_to_group[norm(g_clean)] = g
+
+    def _resolve_canonical_group_for_stl(owner_group):
+        og = str(owner_group).strip()
+        if og in all_groups:
+            return og
+        og_norm = norm(og)
+        if og_norm in norm_prefix_to_group:
+            return norm_prefix_to_group[og_norm]
+        og_clean = re.sub(r'(Module|Bucket)$', '', og, flags=re.IGNORECASE).strip()
+        og_clean_norm = norm(og_clean)
+        if og_clean_norm in norm_prefix_to_group:
+            return norm_prefix_to_group[og_clean_norm]
+        return og
+
+    week_target_group_breakdown['module_key'] = week_target_group_breakdown['owner_group'].apply(_resolve_module_key_from_group_name)
+    week_target_group_breakdown['group_name'] = week_target_group_breakdown['owner_group'].apply(_resolve_canonical_group_for_stl)
     for _, row in week_target_group_breakdown.iterrows():
         module_key = row.get('module_key')
         week_label = row.get('week')
-        if not module_key or not week_label:
+        group_name = row.get('group_name')
+        if not module_key or not week_label or not group_name:
+            continue
+        if module_key not in modules_list:
+            continue
+        if group_name not in all_groups:
             continue
         module_map = stl_breakdown_by_week.setdefault(module_key, {})
         week_map = module_map.setdefault(week_str_to_display(str(week_label)), {'caseStage': {}, 'principalStage': {}})
@@ -1466,7 +1502,9 @@ if len(week_target_group_breakdown) > 0:
         repay = float(row.get('repay_principal', 0) or 0)
 
         if case_k:
-            c = week_map['caseStage'].setdefault(case_k, {
+            k = f"{group_name}||{case_k}"
+            c = week_map['caseStage'].setdefault(k, {
+                'groupName': group_name,
                 'dimensionValue': case_k,
                 'owingPrincipal': 0.0,
                 'repayPrincipal': 0.0
@@ -1474,7 +1512,9 @@ if len(week_target_group_breakdown) > 0:
             c['owingPrincipal'] += owing
             c['repayPrincipal'] += repay
         if principal_k:
-            p = week_map['principalStage'].setdefault(principal_k, {
+            k = f"{group_name}||{principal_k}"
+            p = week_map['principalStage'].setdefault(k, {
+                'groupName': group_name,
                 'dimensionValue': principal_k,
                 'owingPrincipal': 0.0,
                 'repayPrincipal': 0.0
@@ -1490,12 +1530,13 @@ if len(week_target_group_breakdown) > 0:
                     owing = vals['owingPrincipal']
                     repay = vals['repayPrincipal']
                     rows.append({
+                        'groupName': vals['groupName'],
                         'dimensionValue': vals['dimensionValue'],
                         'owingPrincipal': round(owing, 2),
                         'repayPrincipal': round(repay, 2),
                         'repayRate': round((repay / owing * 100), 2) if owing > 0 else None
                     })
-                rows.sort(key=lambda x: x['dimensionValue'])
+                rows.sort(key=lambda x: (x['dimensionValue'], x['groupName']))
                 stl_breakdown_by_week[mk][wk][dim] = rows
 
 has_stl_week_breakdown_data = len(stl_breakdown_by_week) > 0
@@ -1747,7 +1788,7 @@ html = html.replace(
     '<div class="metric-value" id="tl-call-gap">--</div>\n                            <div class="metric-label">Call Volume Gap</div>\n                            <div id="tl-call-gap-meta" style="font-size: 12px; color: #64748b; margin-top: 4px;">Target: -- | Actual: --</div>'
 )
 html = html.replace(
-    '<div class="metric-value" id="tl-connect-gap">--</div>\n                            <div class="metric-label">Connect Rate Gap</div>',
+    '<div class="metric-value" id="tl-connect-gap">--</div>\n                            <div class="metric-label">Call Billmin Gap</div>',
     '<div class="metric-value" id="tl-connect-gap">--</div>\n                            <div class="metric-label">Call Billmin Gap</div>\n                            <div id="tl-connect-gap-meta" style="font-size: 12px; color: #64748b; margin-top: 4px;">Target: -- | Actual: --</div>'
 )
 

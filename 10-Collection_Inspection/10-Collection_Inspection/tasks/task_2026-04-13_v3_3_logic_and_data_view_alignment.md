@@ -43,10 +43,38 @@ updated_at: 2026-04-27
 - 【P0/主回归】`python generate_v2_7.py` 用当前 `v3_5` 生成 `v3_6_*.html` 后做 TL/拆解/角色联动回归（见 `progress.json` 的 `next_actions`）。
 - 按仓库习惯整理：代码与模板进版控、大报告与数据可忽略；清 `__tmp_*`；提交与推送策略自定。
 
+## 基线模板剥离计划（2026-04-29 新增）
+
+**目标**：从 `reports/Collection_Operations_Report_v3_6_2026-04-21.html` 逆向剥离所有补丁产物，生成 `templates/Collection_Operations_Report_base.html`，作为 `generate_v2_7.py` 的纯净输入。
+
+**根因**：脚本补丁逻辑不具备幂等性。`HTML_IN` 使用旧报告作为模板，旧报告已包含上轮补丁产物，导致每次运行重复叠加。
+
+**剥离清单**（保留 `old` 锚点，删除 `new` 追加部分）：
+
+| # | 位置 | 补丁来源 | 需剥离内容 | 保留的锚点 |
+|---|------|---------|-----------|-----------|
+| 1 | Data View subtab | `view_data.py` | `subtab-agent-overview` 按钮 ×1 | `subtab-trend` 按钮 |
+| 2 | Data View 内容块 | `view_data.py` | `<div id="data-agent-overview">` 整个块 ×1 | `<!-- Recovery Trend Sub-tab -->` |
+| 3 | TL View unmet | `generate_v2_7.py` | `tl-gap-meta`、`tl-call-gap-meta`、`tl-connect-gap-meta` 子行 ×3 | `tl-gap-amount` + `Gap to Target` |
+| 4 | TL View unmet | `generate_v2_7.py` | `tl-unmet-attendance` 行 ×1 | `Unmet Target — Detail Review` heading |
+| 5 | STL View unmet | `generate_v2_7.py` | 3-card grid（Gap/Call/Billmin）×1 | heading + legend |
+
+**验证标准**：
+- 剥离后 `grep` 确认：模板中无 `subtab-agent-overview`、`data-agent-overview`、`tl-gap-meta`、`stl-gap-meta`
+- 脚本重新运行后：上述元素恰好各出现1次，无重复
+
+**关联修改**：
+- `05-scripts/generate_v2_7.py` line 80：`HTML_IN = BASE + r'/templates/Collection_Operations_Report_base.html'`
+
 ## 交接说明
 本卡功能与联动抽检已完成；接手时可直接执行提交/推送流程。
+当前新增基线模板剥离任务，见上方计划。
 
-## 会话快照（2026-04-20）
+## 会话快照（2026-04-29）
+- status: in_progress
+- current_focus: 报告模板重复模块清理与基线模板制作（方案A）
+- recent_completed: 阶段一（4-21模板去重）、根因定位、方案评估
+- next_actions: 执行剥离计划 → 修改 HTML_IN → 重新生成验证
 - status: in_progress
 - evidence:
   - 已并回 `v3_5` 关键能力到 `generate_v2_7.py`：today target / breakdown / 新 conclusion 格式。
@@ -265,3 +293,18 @@ updated_at: 2026-04-27
   - 【P3/长期】Agent 级精准诊断
 - blockers: []
 - handoff_note: 数据视图精确性修复，不涉及UI或结论文案变更
+
+## 会话快照（2026-04-29 基线模板剥离完成）
+- status: in_progress
+- evidence:
+  - 执行基线模板剥离计划，从 `v3_6_2026-04-21.html` 剥离5类补丁产物
+  - 生成 `templates/Collection_Operations_Report_base.html`（纯净基线模板）
+  - 修改 `generate_v2_7.py` line 80：`HTML_IN` 指向 `templates/Collection_Operations_Report_base.html`
+  - 修复 `generate_v2_7.py` line 1791：old_string `Connect Rate Gap` → `Call Billmin Gap`（基线模板标签已变更导致替换失效）
+  - 重新生成 `v3_6_2026-04-28.html`，Hard checks passed
+  - 验证产物：9个补丁元素（subtab-agent-overview、data-agent-overview、tl-gap-meta×3、tl-unmet-attendance、stl-gap-meta×3）各恰好出现1次，无重复
+  - 人工抽检通过（用户确认）
+- next_actions:
+  - 以 `progress.json` 的 `next_actions` 为准
+- blockers: []
+- handoff_note: 基线模板机制已生效，后续生成报告前确保 `generate_v2_7.py` 和 `templates/Collection_Operations_Report_base.html` 一致；`HTML_IN` 不再指向 reports 目录下的历史产物
