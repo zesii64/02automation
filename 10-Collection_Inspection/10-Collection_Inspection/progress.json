@@ -5,16 +5,16 @@
   "status": "in_progress",
   "dual_review_gate": "not_run",
   "current_focus": [
-    "Conclusion 优化完成：Action 列、全英文文案、动态阈值判断、Lagging 带具体名单"
+    "TL 模块级改进链接修复已合并到 master，待重新生成最终报告"
   ],
   "recent_completed": [
-    "Conclusion 重构：TL/STL 增加 Suggested Action 列；Action 全英文；Lagging 展示具体人名/组名；阈值从硬编码改为模块均值+容忍带",
-    "人工检验通过，控制台无报错；stlChart 未定义与引号转义问题已闭环",
-    "重新生成 v3_6_2026-04-25.html，全部 6 处 toggle 调用均正确输出 \\'，Hard checks passed"
+    "修复 TL conclusion 链接：恢复按模块区分（S0/S1/S2/M1），粗略匹配子模块；STL 保持统一链接；已合并到 master",
+    "TL/STL target met 时不展示改进方案链接（isMet ? '' : buildImprovementPlanBlock(...)）",
+    "Conclusion 重构：TL/STL 增加 Suggested Action 列；Action 全英文；Lagging 展示具体人名/组名；阈值从硬编码改为模块均值+容忍带"
   ],
   "next_actions": [
-    "【P0】Git 提交并推送（generate_v2_7.py、Jinja2 模板、tl_conclusions_renderer.py）",
-    "【P1】重新生成报告验证 conclusion 渲染效果（TL action 列、英文文案、动态判断）",
+    "【P0】重新生成报告验证 conclusion 渲染效果（TL action 列、英文文案、动态判断、模块链接）",
+    "【P1】清理 debug/test 脚本（05-scripts/debug_*.py、test_*.py 等临时文件）",
     "【P2/长期】Jinja2 模板迁移（替换 fragile string-replacement 为结构化模板渲染）"
   ],
   "blockers": [

@@ -207,3 +207,18 @@ updated_at: 2026-04-27
   - generate_v2_7.py 中 TL 和 STL 的 conclusion 函数已完成重构
   - Jinja2 模板（tl_conclusions.html.j2 / stl_conclusions.html.j2）已同步更新
   - 动态判断逻辑已落地，容忍带为集中常量，便于后续微调
+
+## 会话快照（2026-04-28 晚）
+- status: in_progress
+- evidence:
+  - 修复 TL view 改进文档链接：恢复按模块区分 S0/S1/S2/M1，子模块粗略匹配（S1-Large/S1-Small → S1）
+  - STL 保持统一链接不变
+  - TL 和 STL view：process target met 时隐藏改进方案链接
+  - 人工抽检通过，已合并 hotfix/2026-04-28-tl-module-links → master 并 push
+- next_actions:
+  - 【P0】重新生成最终报告验证所有修复点
+  - 【P1】清理临时 debug/test 脚本
+  - 【P2/长期】Jinja2 模板迁移
+- blockers: []
+- handoff_note:
+  - master 已包含最新修复；下次生成报告前确保 generate_v2_7.py 和模板 v3_6_2026-04-21.html 一致
