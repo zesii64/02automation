@@ -5,7 +5,7 @@
   "status": "completed",
   "dual_review_gate": "not_run",
   "current_focus": [
-    "P0+P1 全部完成，v3.6 体系稳定，仓库已清理"
+    "自动化 pipeline 方案已确定（方案A：本地Windows定时任务），等待AccessKey/API调通后继续"
   ],
   "recent_completed": [
     "修复 TL view daily breakdown 跨月日期匹配 bug：g_dtr.index.day == day 同时命中3月28和4月28，导致4月28被覆盖为644000；改为精确日期匹配后修正为485642",
@@ -13,13 +13,18 @@
     "P0 抽检完成：重新生成报告验证 conclusion 渲染（英文 action、动态阈值、lagging 名单、文档链接可点击性）"
   ],
   "next_actions": [
-    "【P2/长期】Jinja2 模板迁移（替换 fragile string-replacement 为结构化模板渲染）",
-    "【P3/长期】Agent 级精准诊断：每个 lagging agent 的短板归因到 People/Strategy/Tool 维度，生成个性化 conclusion"
+    "【P0/阻塞】配置阿里云 AccessKey，测试 Function Compute API 取数（test_api.py 待跑通）",
+    "【P1】实现 get_write_data_from_dataworks.py（本地run_sql替换）",
+    "【P2】编写 run_pipeline.py（取数→生成HTML→分发）",
+    "【P3】Windows Task Scheduler 定时配置",
+    "【P4/长期】Jinja2 模板迁移",
+    "【P5/长期】Agent 级精准诊断"
   ],
   "blockers": [
-    "无阻塞"
+    "Function Compute HTTP API 认证方式未确认（需 AccessKey + Bearer Token 测试）"
   ],
   "open_questions": [
-    "容忍带数值（attendance 2pp / connect 5pp / loss 5pp / dial 10%）是否需要根据实际数据调参？"
+    "容忍带数值（attendance 2pp / connect 5pp / loss 5pp / dial 10%）是否需要根据实际数据调参？",
+    "自动化产物分发方式：企微 / 邮件 / 云盘？"
   ]
 }

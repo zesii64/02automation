@@ -208,6 +208,25 @@ updated_at: 2026-04-27
   - Jinja2 模板（tl_conclusions.html.j2 / stl_conclusions.html.j2）已同步更新
   - 动态判断逻辑已落地，容忍带为集中常量，便于后续微调
 
+## 会话快照（2026-04-29 自动化Pipeline方案确定）
+- status: in_progress
+- evidence:
+  - 自动化方案已确定：方案A（本地Windows定时任务 + 线上取数）
+  - Function Compute HTTP API 端点已确认：`https://fc-maxcte-query-azbabkaceu.ap-southeast-1.fcapp.run`
+  - 测试脚本 test_api.py 已准备，等待 AccessKey 配置后验证返回格式
+  - Notebook 01_Data_Extraction_v3.ipynb 的16个SQL查询和sheet结构已完整梳理
+- next_actions:
+  - 【P0/阻塞】跑通 test_api.py，确认 API 返回数据格式（JSON Array/ODPS格式）
+  - 【P1】基于 API 返回格式实现 get_write_data_from_dataworks.py（本地run_sql替换）
+  - 【P2】编写 run_pipeline.py（取数→生成HTML→分发）
+  - 【P3】Windows Task Scheduler 定时配置
+- blockers:
+  - Function Compute HTTP API 认证方式未确认（当前返回 403，需要正确 Bearer Token 或 AK）
+- handoff_note:
+  - 方案A已选定，待 API 调通后可立即恢复推进
+  - test_api.py 在根目录，填入 AK 后即可运行测试
+  - 所有历史版本脚本已清理，仓库清爽
+
 ## 长期规划：Agent 级 Conclusion 诊断（方案三）
 - 目标：从 group/module 级结论下沉到 agent 级精准诊断
 - 具体需求：
