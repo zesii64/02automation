@@ -1299,14 +1299,16 @@ for mk in modules_list:
     module_target_nm = target_nm_dict.get(module_bucket, {})
 
     daily_series = []
-    for day in range(1, DAYS_IN_MONTH + 1):
-        date_str = f'{REPORT_YEAR}-{REPORT_MONTH:02d}-{day:02d}'
-        in_cutoff = day <= TL_LATEST_DAY
-        nm_rr  = mk_nm_daily.get(date_str, None) if in_cutoff else None
-        # Module target line should remain available for the whole selected month.
-        nm_trr = module_target_nm.get(date_str, None)
-        daily_series.append({
-            'date': date_str, 'target': None, 'actual': None,
+    for _ym_year, _ym_month in sorted_year_months:
+        _days_in_ym = monthrange(_ym_year, _ym_month)[1]
+        for day in range(1, _days_in_ym + 1):
+            date_str = f'{_ym_year}-{_ym_month:02d}-{day:02d}'
+            in_cutoff = date_str <= TL_LATEST_STR
+            nm_rr  = mk_nm_daily.get(date_str, None) if in_cutoff else None
+            # Module target line should remain available for the whole selected month.
+            nm_trr = module_target_nm.get(date_str, None)
+            daily_series.append({
+                'date': date_str, 'target': None, 'actual': None,
             'repayRate': nm_rr, 'targetRepayRate': nm_trr
         })
     module_daily_js[mk] = {'daily': daily_series}

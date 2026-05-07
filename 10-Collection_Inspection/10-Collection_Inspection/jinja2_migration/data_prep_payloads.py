@@ -156,12 +156,11 @@ def build_module_daily_trends(
     module_nm_dict: dict,
     target_nm_dict: dict,
     nat_buckets: set[str],
-    report_year: int,
-    report_month: int,
-    days_in_month: int,
-    tl_latest_day: int,
+    sorted_year_months: list[tuple[int, int]],
+    tl_latest_str: str,
 ) -> dict:
-    """构建 module_daily_js。"""
+    """构建 module_daily_js，包含数据中所有年月的日维度数据。"""
+    from calendar import monthrange
     from data_prep_helpers import module_key_to_bucket
 
     module_daily_js: dict = {}
@@ -171,18 +170,20 @@ def build_module_daily_trends(
         module_target_nm = target_nm_dict.get(module_bucket, {})
 
         daily_series = []
-        for day in range(1, days_in_month + 1):
-            date_str = f"{report_year}-{report_month:02d}-{day:02d}"
-            in_cutoff = day <= tl_latest_day
-            nm_rr = mk_nm_daily.get(date_str, None) if in_cutoff else None
-            nm_trr = module_target_nm.get(date_str, None)
-            daily_series.append({
-                "date": date_str,
-                "target": None,
-                "actual": None,
-                "repayRate": nm_rr,
-                "targetRepayRate": nm_trr,
-            })
+        for year, month in sorted_year_months:
+            days_in_month = monthrange(year, month)[1]
+            for day in range(1, days_in_month + 1):
+                date_str = f"{year}-{month:02d}-{day:02d}"
+                in_cutoff = date_str <= tl_latest_str
+                nm_rr = mk_nm_daily.get(date_str, None) if in_cutoff else None
+                nm_trr = module_target_nm.get(date_str, None)
+                daily_series.append({
+                    "date": date_str,
+                    "target": None,
+                    "actual": None,
+                    "repayRate": nm_rr,
+                    "targetRepayRate": nm_trr,
+                })
         module_daily_js[mk] = {"daily": daily_series}
     return module_daily_js
 

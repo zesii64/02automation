@@ -1394,11 +1394,21 @@ def build_context(
     group_table_rows = build_group_table_rows(anomaly_groups)
     agent_table_rows = build_agent_table_rows(anomaly_agents)
 
+    # 计算数据中所有存在的年月（用于 moduleDailyTrends 等多月份视图）
+    _ym_set: set[tuple[int, int]] = set()
+    for _df, _col in [
+        (dfs["daily_tr"], "dt"),
+        (nm_data["nat_month"], "dt_biz"),
+        (dfs["attd_daily"], "dt"),
+    ]:
+        _dts = pd.to_datetime(_df[_col])
+        _ym_set.update((int(_dt.year), int(_dt.month)) for _dt in _dts.dropna().unique())
+    sorted_year_months = sorted(_ym_set)
+
     module_daily_js = build_module_daily_trends(
         modules_list, nm_data["module_nm_dict"], nm_data["target_nm_dict"],
         nm_data.get("nat_buckets", set()),
-        dates["REPORT_YEAR"], dates["REPORT_MONTH"],
-        dates["DAYS_IN_MONTH"], dates["TL_LATEST_DAY"],
+        sorted_year_months, dates["TL_LATEST_STR"],
     )
     module_monthly_js = build_module_monthly(
         modules_list, submodule_dtr_groups, dfs["group_repay"],
