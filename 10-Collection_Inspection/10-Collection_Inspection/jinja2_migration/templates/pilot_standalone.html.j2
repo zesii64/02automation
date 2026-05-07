@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pilot — Under-performing Card | {{ data_date }}</title>
+  <style>
+    /* ── minimal reset ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; color: #1e293b; padding: 24px; }
+    .pilot-banner { background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 12px 16px; margin-bottom: 24px; font-size: 13px; }
+    .pilot-banner strong { color: #92400e; }
+    h1 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+    .subtitle { color: #64748b; font-size: 13px; margin-bottom: 24px; }
+    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .empty-state { text-align: center; padding: 24px; color: #64748b; }
+    .empty-state-icon { font-size: 24px; margin-bottom: 8px; }
+    .empty-state-title { font-weight: 600; margin-bottom: 4px; }
+    .empty-state-sub { font-size: 13px; }
+    .drilldown-row { cursor: default; }
+    .drilldown-row.red-row:hover { background: #fef2f2; }
+    .drilldown-row.yellow-row:hover { background: #fefce8; }
+    table { width: 100%; border-collapse: collapse; }
+    tbody tr { border-bottom: 1px solid #f1f5f9; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr.red-row { background: #fef2f2; }
+    tbody tr.yellow-row { background: #fefce8; }
+    button { border:1px solid #cbd5e1;background:#fff;color:#334155;padding:4px 8px;border-radius:6px;cursor:pointer;font-size:12px; }
+    button:hover { background: #f8fafc; }
+  </style>
+</head>
+<body>
+
+<div class="pilot-banner">
+  <strong>Pilot Phase 2.5 — Jinja2 Render Output</strong><br>
+  Template: <code>data_view_under_performing.html.j2</code> &nbsp;|&nbsp;
+  Data snapshot: <code>{{ snapshot_date }}</code> &nbsp;|&nbsp;
+  Source: <code>260318_output_automation_v3.xlsx</code> &nbsp;|&nbsp;
+  Module groups: <strong>{{ n_module_headers }}</strong> &nbsp;|&nbsp;
+  Group rows: <strong>{{ n_group_data_rows }}</strong> &nbsp;|&nbsp;
+  Agent rows: <strong>{{ n_agent_data_rows }}</strong>
+</div>
+
+<h1>Data View — Under-performing</h1>
+<p class="subtitle">Data as of {{ data_date }} &nbsp;|&nbsp; Module headers pre-computed in Python &nbsp;|&nbsp; Zero-target agents filtered</p>
+
+{{ anomaly_content | safe }}
+
+<script>
+  // ── minimal toggle stubs (same signature as production HTML) ──
+  function toggleAnomalyGroupDetail(id) {
+    var el = document.getElementById(id);
+    if (el) el.style.display = el.style.display === 'none' ? '' : 'none';
+  }
+  function toggleAnomalyAgentDetail(id) {
+    var el = document.getElementById(id);
+    if (el) el.style.display = el.style.display === 'none' ? '' : 'none';
+  }
+</script>
+
+</body>
+</html>

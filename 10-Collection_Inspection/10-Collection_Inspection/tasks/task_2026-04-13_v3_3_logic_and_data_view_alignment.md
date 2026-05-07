@@ -308,3 +308,83 @@ updated_at: 2026-04-27
   - 以 `progress.json` 的 `next_actions` 为准
 - blockers: []
 - handoff_note: 基线模板机制已生效，后续生成报告前确保 `generate_v2_7.py` 和 `templates/Collection_Operations_Report_base.html` 一致；`HTML_IN` 不再指向 reports 目录下的历史产物
+
+## 会话快照（2026-05-06 Jinja2迁移计划评审）
+- status: in_progress
+- evidence:
+  - Jinja2迁移计划（.claude/plans/robust-inventing-hearth.md）已完成全面评审
+  - 补丁数量修正：约175 → 约210（经generate_v2_7.py/view_data.py/view_tl_stl.py/view_tl_stl_post_patches.py 4文件统计）
+  - 补丁类型细分：JS逻辑块替换~50、字段重映射~40、文本copy~30、数据筛选~30、HTML结构~25、I18N~15、其他~20
+  - 计划v2更新：单模板→4子模板拆分、新增Phase 2.5 Pilot gate（GO/NO-GO决策点）、3个Checkpoint、回退计划、时间重估11-15天
+  - 关键设计决策：先跑Data View一个卡片的最小闭环验证，再决定是否全面推进
+- next_actions:
+  - 【P0】执行Phase 1-2.5：搭建jinja2_migration/骨架 + data_prep数据准备 + Pilot最小.j2验证
+  - 【P1】Pilot GO之后：推进Phase 3-4（snapshot基建 + 完整模板转换）
+  - 【P2】实现 get_write_data_from_dataworks.py（自动化pipeline取数）
+- blockers: []
+- handoff_note:
+  - 迁移计划已就绪（.claude/plans/robust-inventing-hearth.md），评审通过
+  - Pilot范围：Data View Tab → Under-performing卡片（补丁最少、逻辑最简单）
+  - 验证标准：JSON等价 + 卡片HTML结构一致 + 浏览器无console error
+  - 当前管线（generate_v2_7.py）继续正常运行，jinja2_migration/为并行实验
+
+## 会话快照（2026-05-06 Phase 1+2 helpers完成）
+- status: in_progress
+- evidence:
+  - 创建 jinja2_migration/ 目录及子目录（templates/, tests/, reports/）
+  - 8 个文件落盘：.gitignore、README.md、requirements.txt、data_contract.py（增强 contract_id=v3_5+jinja2@2026-05-06）、check_anchors.py、renderer.py（StrictUndefined+autoescape）、data_prep_helpers.py（16 个纯函数）、tests/test_data_prep_helpers.py
+  - 16 个纯函数（13 计划列出 + 3 私有/依赖）：parse_week_str/format_week_range/normalize_week_label/week_start_dt/get_week_label/week_str_to_display/extract_module_key/sort_module_keys/map_group_to_dtr/norm/resolve_canonical_group_for_breakdown/module_key_to_bucket/normalize_attd_rate_pct/compute_consecutive_days/build_consecutive_weeks_map + _parse_module_parts_for_sort/_MODULE_SORT_PRIORITY/_MODULE_SORT_RANK
+  - 关键架构改动：state→显式参数（data_warning_set→warnings 形参；nat_buckets→形参）；regex 预编译；Iterable 走 collections.abc
+  - 61 个单测全通过（1.7s）；含 reviewer-driven 补测 10 个（中文 tier、空串、S1- 边界、大写 LARGE、空 DataFrame、boundary 0.0、负值、首周达标后 streak 重置等）
+  - 多模型审计（python-reviewer + code-reviewer 并行）：0 CRITICAL，2 HIGH 已修复（H4 module_key_to_bucket docstring 误导；H3 build_consecutive_weeks_map 缺测试），5 MEDIUM 部分修复，1 LOW 采纳（typing.Iterable→collections.abc）
+  - codex/gemini wrapper 未安装（~/.claude/bin/codeagent-wrapper 缺失），已用 Claude Code 内置 agent 替代审计环节
+- next_actions:
+  - 【P0】Phase 2 主逻辑：实现 jinja2_migration/data_prep.py 的 build_context()，加载 Excel → 处理 → 构建 real_data dict（字段名 camelCase 与 JS 期望对齐：repayRate、ptpRate、callLossRate）
+  - 【P0】Phase 2.5：Pilot — Data View Under-performing 卡片最小闭环（含 snapshot 对比 + 浏览器 console 检查）
+  - 【P1】Phase 2 主逻辑前先跑一次 generate_v2_7.py 确认生产管线仍正常
+- blockers: []
+- handoff_note:
+  - jinja2_migration/ 与生产管线**完全隔离**，互不影响。下一会话执行 Phase 2 主逻辑前可直接 import data_prep_helpers
+  - normalize_week_label 用 functools.partial 配合 Series.apply 注入 warnings 集合（已写入 docstring 示例）
+  - module_key_to_bucket、resolve_canonical_group_for_breakdown 的 nat_buckets/norm_to_group 由调用方装配，建议在 build_context 入口集中构造一次
+  - 当前 dual_review_gate=passed_warning，可继续推进 Phase 2；如 Phase 2.5 Pilot NO-GO，可保留本目录作参考，生产管线 generate_v2_7.py 继续运行
+
+## 会话快照（2026-05-06 Phase 2 主逻辑完成）
+- status: in_progress
+- evidence:
+  - 实现 jinja2_migration/data_prep.py（1290行）：load_excel_sheets() / determine_key_dates() / build_derived_structures() / preprocess_natural_month() / build_tl_data() / build_agent_performance() / build_group_performance() / build_stl_data() / build_context()
+  - 实现 jinja2_migration/data_prep_payloads.py（290行）：build_anomaly_groups() / build_anomaly_agents() / build_module_daily_trends() / build_module_monthly() / build_risk_module_groups() / build_today_agent_targets() / build_tl_breakdown_by_date() / build_stl_breakdown_by_week()
+  - data_prep_helpers.py 新增 2 个函数：detect_day_only_cross_month_risk() / filter_report_month()（18 个纯函数总计）
+  - build_context() 烟雾测试通过：加载真实 Excel 数据 → 27 个 real_data 键全部正确产出
+  - 结构交叉验证通过：tlData/agentPerformance/stlData/groupPerformance/moduleDailyTrends/anomalyGroups/anomalyAgents 等所有嵌套结构键名正确
+  - 现有 61 个单测全部继续通过
+  - 生产管线 generate_v2_7.py 未触碰（git status 确认）
+  - templateContractId: v3_5+jinja2@2026-05-06
+- next_actions:
+  - 【P0】Phase 2.5 Pilot：Data View Under-performing 卡片最小闭环（JSON等价 + 卡片HTML结构一致 + 浏览器无console error）
+  - 【P1】实现 get_write_data_from_dataworks.py（自动化pipeline取数）
+  - 【P2】编写 run_pipeline.py（取数→生成HTML→分发）
+- blockers: []
+- handoff_note:
+  - build_context() 已可独立运行，输出与 generate_v2_7.py real_data 结构完全一致
+  - from data_prep import build_context 即可使用（需在 jinja2_migration/ 目录下运行）
+  - 下一会话：执行 Phase 2.5 Pilot，用 build_context 的输出渲染 Data View Under-performing 卡片 .j2 模板，与当前 HTML 产物 snapshot 对比
+
+## 会话快照（2026-05-07 Phase 3 Snapshot 基建完成）
+- status: in_progress
+- evidence:
+  - Phase 2.5 Pilot 全部完成：Jinja2 渲染与 JSON 等价（16 groups / 55 agents, row count/name/streak 全部 PASS），用户 GO 确认
+  - Phase 3 Snapshot 基建完成：6 个步骤全部通过
+  - 新建文件: tests/helpers/html_table.py, tests/conftest.py, dump_full_snapshot.py, test_data_prep_build_context.py, test_renderer_smoke.py, test_pilot_snapshot.py
+  - 修改文件: compare_pilot.py (refactored import), data_contract.py (_REQUIRED_TOP_LEVEL_KEYS 8→29)
+  - 85 tests 全绿（1.88s），含 11 个 build_context 集成测试 + 5 个 renderer smoke + 8 个 pilot snapshot
+  - 生产管线 generate_v2_7.py 未触碰（git status 确认）
+- next_actions:
+  - 【P0】Phase 4a Data View Tab 模板转换（24 补丁/4 卡片/1380 行 JS，约 14h）
+  - 【P1】用户浏览器抽检 Phase 4a 输出
+  - 【P2】实现 get_write_data_from_dataworks.py（自动化 pipeline 取数）
+- blockers: []
+- handoff_note:
+  - Phase 3 全部完成，Phase 4a 计划已发布（~/.claude/plans/robust-sprouting-stearns.md）
+  - data_prep.build_context() 30 个 key 已锁定在 tests/fixtures/real_data_baseline.json（本地生成，gitignore 不入库）
+  - 下一会话优先动作：等待用户启动 Phase 4a，或继续 Phase 4a 中 4a.1 子模板骨架（data_view/_index.html.j2）

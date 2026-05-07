@@ -1,0 +1,162 @@
+{# data_view_under_performing.html.j2 — Phase 2.5 Pilot
+   Rendered by jinja2_migration/render_pilot.py
+   Data source: anomalyGroupTableRows / anomalyAgentTableRows
+   (module headers pre-computed in Python to avoid Jinja2 state-tracking issues)
+#}
+
+{# ── helpers ─────────────────────────────────────────────────────────────── #}
+{%- macro format_number(val) -%}
+{%-   if val is none or val == '' -%}--
+{%-   elif val is integer -%}{{ "{:,}".format(val) }}
+{%-   elif val is float -%}{{ "{:,.2f}".format(val) }}
+{%-   else -%}{{ val }}
+{%-   endif -%}
+{%- endmacro -%}
+
+{%- macro achievement_color(ach) -%}
+{%-   if ach is none or ach == '' -%}
+{%-   elif ach >= 100 -%}#22c55e
+{%-   elif ach >= 90 -%}#d97706
+{%-   else -%}#ef4444
+{%-   endif -%}
+{%- endmacro -%}
+
+{%- macro pct(val, decimals=1) -%}
+{%-   if val is none or val == '' -%}--
+{%-   elif val is string -%}{{ val }}%
+{%-   else -%}{{ ("%." ~ decimals ~ "f") | format(val) }}%
+{%-   endif -%}
+{%- endmacro -%}
+
+{# ── group table row renderer ────────────────────────────────────────────── #}
+{%- macro render_group_row(item, idx) -%}
+{%-   set wTgt = item.weeklyTarget | default(0) -%}
+{%-   set wAct = item.weeklyActual | default(0) -%}
+{%-   set wAch = ((wAct / wTgt * 100) | round(1)) if wTgt > 0 else 0.0 -%}
+{%-   set wGap = [wTgt - wAct, 0] | max -%}
+{%-   set rowClass = 'drilldown-row red-row' if (item.weeks | default(0)) >= 3 else 'drilldown-row yellow-row' -%}
+<tr class="{{ rowClass }}">
+  <td style="padding: 12px; font-weight: 500;">{{ item.name }}</td>
+  <td style="padding: 12px; text-align: center;">{{ item.module }}</td>
+  <td style="padding: 12px; text-align: center; font-weight: 700;">{{ item.weeks }}</td>
+  <td style="padding: 12px; text-align: right;">{{ format_number(wTgt) }}</td>
+  <td style="padding: 12px; text-align: right;">{{ format_number(wAct) }}</td>
+  <td style="padding: 12px; text-align: right; color: #ef4444; font-weight: 600;">-{{ format_number(wGap) }}</td>
+  <td style="padding: 12px; text-align: right; color: {{ achievement_color(wAch) }}; font-weight: 600;">{{ wAch }}%</td>
+  <td style="padding: 12px; text-align: center;"><button onclick="toggleAnomalyGroupDetail('anomaly-group-detail-{{ idx }}')" style="border:1px solid #cbd5e1;background:#fff;color:#334155;padding:4px 8px;border-radius:6px;cursor:pointer;font-size:12px;">Recent 2 Weeks</button></td>
+</tr>
+{%- endmacro -%}
+
+{# ── agent table row renderer ───────────────────────────────────────────── #}
+{%- macro render_agent_row(item, idx) -%}
+{%-   set dTgt = item.dailyTarget | default(0) -%}
+{%-   set dAct = item.dailyActual | default(0) -%}
+{%-   set dGap = [dTgt - dAct, 0] | max -%}
+{%-   set connRate = pct(item.connectRate, 1) -%}
+{%-   set callLoss = pct(item.callLossRate, 1) -%}
+{%-   set attd = pct(item.attendance, 0) -%}
+<tr class="drilldown-row red-row">
+  <td style="padding: 12px; font-weight: 500;">{{ item.name }}</td>
+  <td style="padding: 12px;">{{ item.group }}</td>
+  <td style="padding: 12px; text-align: center;">{{ item.module }}</td>
+  <td style="padding: 12px; text-align: center; font-weight: 700; color: #ef4444;">{{ item.days }}</td>
+  <td style="padding: 12px; text-align: right;">{{ format_number(dTgt) }}</td>
+  <td style="padding: 12px; text-align: right;">{{ format_number(dAct) }}</td>
+  <td style="padding: 12px; text-align: right; color: #ef4444; font-weight: 600;">-{{ format_number(dGap) }}</td>
+  <td style="padding: 12px; text-align: right;">{{ format_number(item.calls | default(0)) }}</td>
+  <td style="padding: 12px; text-align: right;">{{ connRate }}</td>
+  <td style="padding: 12px; text-align: right;">{{ callLoss }}</td>
+  <td style="padding: 12px; text-align: center;">{{ attd }}</td>
+  <td style="padding: 12px; text-align: center;"><button onclick="toggleAnomalyAgentDetail('anomaly-agent-detail-{{ idx }}')" style="border:1px solid #cbd5e1;background:#fff;color:#334155;padding:4px 8px;border-radius:6px;cursor:pointer;font-size:12px;">Recent 3 Days</button></td>
+</tr>
+{%- endmacro -%}
+
+{# ── main output ─────────────────────────────────────────────────────────── #}
+<div id="data-anomaly" class="data-subtab-content">
+
+  {# ── Group: Continuous Unmet Target ──────────────────────────────────────── #}
+  <div class="card" style="margin-bottom: 20px;">
+    <h2 style="font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 8px;">Group — Continuous Unmet Target (2+ Weeks)</h2>
+    <p style="color: #991b1b; font-size: 13px; margin-bottom: 8px; font-weight: 600;">escalate to Inia</p>
+    <p style="color: #64748b; font-size: 13px; margin-bottom: 20px;">Groups with 2+ consecutive weeks below weekly target, sorted by consecutive weeks (descending).</p>
+    <table style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+          <th style="padding: 12px; text-align: left; font-size: 12px; color: #64748b;">Group</th>
+          <th style="padding: 12px; text-align: center; font-size: 12px; color: #64748b;">Module</th>
+          <th style="padding: 12px; text-align: center; font-size: 12px; color: #64748b;">Consecutive Weeks</th>
+          <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Weekly Target</th>
+          <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Weekly Actual</th>
+          <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Weekly Gap</th>
+          <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Weekly Achievement</th>
+          <th style="padding: 12px; text-align: center; font-size: 12px; color: #64748b;">Drilldown</th>
+        </tr>
+      </thead>
+      <tbody id="anomaly-group-table">
+        {%- if anomalyGroupTableRows -%}
+        {%-   set _group_idx = [0] -%}
+        {%-   for row in anomalyGroupTableRows -%}
+        {%-     if row.row_type == 'header' -%}
+        <tr><td colspan="8" style="padding:10px 12px; background:#eef2ff; color:#1e3a8a; font-weight:700;">{{ row.module }}</td></tr>
+        {%-     else -%}
+        {%-       set _ = _group_idx.append(_group_idx.pop() + 1) -%}
+        {{ render_group_row(row, _group_idx[-1]) }}
+        {%-     endif -%}
+        {%-   endfor -%}
+        {%- else -%}
+        <tr><td colspan="8" style="padding: 20px; text-align: center; color: #64748b;">No data</td></tr>
+        {%- endif -%}
+      </tbody>
+    </table>
+    <div id="anomaly-group-empty" class="empty-state" style="display: none;">
+      <div class="empty-state-icon">✓</div>
+      <div class="empty-state-title">No groups with 2+ consecutive unmet weeks</div>
+      <div class="empty-state-sub">All groups are performing within acceptable range</div>
+    </div>
+  </div>
+
+  {# ── Agent: Continuous Unmet Target ─────────────────────────────────────── #}
+  <div class="card">
+    <h2 style="font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 8px;">Individual — Continuous Unmet Target (3+ Days)</h2>
+    <p style="color: #991b1b; font-size: 13px; margin-bottom: 8px; font-weight: 600;">escalate to STL</p>
+    <p style="color: #64748b; font-size: 13px; margin-bottom: 20px;">Agents with 3+ consecutive days below daily target, sorted by consecutive days (descending).</p>
+    <table style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+          <th style="padding: 12px; text-align: left; font-size: 12px; color: #64748b;">Agent</th>
+          <th style="padding: 12px; text-align: left; font-size: 12px; color: #64748b;">Group</th>
+          <th style="padding: 12px; text-align: center; font-size: 12px; color: #64748b;">Module</th>
+          <th style="padding: 12px; text-align: center; font-size: 12px; color: #64748b;">Consecutive Days</th>
+          <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Daily Target</th>
+          <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Daily Actual</th>
+          <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Daily Gap</th>
+          <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Calls</th>
+          <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Conn. Rate</th>
+          <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b;">Call Loss</th>
+          <th style="padding: 12px; text-align: center; font-size: 12px; color: #64748b;">Process KPI</th>
+        </tr>
+      </thead>
+      <tbody id="anomaly-agent-table">
+        {%- if anomalyAgentTableRows -%}
+        {%-   set _agent_idx = [0] -%}
+        {%-   for row in anomalyAgentTableRows -%}
+        {%-     if row.row_type == 'header' -%}
+        <tr><td colspan="11" style="padding:10px 12px; background:#eef2ff; color:#1e3a8a; font-weight:700;">{{ row.module }}</td></tr>
+        {%-     else -%}
+        {%-       set _ = _agent_idx.append(_agent_idx.pop() + 1) -%}
+        {{ render_agent_row(row, _agent_idx[-1]) }}
+        {%-     endif -%}
+        {%-   endfor -%}
+        {%- else -%}
+        <tr><td colspan="11" style="padding: 20px; text-align: center; color: #64748b;">No data</td></tr>
+        {%- endif -%}
+      </tbody>
+    </table>
+    <div id="anomaly-agent-empty" class="empty-state" style="display: none;">
+      <div class="empty-state-icon">✓</div>
+      <div class="empty-state-title">No agents with 3+ consecutive unmet days</div>
+      <div class="empty-state-sub">All agents are performing within acceptable range</div>
+    </div>
+  </div>
+
+</div>

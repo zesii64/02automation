@@ -1,24 +1,27 @@
 {
-  "last_updated": "2026-04-29",
+  "last_updated": "2026-05-07",
   "active_task": "task_2026-04-13_v3_3_logic_and_data_view_alignment.md",
   "owner": "未分配",
   "status": "in_progress",
-  "dual_review_gate": "not_run",
+  "dual_review_gate": "passed_warning",
   "current_focus": [
-    "基线模板剥离计划已执行完毕，产物验证通过",
-    "当前进入自动化Pipeline实现阶段"
+    "Phase 3 Snapshot 基建完成（85 tests 全绿），pending Phase 4a 启动审批",
+    "Phase 4a Data View Tab 模板转换：4 张卡片 + 1380 行 JS 迁移（24 补丁，约 14h）"
   ],
   "recent_completed": [
-    "基线模板剥离完成：生成 templates/Collection_Operations_Report_base.html，修复 tl-connect-gap 锚点，产物验证全部9个补丁元素各恰好出现1次",
-    "阶段一完成：清理4-21污染模板（Data View/TL View/STL View重复模块去重）",
-    "根因定位：脚本补丁逻辑非幂等，4-21模板保留单次补丁产物导致二次叠加"
+    "Phase 3 Snapshot 基建完成 — tests/helpers/conftest/dump_full_snapshot/data_contract扩展, 85 tests全绿",
+    "Phase 2.5 Pilot 完成 — Jinja2 渲染与 JSON 等价，用户 GO",
+    "Phase 2 主逻辑：实现 data_prep.py (1290行) + data_prep_payloads.py (290行)，build_context() 烟雾测试 + 结构交叉验证通过"
   ],
   "next_actions": [
-    "【P1】实现 get_write_data_from_dataworks.py（本地run_sql替换）",
-    "【P2】编写 run_pipeline.py（取数→生成HTML→分发）",
-    "【P3】Windows Task Scheduler 定时配置",
-    "【P4/长期】Jinja2 模板迁移",
-    "【P5/长期】Agent 级精准诊断"
+    "【P0】Phase 4a Data View Tab 模板转换（24 补丁/4 卡片/1380 行 JS，约 14h）",
+    "【P1】用户浏览器抽检 Phase 4a 输出",
+    "【P2】实现 get_write_data_from_dataworks.py（自动化 pipeline 取数）"
+  ],
+  "task_queue": [
+    "【长期】Jinja2 模板迁移全面推进 — 依赖：Pilot GO → Phase 3-8 完整模板转换",
+    "【长期】Agent 级精准诊断 — 从 group/module 级结论下沉到 agent 级，短板归因 People/Strategy/Tool，依赖：方案一（规则映射）稳定运行 + 业务确认归因逻辑",
+    "【长期】Function Compute API 调通后自动化 pipeline 全链路打通"
   ],
   "blockers": [
     "Function Compute HTTP API 认证方式未确认（需 AccessKey + Bearer Token 测试）"
