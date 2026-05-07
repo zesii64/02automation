@@ -543,18 +543,8 @@ if nat_month_cross_month_day_key_cnt > 0:
         "Any day-of-month aggregation must filter report month first."
     )
 
-# Always filter to report month before building day-of-month dicts.
-nat_month = filter_report_month(nat_month, 'dt_biz', REPORT_YEAR, REPORT_MONTH)
-if len(nat_month) == 0:
-    data_warning_set.add(
-        f"natural_month_repay has no rows for report month {REPORT_YEAR}-{REPORT_MONTH:02d}"
-    )
-nat_month_single_month_ok = (
-    len(nat_month) == 0 or
-    nat_month['dt_biz'].dt.to_period('M').nunique() == 1
-)
-
-nat_buckets = set(nat_month['agent_bucket'].dropna().unique().tolist())
+# 不再过滤到仅当前月，保留所有月份
+nat_buckets = set(nat_month["agent_bucket"].dropna().unique().tolist())
 
 def module_key_to_bucket(mk):
     # For non-split modules (e.g. S0/M2), use *_Other bucket if present.
@@ -570,10 +560,10 @@ def module_key_to_bucket(mk):
 
 target_nm_dict = {}
 for _, row in nat_month[nat_month['group_name'] == 'Target'].iterrows():
-    bucket = row['agent_bucket']
-    day    = int(row['day'])
-    rr     = float(row['repay_rate']) * 100
-    target_nm_dict.setdefault(bucket, {})[day] = round(rr, 4)
+    bucket   = row['agent_bucket']
+    date_str = row['dt_biz'].strftime('%Y-%m-%d')
+    rr       = float(row['repay_rate']) * 100
+    target_nm_dict.setdefault(bucket, {})[date_str] = round(rr, 4)
 
 module_nm_dict = {}
 nontar_nm = nat_month[nat_month['group_name'] != 'Target']
@@ -583,25 +573,39 @@ for mk in modules_list:
     mk_nm     = nontar_nm[nontar_nm['agent_bucket'] == mk_bucket]
     module_nm_dict[mk] = {}
     module_group_nm_dict[mk] = {}
-    for day, day_data in mk_nm.groupby('day'):
+    for dt_biz, day_data in mk_nm.groupby('dt_biz'):
+        date_str   = pd.Timestamp(dt_biz).strftime('%Y-%m-%d')
         total_repay = day_data['repay_principal'].astype(float).sum()
         total_owing = day_data['start_owing_principal'].astype(float).sum()
         rr = total_repay / total_owing * 100 if total_owing > 0 else 0.0
-        module_nm_dict[mk][int(day)] = round(rr, 4)
+        module_nm_dict[mk][date_str] = round(rr, 4)
     for g in submodule_groups.get(mk, []):
         g_nm = mk_nm[mk_nm['group_name'] == g.strip()]
         group_daily = {}
-        for day, day_data in g_nm.groupby('day'):
+        for dt_biz, day_data in g_nm.groupby('dt_biz'):
+            date_str   = pd.Timestamp(dt_biz).strftime('%Y-%m-%d')
             total_repay = day_data['repay_principal'].astype(float).sum()
             total_owing = day_data['start_owing_principal'].astype(float).sum()
             rr = total_repay / total_owing * 100 if total_owing > 0 else 0.0
-            group_daily[int(day)] = round(rr, 4)
+            group_daily[date_str] = round(rr, 4)
         module_group_nm_dict[mk][g] = group_daily
 
 # ========================
 # 1. TL DATA
 # ========================
 print("Building tlData...")
+# 计算数据中所有存在的年月
+_ym_set = set()
+for _df, _col in [
+    (daily_tr, 'dt'),
+    (nat_month, 'dt_biz'),
+    (attd_daily, 'dt'),
+]:
+    _dts = pd.to_datetime(_df[_col])
+    for _dt in _dts.dropna().unique():
+        _ym_set.add((int(_dt.year), int(_dt.month)))
+sorted_year_months = sorted(_ym_set)
+
 DAYS_IN_MONTH = monthrange(REPORT_YEAR, REPORT_MONTH)[1]
 
 latest_dtr_agg = (daily_tr[daily_tr['dt'] == TL_LATEST_DT]
@@ -669,33 +673,33 @@ for group in all_groups:
             attd_daily_by_date[dt_str] = normalize_attd_rate_pct(attd_vals.mean()) if len(attd_vals) > 0 else None
 
     days_series = []
-    for day in range(1, DAYS_IN_MONTH + 1):
-        date_str = f'{REPORT_YEAR}-{REPORT_MONTH:02d}-{day:02d}'
-        in_cutoff = day <= TL_LATEST_DAY
-        day_rows = g_dtr[g_dtr.index == pd.Timestamp(date_str)]
-        if len(day_rows) > 0:
-            r   = day_rows.iloc[0]
-            tgt = round(float(r['target'])) if in_cutoff else None
-            act = round(float(r['actual'])) if in_cutoff else None
-            owing = float(r['owing'])
-            rr   = round(float(r['actual']) / owing * 100, 4) if (in_cutoff and owing > 0) else None
-            # targetRepayRate should be visible for full month, not capped by data cutoff day.
-            nm_trr = module_target_nm.get(day, None)
-            nm_rr  = module_nm_daily.get(day, None) if in_cutoff else None
-            g_nm_rr = group_nm_daily.get(day, None) if in_cutoff else None
-            days_series.append({'date': date_str, 'target': tgt, 'actual': act,
-                                 'repayRate': rr, 'nmRepayRate': g_nm_rr,
-                                 'targetRepayRate': nm_trr, 'moduleRepayRate': nm_rr,
-                                 'attendanceRate': attd_daily_by_date.get(date_str)})
-        else:
-            # targetRepayRate should be visible for full month, not capped by data cutoff day.
-            nm_trr = module_target_nm.get(day, None)
-            nm_rr  = module_nm_daily.get(day, None) if in_cutoff else None
-            g_nm_rr = group_nm_daily.get(day, None) if in_cutoff else None
-            days_series.append({'date': date_str, 'target': None, 'actual': None,
-                                 'repayRate': None, 'nmRepayRate': g_nm_rr,
-                                 'targetRepayRate': nm_trr, 'moduleRepayRate': nm_rr,
-                                 'attendanceRate': attd_daily_by_date.get(date_str)})
+    for _ym_year, _ym_month in sorted_year_months:
+        _days_in_ym = monthrange(_ym_year, _ym_month)[1]
+        for day in range(1, _days_in_ym + 1):
+            date_str = f'{_ym_year}-{_ym_month:02d}-{day:02d}'
+            in_cutoff = date_str <= TL_LATEST_STR
+            day_rows = g_dtr[g_dtr.index == pd.Timestamp(date_str)]
+            if len(day_rows) > 0:
+                r   = day_rows.iloc[0]
+                tgt = round(float(r['target'])) if in_cutoff else None
+                act = round(float(r['actual'])) if in_cutoff else None
+                owing = float(r['owing'])
+                rr   = round(float(r['actual']) / owing * 100, 4) if (in_cutoff and owing > 0) else None
+                nm_trr = module_target_nm.get(date_str, None)
+                nm_rr  = module_nm_daily.get(date_str, None) if in_cutoff else None
+                g_nm_rr = group_nm_daily.get(date_str, None) if in_cutoff else None
+                days_series.append({'date': date_str, 'target': tgt, 'actual': act,
+                                     'repayRate': rr, 'nmRepayRate': g_nm_rr,
+                                     'targetRepayRate': nm_trr, 'moduleRepayRate': nm_rr,
+                                     'attendanceRate': attd_daily_by_date.get(date_str)})
+            else:
+                nm_trr = module_target_nm.get(date_str, None)
+                nm_rr  = module_nm_daily.get(date_str, None) if in_cutoff else None
+                g_nm_rr = group_nm_daily.get(date_str, None) if in_cutoff else None
+                days_series.append({'date': date_str, 'target': None, 'actual': None,
+                                     'repayRate': None, 'nmRepayRate': g_nm_rr,
+                                     'targetRepayRate': nm_trr, 'moduleRepayRate': nm_rr,
+                                     'attendanceRate': attd_daily_by_date.get(date_str)})
 
     tl_data_js[group] = {
         'groupModule': group_module,
@@ -1298,9 +1302,9 @@ for mk in modules_list:
     for day in range(1, DAYS_IN_MONTH + 1):
         date_str = f'{REPORT_YEAR}-{REPORT_MONTH:02d}-{day:02d}'
         in_cutoff = day <= TL_LATEST_DAY
-        nm_rr  = mk_nm_daily.get(day, None) if in_cutoff else None
+        nm_rr  = mk_nm_daily.get(date_str, None) if in_cutoff else None
         # Module target line should remain available for the whole selected month.
-        nm_trr = module_target_nm.get(day, None)
+        nm_trr = module_target_nm.get(date_str, None)
         daily_series.append({
             'date': date_str, 'target': None, 'actual': None,
             'repayRate': nm_rr, 'targetRepayRate': nm_trr
@@ -4103,8 +4107,7 @@ for g in all_groups:
         d_dt = pd.to_datetime(d.get('date'), errors='coerce')
         if pd.isna(d_dt):
             continue
-        day = d_dt.day
-        if day > TL_LATEST_DAY and any(d.get(k) is not None for k in ('repayRate', 'nmRepayRate', 'moduleRepayRate')):
+        if d_dt > data_date_dt and any(d.get(k) is not None for k in ('repayRate', 'nmRepayRate', 'moduleRepayRate')):
             post_cutoff_actual_ok = False
             break
     if not post_cutoff_actual_ok:
@@ -4115,8 +4118,7 @@ if post_cutoff_actual_ok:
             d_dt = pd.to_datetime(d.get('date'), errors='coerce')
             if pd.isna(d_dt):
                 continue
-            day = d_dt.day
-            if day > TL_LATEST_DAY and d.get('repayRate') is not None:
+            if d_dt > data_date_dt and d.get('repayRate') is not None:
                 post_cutoff_actual_ok = False
                 break
         if not post_cutoff_actual_ok:
@@ -4133,9 +4135,9 @@ for mk in modules_list:
         d_dt = pd.to_datetime(d.get('date'), errors='coerce')
         if pd.isna(d_dt):
             continue
-        day = d_dt.day
+        date_str = d_dt.strftime('%Y-%m-%d')
         got = d.get('targetRepayRate')
-        exp = src_map.get(day, None)
+        exp = src_map.get(date_str, None)
         if got is None and exp is None:
             continue
         if got is None or exp is None:
@@ -4188,7 +4190,7 @@ def _onclick_has_escaped_quote(html: str) -> bool:
     return any(pattern in h for h in handlers)
 
 hard_checks = [
-    ("Natural-month day-mix guard", nat_month_single_month_ok),
+    ("Natural-month day-mix guard", True),  # no longer filtered to single month
     ("TL actual trend <= dataDate", tl_trend_cutoff_ok),
     ("Module actual trend <= dataDate", module_trend_cutoff_ok),
     ("Actual hidden after dataDate", post_cutoff_actual_ok),
