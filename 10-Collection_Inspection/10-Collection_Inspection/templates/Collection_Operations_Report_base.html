@@ -5201,14 +5201,17 @@ body.theme-style_3 .status-danger {
         }
 
         // Generate current month date labels (e.g., 03/01 - 03/31)
+        // Use REAL_DATA.dataDate (data cutoff), not viewer's current date, so x-axis
+        // matches the data availability window (e.g., shows 05/01-05/07 when dataDate=2026-05-07).
         function generateCurrentMonthLabels() {
-            var today = new Date();
-            var year = today.getFullYear();
-            var month = today.getMonth(); // 0-indexed
-            var daysInMonth = new Date(year, month + 1, 0).getDate();
+            var dataDateStr = REAL_DATA.dataDate || '';
+            var parts = dataDateStr.split('-');
+            var year = parseInt(parts[0], 10) || new Date().getFullYear();
+            var month = parseInt(parts[1], 10) || (new Date().getMonth() + 1); // 1-indexed
+            var daysInMonth = new Date(year, month, 0).getDate();
             var labels = [];
             for (var d = 1; d <= daysInMonth; d++) {
-                labels.push((month + 1).toString().padStart(2, '0') + '/' + d.toString().padStart(2, '0'));
+                labels.push(month.toString().padStart(2, '0') + '-' + d.toString().padStart(2, '0'));
             }
             return labels;
         }
@@ -5343,8 +5346,6 @@ body.theme-style_3 .status-danger {
 
             // Get current month labels
             var dateLabels = generateCurrentMonthLabels();
-            var today = new Date();
-            var currentDayOfMonth = today.getDate(); // 1-31
             var daysInMonth = dateLabels.length;
 
             orderedTrendModules.forEach(module => {
@@ -5363,45 +5364,52 @@ body.theme-style_3 .status-danger {
                 var trendData = REAL_DATA.moduleDailyTrends[module];
                 var dailyData = trendData ? trendData.daily : [];
 
-                // Extract actual and target values from daily data
-                var actualValues = [];
-                var targetValues = [];
+                // Filter to current month using REAL_DATA.dataDate (not viewer's new Date()).
+                var dataDateStr = REAL_DATA.dataDate || '';
+                var dataYearMonth = dataDateStr.slice(0, 7); // e.g. "2026-05"
+                var monthDaily = dailyData.filter(function(r) { return String(r.date || '').slice(0, 7) === dataYearMonth; });
+
+                // Build date-label keyed maps (align with x-axis dateLabels).
+                var actualByLabel = {};
+                var targetByLabel = {};
                 var avgDailyTarget = 0;
                 var targetCount = 0;
-                for (var d = 0; d < daysInMonth; d++) {
-                    if (d < dailyData.length) {
-                        actualValues.push(dailyData[d].repayRate !== null && dailyData[d].repayRate !== undefined ? dailyData[d].repayRate : null);
-                        targetValues.push(dailyData[d].targetRepayRate !== null && dailyData[d].targetRepayRate !== undefined ? dailyData[d].targetRepayRate : null);
-                        if (dailyData[d].targetRepayRate !== null && dailyData[d].targetRepayRate !== undefined) {
-                            avgDailyTarget += dailyData[d].targetRepayRate;
-                            targetCount++;
-                        }
-                    } else {
-                        // For future days beyond generated data, show null
-                        actualValues.push(null);
-                        targetValues.push(null);
+                monthDaily.forEach(function(r) {
+                    var label = String(r.date || '').slice(5); // "MM-DD"
+                    if (r.repayRate !== null && r.repayRate !== undefined) actualByLabel[label] = r.repayRate;
+                    if (r.targetRepayRate !== null && r.targetRepayRate !== undefined) {
+                        targetByLabel[label] = r.targetRepayRate;
+                        avgDailyTarget += r.targetRepayRate;
+                        targetCount++;
                     }
-                }
+                });
                 avgDailyTarget = targetCount > 0 ? avgDailyTarget / targetCount : 0;
 
+                // Map dateLabels to values; null if no data for that day.
+                var actualValues = dateLabels.map(function(lbl) {
+                    return Object.prototype.hasOwnProperty.call(actualByLabel, lbl) ? actualByLabel[lbl] : null;
+                });
+                var targetValues = dateLabels.map(function(lbl) {
+                    return Object.prototype.hasOwnProperty.call(targetByLabel, lbl) ? targetByLabel[lbl] : null;
+                });
+
                 var groupsInModule = (REAL_DATA.groups || []).filter(g => REAL_DATA.tlData[g] && REAL_DATA.tlData[g].groupModule === module);
-                var monthPrefix = (dailyData && dailyData.length > 0 && dailyData[0].date) ? String(dailyData[0].date).slice(0, 7) : String(REAL_DATA.dataDate || '').slice(0, 7);
                 var grayPalette = ['#9ca3af', '#94a3b8', '#a1a1aa', '#b6beca', '#8f9baa'];
                 var groupSeries = groupsInModule.map((groupName, idx) => {
                     var gData = REAL_DATA.tlData[groupName];
-                    var gDays = (gData && gData.days ? gData.days : []).filter(r => String(r.date || '').startsWith(monthPrefix));
-                    var gValues = [];
-                    for (var d = 0; d < daysInMonth; d++) {
-                        if (d < gDays.length) {
-                            var row = gDays[d];
-                            var gv = (row.nmRepayRate !== null && row.nmRepayRate !== undefined)
-                                ? row.nmRepayRate
-                                : ((row.repayRate !== null && row.repayRate !== undefined) ? row.repayRate : null);
-                            gValues.push(gv);
-                        } else {
-                            gValues.push(null);
-                        }
-                    }
+                    var gDays = (gData && gData.days ? gData.days : []).filter(r => String(r.date || '').slice(0, 7) === dataYearMonth);
+                    // Build keyed map then map over dateLabels (same pattern as module total).
+                    var gByLabel = {};
+                    gDays.forEach(function(row) {
+                        var label = String(row.date || '').slice(5);
+                        var v = (row.nmRepayRate !== null && row.nmRepayRate !== undefined)
+                            ? row.nmRepayRate
+                            : ((row.repayRate !== null && row.repayRate !== undefined) ? row.repayRate : null);
+                        gByLabel[label] = v;
+                    });
+                    var gValues = dateLabels.map(function(lbl) {
+                        return Object.prototype.hasOwnProperty.call(gByLabel, lbl) ? gByLabel[lbl] : null;
+                    });
                     return {
                         name: groupName,
                         type: 'line',
