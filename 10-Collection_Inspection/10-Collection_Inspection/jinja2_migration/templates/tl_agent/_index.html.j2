@@ -1,0 +1,539 @@
+{# _index.html.j2 — TL Agent Tab 主模板 #}
+{# Phase 4b: TL Agent Tab with Jinja2 rendering + pre-patched JS #}
+<!-- ===================== TL TAB ===================== -->
+<div id="tab-TL" class="tab-content">
+  {% include "tl_agent/header.html.j2" %}
+  {% include "tl_agent/metrics.html.j2" %}
+  {% include "tl_agent/chart.html.j2" %}
+  {% include "tl_agent/unmet_detail.html.j2" %}
+  {% include "tl_agent/conclusions.html.j2" %}
+</div>
+
+{# ── TL Agent Tab JS ── #}
+<script>
+// ===================== TL AGENT TAB =====================
+{% raw %}
+// ===================== TL DATA =====================
+// --- TL Core ---
+function initTLTab() {
+    var groupSelect = document.getElementById('tl-group-select');
+    var dateSelect = document.getElementById('tl-date-select');
+    if (!groupSelect || !dateSelect) return;
+
+    // Populate group dropdown
+    groupSelect.innerHTML = '<option value="">-- Select Group --</option>';
+    var orderedGroups = (REAL_DATA.groups || []).slice().sort(function(a, b) {
+        var ma = REAL_DATA.tlData[a] ? REAL_DATA.tlData[a].groupModule : '';
+        var mb = REAL_DATA.tlData[b] ? REAL_DATA.tlData[b].groupModule : '';
+        var rank = { 'S0': 0, 'S1': 1, 'S2': 2, 'M1': 3 };
+        var ra = Object.prototype.hasOwnProperty.call(rank, ma) ? rank[ma] : 999;
+        var rb = Object.prototype.hasOwnProperty.call(rank, mb) ? rank[mb] : 999;
+        if (ra !== rb) return ra - rb;
+        return a.localeCompare(b);
+    });
+    orderedGroups.forEach(function(g) {
+        var mod = REAL_DATA.tlData[g] ? REAL_DATA.tlData[g].groupModule : '';
+        groupSelect.innerHTML += '<option value="' + g + '">' + g + ' (' + mod + ')</option>';
+    });
+
+    // Populate date dropdown
+    dateSelect.innerHTML = '';
+    (REAL_DATA.availableDates || []).slice().reverse().forEach(function(d) {
+        dateSelect.innerHTML += '<option value="' + d + '">' + d + '</option>';
+    });
+
+    // Default to latest available date
+    if (REAL_DATA.availableDates && REAL_DATA.availableDates.length > 0) {
+        var latestDate = REAL_DATA.availableDates.slice().sort().pop();
+        if (REAL_DATA.tlData) {
+            // Find latest date that has data
+            var datesByGroup = {};
+            (REAL_DATA.availableDates || []).forEach(function(d) {
+                Object.keys(REAL_DATA.tlData || {}).forEach(function(g) {
+                    var days = REAL_DATA.tlData[g].days || [];
+                    if (days.some(function(day) { return day.date === d; })) {
+                        if (!datesByGroup[g]) datesByGroup[g] = [];
+                        if (!datesByGroup[g].includes(d)) datesByGroup[g].push(d);
+                    }
+                });
+            });
+            var commonDates = null;
+            Object.values(datesByGroup).forEach(function(dates) {
+                if (commonDates === null) {
+                    commonDates = new Set(dates);
+                } else {
+                    commonDates = new Set([...commonDates].filter(x => dates.includes(x)));
+                }
+            });
+            if (commonDates && commonDates.size > 0) {
+                latestDate = Array.from(commonDates).sort().pop();
+            }
+        }
+        dateSelect.value = latestDate;
+    }
+
+    // Load initial data
+    loadTLData();
+}
+
+function loadTLData() {
+    var group = document.getElementById('tl-group-select') ? document.getElementById('tl-group-select').value : '';
+    var dateStr = document.getElementById('tl-date-select') ? document.getElementById('tl-date-select').value : '';
+
+    var emptyState = document.getElementById('tl-empty-state');
+    var metricsContainer = document.getElementById('tl-metrics-container');
+    var chartCard = document.getElementById('tl-chart-card');
+    var unmetSection = document.getElementById('tl-unmet-section');
+    var conclusionsCard = document.getElementById('tl-conclusions-card');
+
+    if (!group || !dateStr) {
+        if (emptyState) emptyState.style.display = 'block';
+        if (metricsContainer) metricsContainer.style.display = 'none';
+        if (chartCard) chartCard.style.display = 'none';
+        if (unmetSection) unmetSection.style.display = 'none';
+        if (conclusionsCard) conclusionsCard.style.display = 'none';
+        return;
+    }
+
+    if (emptyState) emptyState.style.display = 'none';
+    if (metricsContainer) metricsContainer.style.display = 'block';
+    if (chartCard) chartCard.style.display = 'block';
+    if (unmetSection) unmetSection.style.display = 'block';
+    if (conclusionsCard) conclusionsCard.style.display = 'block';
+
+    // Load metrics (includes badge + conclusions generation)
+    loadTLMetrics(group, dateStr);
+
+    // Load chart
+    renderTLChart(group, dateStr);
+}
+
+function loadTLMetrics(group, dateStr) {
+    var groupData = REAL_DATA.tlData && REAL_DATA.tlData[group] ? REAL_DATA.tlData[group] : null;
+    var dayData = null;
+    if (groupData && groupData.days) {
+        dayData = groupData.days.find(function(d) { return d.date === dateStr; });
+    }
+
+    var yesterdayTarget = document.getElementById('tl-yesterday-target');
+    var yesterdayActual = document.getElementById('tl-yesterday-actual');
+    var achievementRate = document.getElementById('tl-achievement-rate');
+    var moduleAvg = document.getElementById('tl-module-avg');
+    var statusBadge = document.getElementById('tl-status-badge');
+    var attendanceRateEl = document.getElementById('tl-attendance-rate');
+
+    // Compute display target/actual/achievement same as original
+    var displayTarget = groupData ? groupData.target : 0;
+    var displayActual = groupData ? groupData.actual : 0;
+    var displayAchievement = 0;
+
+    if (dayData && dayData.target !== null && dayData.target !== undefined) {
+        displayTarget = dayData.target;
+        displayActual = dayData.actual !== null && dayData.actual !== undefined ? dayData.actual : displayActual;
+        displayAchievement = displayTarget > 0 ? (displayActual / displayTarget * 100) : 0;
+    }
+
+    if (yesterdayTarget) {
+        yesterdayTarget.textContent = formatNumber(displayTarget);
+    }
+    if (yesterdayActual) {
+        yesterdayActual.textContent = formatNumber(displayActual);
+    }
+    if (achievementRate) {
+        achievementRate.textContent = displayAchievement.toFixed(1) + '%';
+        achievementRate.style.color = displayAchievement >= 100 ? '#16a34a' : '#dc2626';
+    }
+    if (moduleAvg) {
+        moduleAvg.textContent = '--';
+        moduleAvg.closest('.metric-card').style.display = 'none';
+    }
+
+    // ===== ORIGINAL BADGE LOGIC (from generate_v2_7.py lines 1832-1896) =====
+    var conclusionsCard = document.getElementById('tl-conclusions-card');
+    if (conclusionsCard) conclusionsCard.style.display = 'block';
+
+    var badge = statusBadge;
+    // Get rate comparison row (nmRepayRate vs targetRepayRate — NOT achievement %)
+    var compareRow = null;
+    if (groupData && groupData.days) {
+        for (var i = 0; i < groupData.days.length; i++) {
+            if (groupData.days[i].date === dateStr) {
+                var r = groupData.days[i];
+                var groupRate = (r.nmRepayRate !== null && r.nmRepayRate !== undefined) ? r.nmRepayRate : r.repayRate;
+                if (groupRate !== null && groupRate !== undefined && r.targetRepayRate !== null && r.targetRepayRate !== undefined) {
+                    compareRow = { actualRate: groupRate, targetRate: r.targetRepayRate };
+                }
+                break;
+            }
+        }
+    }
+
+    var isMet = !!(compareRow && compareRow.actualRate >= compareRow.targetRate);
+
+    // Repay Target badge
+    if (!compareRow) {
+        badge.innerHTML = '<span class="status-badge" style="background:#f3f4f6;color:#6b7280;">Repay Target: N/A</span>';
+        if (attendanceRateEl) attendanceRateEl.textContent = '--';
+        document.getElementById('tl-unmet-section').style.display = 'none';
+    } else if (isMet) {
+        badge.innerHTML = '<span class="status-badge status-success">Repay Target: Met</span>';
+        if (attendanceRateEl) attendanceRateEl.textContent = '--';
+        document.getElementById('tl-unmet-section').style.display = 'none';
+    } else {
+        badge.innerHTML = '<span class="status-badge status-danger">Repay Target: Unmet</span>';
+        document.getElementById('tl-unmet-section').style.display = 'block';
+
+        // Attendance from tlData days
+        if (attendanceRateEl) {
+            var attdAtDate = null;
+            if (groupData && groupData.days) {
+                for (var j = 0; j < groupData.days.length; j++) {
+                    if (groupData.days[j].date === dateStr) {
+                        var a = groupData.days[j].attendanceRate;
+                        attdAtDate = (a !== null && a !== undefined) ? Number(a) : null;
+                        break;
+                    }
+                }
+            }
+            attendanceRateEl.textContent = attdAtDate !== null ? attdAtDate.toFixed(1) + '%' : '--';
+        }
+
+        // Process Target badge + gap values
+        var processTarget = REAL_DATA.processTargets && REAL_DATA.processTargets[groupData.groupModule] ? REAL_DATA.processTargets[groupData.groupModule] : null;
+        var callBenchmark = processTarget && processTarget.artCallTimes !== undefined && processTarget.artCallTimes !== null ? processTarget.artCallTimes : null;
+        var callBillminBenchmark = processTarget && processTarget.callBillminRawTarget !== undefined && processTarget.callBillminRawTarget !== null ? processTarget.callBillminRawTarget : null;
+
+        var agentsForAvg = REAL_DATA.agentPerformance[group] || [];
+        var callsSum = 0, billminSum = 0, cnt = 0;
+        agentsForAvg.forEach(function(agent) {
+            var dm = REAL_DATA.agentPerformanceByDate && REAL_DATA.agentPerformanceByDate[group] && REAL_DATA.agentPerformanceByDate[group][agent.name] ? REAL_DATA.agentPerformanceByDate[group][agent.name][dateStr] : null;
+            var c = dm && dm.artCallTimes !== undefined ? dm.artCallTimes : agent.artCallTimes;
+            var b = dm && dm.callBillmin !== undefined ? dm.callBillmin : agent.callBillmin;
+            if (c !== null && c !== undefined && b !== null && b !== undefined) { callsSum += c; billminSum += b; cnt += 1; }
+        });
+        var groupAvgCalls = cnt > 0 ? callsSum / cnt : 0;
+        var groupAvgBillmin = cnt > 0 ? billminSum / cnt : 0;
+
+        var processTargetMet = (callBenchmark !== null && callBillminBenchmark !== null) ? (groupAvgCalls >= callBenchmark && groupAvgBillmin >= callBillminBenchmark) : null;
+        var processTargetBadge = processTargetMet === null ? '<span class="status-badge" style="background:#f3f4f6;color:#6b7280;">Process Target: No Target</span>' : (processTargetMet ? '<span class="status-badge status-success">Process Target: Met</span>' : '<span class="status-badge status-danger">Process Target: Unmet</span>');
+        badge.innerHTML += ' <br>' + processTargetBadge;
+
+        // Gap values
+        var repayGap = displayActual - displayTarget;
+        var callGap = callBenchmark !== null ? Math.round(groupAvgCalls - callBenchmark) : null;
+        var callBillminGap = callBillminBenchmark !== null ? Math.round((groupAvgBillmin - callBillminBenchmark) * 10) / 10 : null;
+
+        var tlGapEl = document.getElementById('tl-gap-amount');
+        if (tlGapEl) tlGapEl.textContent = (repayGap > 0 ? '+' : '') + formatNumber(Math.round(repayGap));
+        var callGapEl = document.getElementById('tl-call-gap');
+        if (callGapEl) callGapEl.textContent = callGap !== null ? (callGap > 0 ? '+' : '') + callGap : '--';
+        var connectGapEl = document.getElementById('tl-connect-gap');
+        if (connectGapEl) connectGapEl.textContent = callBillminGap !== null ? (callBillminGap > 0 ? '+' : '') + callBillminGap.toFixed(1) : '--';
+
+        // Meta labels
+        var tlGapMeta = document.getElementById('tl-gap-meta');
+        if (tlGapMeta) tlGapMeta.textContent = 'Target: ' + formatNumber(displayTarget) + ' | Actual: ' + formatNumber(displayActual);
+        var tlCallGapMeta = document.getElementById('tl-call-gap-meta');
+        if (tlCallGapMeta) tlCallGapMeta.textContent = 'Target: ' + (callBenchmark !== null ? callBenchmark.toFixed(0) : '--') + ' | Actual: ' + groupAvgCalls.toFixed(0);
+        var tlConnectGapMeta = document.getElementById('tl-connect-gap-meta');
+        if (tlConnectGapMeta) tlConnectGapMeta.textContent = 'Target: ' + (callBillminBenchmark !== null ? callBillminBenchmark.toFixed(1) : '--') + ' | Actual: ' + groupAvgBillmin.toFixed(1);
+    }
+
+    // Generate TL Conclusions
+    var tlViewData = {
+        target: displayTarget,
+        actual: displayActual,
+        achievement: displayAchievement,
+        gap: Math.max(0, displayTarget - displayActual)
+    };
+    generateTLConclusions(tlViewData, isMet);
+
+    // Load agent table
+    loadTLAgentTable(group, dateStr);
+}
+
+function loadTLAgentTable(group, dateStr) {
+    var tbody = document.getElementById('tl-agent-table');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    // Get process targets for Process KPI judgment
+    var groupData = REAL_DATA.tlData && REAL_DATA.tlData[group] ? REAL_DATA.tlData[group] : null;
+    var processTarget = groupData && REAL_DATA.processTargets && REAL_DATA.processTargets[groupData.groupModule] ? REAL_DATA.processTargets[groupData.groupModule] : null;
+    var callBenchmark = processTarget && processTarget.artCallTimes !== undefined && processTarget.artCallTimes !== null ? processTarget.artCallTimes : null;
+    var callBillminBenchmark = processTarget && processTarget.callBillminRawTarget !== undefined && processTarget.callBillminRawTarget !== null ? processTarget.callBillminRawTarget : null;
+
+    var agents = (REAL_DATA.agentPerformance[group] || []).filter(function(a) {
+        var dm = REAL_DATA.agentPerformanceByDate && REAL_DATA.agentPerformanceByDate[group] && REAL_DATA.agentPerformanceByDate[group][a.name] ? REAL_DATA.agentPerformanceByDate[group][a.name][dateStr] : null;
+        return !!dm;
+    });
+    agents.sort(function(a, b) {
+        var av = (a.achievement !== null && a.achievement !== undefined) ? a.achievement : 999;
+        var bv = (b.achievement !== null && b.achievement !== undefined) ? b.achievement : 999;
+        return av - bv;
+    });
+
+    if (agents.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="15" style="padding:20px; text-align:center; color:#64748b;">No agent data</td></tr>';
+        return;
+    }
+
+    var datesAsc = (REAL_DATA.availableDates || []).slice().reverse();
+
+    agents.forEach(function(agent) {
+        var agentHist = REAL_DATA.agentPerformanceByDate && REAL_DATA.agentPerformanceByDate[group] && REAL_DATA.agentPerformanceByDate[group][agent.name]
+            ? REAL_DATA.agentPerformanceByDate[group][agent.name] : null;
+        var todayMetrics = agentHist && agentHist[dateStr] ? agentHist[dateStr] : null;
+
+        var consecutiveDays = 0;
+        if (agentHist && datesAsc.length > 0) {
+            var endIdx = datesAsc.indexOf(dateStr);
+            if (endIdx >= 0) {
+                for (var i = endIdx; i >= 0; i--) {
+                    var row = agentHist[datesAsc[i]];
+                    if (!row || row.achievement === null || row.achievement === undefined) break;
+                    if (row.achievement < 100) consecutiveDays++;
+                    else break;
+                }
+            }
+        }
+
+        var target = todayMetrics && todayMetrics.target !== undefined ? todayMetrics.target : (agent.target || 0);
+        var actual = todayMetrics && todayMetrics.actual !== undefined ? todayMetrics.actual : (agent.actual || 0);
+        var achievement = todayMetrics && todayMetrics.achievement !== undefined ? todayMetrics.achievement : (agent.achievement || 0);
+        var attendance = todayMetrics && todayMetrics.attendance !== undefined ? todayMetrics.attendance : (agent.attendance || null);
+        var connectRate = todayMetrics && todayMetrics.connectRate !== undefined ? todayMetrics.connectRate : (agent.connectRate || null);
+        var coverTimes = todayMetrics && todayMetrics.coverTimes !== undefined ? todayMetrics.coverTimes : (agent.coverTimes || null);
+        var callTimes = todayMetrics && todayMetrics.callTimes !== undefined ? todayMetrics.callTimes : (agent.callTimes || null);
+        var artCallTimes = todayMetrics && todayMetrics.artCallTimes !== undefined ? todayMetrics.artCallTimes : (agent.artCallTimes || null);
+        var callBillmin = todayMetrics && todayMetrics.callBillmin !== undefined ? todayMetrics.callBillmin : (agent.callBillmin || null);
+        var singleCallDuration = todayMetrics && todayMetrics.singleCallDuration !== undefined ? todayMetrics.singleCallDuration : (agent.singleCallDuration || null);
+        var ptp = todayMetrics && todayMetrics.ptp !== undefined ? todayMetrics.ptp : (agent.ptp || null);
+        var callLossRate = todayMetrics && todayMetrics.callLossRate !== undefined ? todayMetrics.callLossRate : (agent.callLossRate || null);
+
+        var processKpi = null;
+        if (callBenchmark !== null && callBillminBenchmark !== null) {
+            var agentArtCalls = artCallTimes !== null ? Number(artCallTimes) : 0;
+            var agentBillmin = callBillmin !== null ? Number(callBillmin) : 0;
+            processKpi = (agentArtCalls >= callBenchmark && agentBillmin >= callBillminBenchmark) ? 'Met' : 'Unmet';
+        } else {
+            processKpi = '--';
+        }
+
+        var rowClass = consecutiveDays >= 3 ? 'red-row' : (consecutiveDays >= 1 ? 'yellow-row' : '');
+        var gap = Math.max(0, target - actual);
+
+        tbody.innerHTML +=
+            '<tr class="drilldown-row ' + rowClass + '">' +
+            '<td style="padding:12px; font-weight:500;">' + agent.name + '</td>' +
+            '<td style="padding:12px; text-align:center; font-weight:600; color:' + (consecutiveDays >= 3 ? '#dc2626' : (consecutiveDays >= 1 ? '#d97706' : '#64748b')) + ';">' + consecutiveDays + '</td>' +
+            '<td style="padding:12px; text-align:right;">' + formatNumber(target) + '</td>' +
+            '<td style="padding:12px; text-align:right;">' + formatNumber(actual) + '</td>' +
+            '<td style="padding:12px; text-align:right; color:' + (achievement >= 100 ? '#16a34a' : '#dc2626') + '; font-weight:600;">' + achievement.toFixed(1) + '%</td>' +
+            '<td style="padding:12px; text-align:center;">' + (attendance !== null ? attendance + '%' : '--') + '</td>' +
+            '<td style="padding:12px; text-align:right;">' + (connectRate !== null ? connectRate.toFixed(1) + '%' : '--') + '</td>' +
+            '<td style="padding:12px; text-align:right;">' + (coverTimes !== null ? formatNumber(coverTimes) : '--') + '</td>' +
+            '<td style="padding:12px; text-align:right;">' + (callTimes !== null ? formatNumber(callTimes) : '--') + '</td>' +
+            '<td style="padding:12px; text-align:right;">' + (artCallTimes !== null ? formatNumber(artCallTimes) : '--') + '</td>' +
+            '<td style="padding:12px; text-align:right;">' + (callBillmin !== null ? callBillmin.toFixed(2) : '--') + '</td>' +
+            '<td style="padding:12px; text-align:right;">' + (singleCallDuration !== null ? singleCallDuration.toFixed(2) : '--') + '</td>' +
+            '<td style="padding:12px; text-align:right;">' + (ptp !== null ? ptp.toFixed(1) + '%' : '--') + '</td>' +
+            '<td style="padding:12px; text-align:right;">' + (callLossRate !== null ? callLossRate.toFixed(1) + '%' : '--') + '</td>' +
+            '<td style="padding:12px; text-align:center; font-weight:600; color:' + (processKpi === 'Met' ? '#16a34a' : (processKpi === 'Unmet' ? '#dc2626' : '#6b7280')) + ';">' + processKpi + '</td>' +
+            '</tr>';
+    });
+}
+
+// ===================== TL CHART =====================
+function renderTLChart(group, selectedDate) {
+    var chartDom = document.getElementById('tl-chart');
+    if (tlChart) tlChart.dispose();
+    tlChart = echarts.init(chartDom);
+
+    var module = REAL_DATA.tlData[group] ? REAL_DATA.tlData[group].groupModule : group.split('-')[0];
+    var allGroupsInModule = REAL_DATA.groups.filter(g => REAL_DATA.tlData[g] && REAL_DATA.tlData[g].groupModule === module);
+
+    var selectedMonth = selectedDate ? selectedDate.slice(0, 7) : REAL_DATA.dataDate.slice(0, 7);
+    var cutoffDate = (selectedDate && selectedDate < REAL_DATA.dataDate) ? selectedDate : REAL_DATA.dataDate;
+
+    var dates = [];
+    var series = [];
+    var legendData = [currentLang === 'zh' ? '模块目标' : 'Module Target'];
+
+    var ymParts = selectedMonth.split('-');
+    var year = parseInt(ymParts[0], 10);
+    var month = parseInt(ymParts[1], 10);
+    var daysInMonth = new Date(year, month, 0).getDate();
+    for (var d = 1; d <= daysInMonth; d++) {
+        var mm = String(month).padStart(2, '0');
+        var dd = String(d).padStart(2, '0');
+        dates.push(mm + '-' + dd);
+    }
+
+    var trendData = (REAL_DATA.moduleDailyTrends && REAL_DATA.moduleDailyTrends[module]) ? REAL_DATA.moduleDailyTrends[module] : null;
+    var targetRows = (trendData && trendData.daily) ? trendData.daily.filter(function(d) { return d.date.startsWith(selectedMonth); }) : [];
+    var targetByLabel = {};
+    targetRows.forEach(function(r) { targetByLabel[r.date.slice(5)] = (r.targetRepayRate !== null && r.targetRepayRate !== undefined) ? r.targetRepayRate : null; });
+    var moduleTargetValues = dates.map(function(lbl) { return Object.prototype.hasOwnProperty.call(targetByLabel, lbl) ? targetByLabel[lbl] : null; });
+
+    allGroupsInModule.forEach(function(g, idx) {
+        var groupData = REAL_DATA.tlData[g];
+        if (!groupData || !groupData.days) return;
+
+        var filteredDays = groupData.days.filter(function(d) { return d.date.startsWith(selectedMonth) && d.date <= cutoffDate; });
+        if (filteredDays.length === 0) return;
+
+        var isSelected = g === group;
+        var actualByLabel = {};
+        filteredDays.forEach(function(d) {
+            var v = (d.nmRepayRate !== null && d.nmRepayRate !== undefined) ? d.nmRepayRate : ((d.repayRate !== null && d.repayRate !== undefined) ? d.repayRate : null);
+            actualByLabel[d.date.slice(5)] = v;
+        });
+        var actuals = dates.map(function(lbl) { return Object.prototype.hasOwnProperty.call(actualByLabel, lbl) ? actualByLabel[lbl] : null; });
+
+        var lineWidth = isSelected ? 3 : 1.5;
+        var color = isSelected ? '#dc2626' : (idx % 2 === 0 ? '#3b82f6' : '#60a5fa');
+        var opacity = isSelected ? 1 : 0.5;
+
+        series.push({
+            name: g,
+            type: 'line',
+            data: actuals,
+            smooth: true,
+            lineStyle: { color: color, width: lineWidth, opacity: opacity },
+            itemStyle: { color: color },
+            symbol: isSelected ? 'circle' : 'none',
+            symbolSize: isSelected ? 6 : 0,
+            z: isSelected ? 10 : 1
+        });
+        legendData.unshift(g);
+    });
+
+    series.push({
+        name: currentLang === 'zh' ? '模块目标' : 'Module Target',
+        type: 'line',
+        data: moduleTargetValues,
+        smooth: false,
+        lineStyle: { color: '#059669', width: 2, type: 'dashed' },
+        itemStyle: { color: '#059669' },
+        symbol: 'none',
+        z: 5
+    });
+
+    tlChart.setOption({
+        tooltip: { trigger: 'axis', formatter: function(params) {
+            var date = params[0].name;
+            var html = date + '<br>';
+            var sortedParams = params.slice().sort(function(a, b) {
+                var av = (a.value !== null && a.value !== undefined) ? a.value : -999999;
+                var bv = (b.value !== null && b.value !== undefined) ? b.value : -999999;
+                return bv - av;
+            });
+            sortedParams.forEach(function(p) {
+                html += p.marker + ' ' + p.seriesName + ': ' + (p.value !== null && p.value !== undefined ? p.value.toFixed(1) + '%' : '-') + '<br>';
+            });
+            return html;
+        }},
+        legend: { data: legendData, bottom: 0 },
+        grid: { left: '3%', right: '4%', bottom: '18%', top: '15%', containLabel: true },
+        xAxis: { type: 'category', data: dates, axisLabel: { fontSize: 10 } },
+        yAxis: { type: 'value', axisLabel: { formatter: function(v) { return v !== null && v !== undefined ? v.toFixed(1) + '%' : ''; }, fontSize: 10 } },
+        series: series
+    });
+}
+
+// ===================== TL BREAKDOWN =====================
+function toggleTLBreakdown() {
+    var panel = document.getElementById('tl-breakdown-panel');
+    var dimToggle = document.getElementById('tl-breakdown-dim-toggle');
+    if (!panel || !dimToggle) return;
+    var open = panel.style.display === 'none' || panel.style.display === '';
+    panel.style.display = open ? 'block' : 'none';
+    dimToggle.style.display = open ? 'flex' : 'none';
+    if (open) {
+        var group = document.getElementById('tl-group-select') ? document.getElementById('tl-group-select').value : '';
+        var dateStr = document.getElementById('tl-date-select') ? document.getElementById('tl-date-select').value : '';
+        renderTLBreakdown(group, dateStr);
+    }
+}
+
+function getTLBreakdownDimension() {
+    var panel = document.getElementById('tl-breakdown-panel');
+    return panel && panel.dataset && panel.dataset.dim ? panel.dataset.dim : 'caseStage';
+}
+
+function setTLBreakdownDimension(dimKey) {
+    var panel = document.getElementById('tl-breakdown-panel');
+    if (!panel) return;
+    panel.dataset.dim = dimKey === 'principalStage' ? 'principalStage' : 'caseStage';
+    var group = document.getElementById('tl-group-select') ? document.getElementById('tl-group-select').value : '';
+    var dateStr = document.getElementById('tl-date-select') ? document.getElementById('tl-date-select').value : '';
+    renderTLBreakdown(group, dateStr);
+}
+
+function renderTLBreakdown(group, dateStr) {
+    var emptyEl = document.getElementById('tl-breakdown-empty');
+    var shareHeadRow = document.getElementById('tl-breakdown-share-head-row');
+    var rateHeadRow = document.getElementById('tl-breakdown-rate-head-row');
+    var shareTbody = document.getElementById('tl-breakdown-share-table');
+    var rateTbody = document.getElementById('tl-breakdown-rate-table');
+    if (!emptyEl || !shareHeadRow || !rateHeadRow || !shareTbody || !rateTbody || !group || !dateStr) return;
+    var t = getBreakdownUiText();
+    var dim = getTLBreakdownDimension();
+    emptyEl.textContent = t.noTlData;
+
+    var byDate = REAL_DATA.tlBreakdownByDate && REAL_DATA.tlBreakdownByDate[group]
+        ? REAL_DATA.tlBreakdownByDate[group][dateStr]
+        : null;
+    var rows = byDate ? (dim === 'principalStage' ? (byDate.principalStage || []) : (byDate.caseStage || [])) : [];
+    var totalOwing = rows.reduce(function(sum, r) { return sum + (Number(r.owingPrincipal) || 0); }, 0);
+    if (!rows || rows.length === 0) {
+        emptyEl.style.display = 'block';
+        shareHeadRow.innerHTML = '';
+        rateHeadRow.innerHTML = '';
+        shareTbody.innerHTML = '';
+        rateTbody.innerHTML = '';
+        return;
+    }
+    emptyEl.style.display = 'none';
+
+    var agents = Array.from(new Set(rows.map(function(r) { return (r.agentName !== null && r.agentName !== undefined) ? String(r.agentName) : '--'; })))
+        .sort(function(a, b) { return a.localeCompare(b); });
+    var dims = Array.from(new Set(rows.map(function(r) { return (r.dimensionValue !== null && r.dimensionValue !== undefined) ? String(r.dimensionValue) : '--'; })))
+        .sort(function(a, b) { return a.localeCompare(b); });
+
+    var byDimAgent = {};
+    rows.forEach(function(r) {
+        var dimVal = (r.dimensionValue !== null && r.dimensionValue !== undefined) ? String(r.dimensionValue) : '--';
+        var agentName = (r.agentName !== null && r.agentName !== undefined) ? String(r.agentName) : '--';
+        byDimAgent[dimVal + '||' + agentName] = r;
+    });
+
+    var dimTitle = dim === 'principalStage' ? t.principal : t.overdue;
+    shareHeadRow.innerHTML = '<th style="padding:8px; text-align:left; font-size:12px; color:#64748b;">' + dimTitle + '</th>' +
+        agents.map(function(a) { return '<th style="padding:8px; text-align:right; font-size:12px; color:#64748b;">' + a + '</th>'; }).join('');
+    rateHeadRow.innerHTML = '<th style="padding:8px; text-align:left; font-size:12px; color:#64748b;">' + dimTitle + '</th>' +
+        agents.map(function(a) { return '<th style="padding:8px; text-align:right; font-size:12px; color:#64748b;">' + a + '</th>'; }).join('');
+
+    shareTbody.innerHTML = '';
+    rateTbody.innerHTML = '';
+    dims.forEach(function(dimVal) {
+        var shareRowHtml = '<tr style="border-top:1px solid #e2e8f0;"><td style="padding:8px; font-weight:600; color:#334155;">' + dimVal + '</td>';
+        var rateRowHtml = '<tr style="border-top:1px solid #e2e8f0;"><td style="padding:8px; font-weight:600; color:#334155;">' + dimVal + '</td>';
+        agents.forEach(function(agentName) {
+            var cell = byDimAgent[dimVal + '||' + agentName] || null;
+            var owingVal = cell ? (Number(cell.owingPrincipal) || 0) : 0;
+            var shareVal = totalOwing > 0 ? (owingVal / totalOwing * 100) : null;
+            var repayRateVal = cell && cell.repayRate !== null && cell.repayRate !== undefined ? Number(cell.repayRate) : null;
+            shareRowHtml += '<td style="padding:8px; text-align:right;">' + (shareVal !== null ? shareVal.toFixed(1) + '%' : '--') + '</td>';
+            rateRowHtml += '<td style="padding:8px; text-align:right;">' + (repayRateVal !== null ? repayRateVal.toFixed(2) + '%' : '--') + '</td>';
+        });
+        shareRowHtml += '</tr>';
+        rateRowHtml += '</tr>';
+        shareTbody.innerHTML += shareRowHtml;
+        rateTbody.innerHTML += rateRowHtml;
+    });
+}
+
+{% endraw %}
+</script>

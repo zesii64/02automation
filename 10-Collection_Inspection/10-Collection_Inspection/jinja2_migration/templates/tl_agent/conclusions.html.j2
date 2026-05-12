@@ -1,0 +1,235 @@
+{# conclusions.html.j2 — TL Conclusion Box #}
+<!-- TL Conclusions -->
+<div class="card" id="tl-conclusions-card" style="display: none;">
+    <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 12px; color: #1e40af;">Conclusion</h3>
+    <div class="conclusion-box" id="tl-conclusions"></div>
+</div>
+
+<script>
+// ===================== TL CONCLUSIONS =====================
+function generateTLConclusions(data, isMet) {
+    var group = document.getElementById('tl-group-select') ? document.getElementById('tl-group-select').value : '';
+    var selectedDate = document.getElementById('tl-date-select') ? document.getElementById('tl-date-select').value : REAL_DATA.dataDate;
+    var selectedDateForSort = (typeof selectedDate !== 'undefined' && selectedDate) ? selectedDate : (document.getElementById('tl-date-select') ? document.getElementById('tl-date-select').value : REAL_DATA.dataDate);
+    var agents = (REAL_DATA.agentPerformance[group] || []).filter(function(a) {
+        var dm = REAL_DATA.agentPerformanceByDate && REAL_DATA.agentPerformanceByDate[group] && REAL_DATA.agentPerformanceByDate[group][a.name] ? REAL_DATA.agentPerformanceByDate[group][a.name][selectedDateForSort] : null;
+        return !!dm;
+    });
+    agents.sort(function(a, b) {
+        var adm = REAL_DATA.agentPerformanceByDate && REAL_DATA.agentPerformanceByDate[group] && REAL_DATA.agentPerformanceByDate[group][a.name] ? REAL_DATA.agentPerformanceByDate[group][a.name][selectedDateForSort] : null;
+        var bdm = REAL_DATA.agentPerformanceByDate && REAL_DATA.agentPerformanceByDate[group] && REAL_DATA.agentPerformanceByDate[group][b.name] ? REAL_DATA.agentPerformanceByDate[group][b.name][selectedDateForSort] : null;
+        var av = (adm && adm.achievement !== null && adm.achievement !== undefined) ? adm.achievement : ((a.achievement !== null && a.achievement !== undefined) ? a.achievement : 999);
+        var bv = (bdm && bdm.achievement !== null && bdm.achievement !== undefined) ? bdm.achievement : ((b.achievement !== null && b.achievement !== undefined) ? b.achievement : 999);
+        return av - bv;
+    });
+    var groupMeta = REAL_DATA.tlData[group] || {};
+    var moduleKey = groupMeta.groupModule || '';
+    var coarseModule = moduleKey.replace(/-Large|-Small/g, '');
+    var TL_MODULE_IMPROVEMENT_PLAN_URL = {
+        'S0': 'https://doc.weixin.qq.com/sheet/e3_AGIATAbTANsCNWcq1Hf0CS76ZJaSp?scode=AGMA_AdxAAsFy3PXtQAagA5gaoAKA&tab=BB08J2',
+        'S1': 'https://doc.weixin.qq.com/sheet/e3_AGIATAbTANsCNKGdG4MPaQreE00Ga?scode=AGMA_AdxAAswoBPuhvAagA5gaoAKA&tab=BB08J2',
+        'S2': 'https://doc.weixin.qq.com/sheet/e3_AGIATAbTANsCNk6txUBU0SG2hZ9A0?scode=AGMA_AdxAAsARq92dVAagA5gaoAKA&tab=BB08J2',
+        'M1': 'https://doc.weixin.qq.com/sheet/e3_AGIATAbTANsCNs8XAuzKHQmq0m0W1?scode=AGMA_AdxAAsXVhLkssAagA5gaoAKA&tab=BB08J2'
+    };
+    var improvementPlanUrl = TL_MODULE_IMPROVEMENT_PLAN_URL[coarseModule] || '';
+    var improvementPlanBlock = '';
+    if (!isMet && improvementPlanUrl) {
+        improvementPlanBlock = '<div style="margin-top:10px; padding-top:10px; border-top:1px solid #e5e7eb; font-size:12px;">' +
+            '<div style="color:#374151; font-weight:600; margin-bottom:4px;">改进方案 · Improvement plan</div>' +
+            '<div style="color:#6b7280; font-size:11px; line-height:1.45; margin-bottom:6px;">在当前模块维度填写或跟踪改进动作（腾讯文档外链）。 / Fill in or track module-level improvement actions (Tencent Doc, external).</div>' +
+            '<a href="' + improvementPlanUrl + '" target="_blank" rel="noopener noreferrer" style="color:#2563eb;">打开「' + coarseModule + '」模块改进方案 · Open ' + coarseModule + ' improvement plan (Tencent Doc)</a>' +
+        '</div>';
+    }
+    var moduleGroups = (REAL_DATA.groups || []).filter(function(g) { return REAL_DATA.tlData[g] && REAL_DATA.tlData[g].groupModule === moduleKey; });
+    var fmt = function(v, d, suffix) {
+        d = d || 1; suffix = suffix || '';
+        return (v === null || v === undefined || Number.isNaN(Number(v))) ? '--' : (Number(v).toFixed(d) + suffix);
+    };
+
+    var getAgentMetric = function(groupId, agent, key) {
+        var dm = REAL_DATA.agentPerformanceByDate && REAL_DATA.agentPerformanceByDate[groupId] && REAL_DATA.agentPerformanceByDate[groupId][agent.name] ? REAL_DATA.agentPerformanceByDate[groupId][agent.name][selectedDate] : null;
+        if (dm && dm[key] !== undefined && dm[key] !== null) return Number(dm[key]);
+        if (agent && agent[key] !== undefined && agent[key] !== null) return Number(agent[key]);
+        return null;
+    };
+
+    var tAch = 0, tAttd = 0, tConn = 0, tLoss = 0, tDial = 0, tCnt = 0;
+    agents.forEach(function(a) {
+        tAch += getAgentMetric(group, a, 'achievement') || 0;
+        tAttd += getAgentMetric(group, a, 'attendance') || 0;
+        tConn += getAgentMetric(group, a, 'connectRate') || 0;
+        tLoss += getAgentMetric(group, a, 'callLossRate') || 0;
+        tDial += getAgentMetric(group, a, 'artCallTimes') || 0;
+        tCnt += 1;
+    });
+    var teamCnt = Math.max(1, tCnt);
+    var teamAvg = { achievement: tAch / teamCnt, attendance: tAttd / teamCnt, connectRate: tConn / teamCnt, callLossRate: tLoss / teamCnt, artCallTimes: tDial / teamCnt };
+
+    var mDial = 0, mAttd = 0, mConn = 0, mLoss = 0, mCnt = 0;
+    moduleGroups.forEach(function(gid) {
+        var rows = REAL_DATA.agentPerformance[gid] || [];
+        rows.forEach(function(a) {
+            mDial += getAgentMetric(gid, a, 'artCallTimes') || 0;
+            mAttd += getAgentMetric(gid, a, 'attendance') || 0;
+            mConn += getAgentMetric(gid, a, 'connectRate') || 0;
+            mLoss += getAgentMetric(gid, a, 'callLossRate') || 0;
+            mCnt += 1;
+        });
+    });
+    var moduleAvgDial = mCnt > 0 ? (mDial / mCnt) : teamAvg.artCallTimes;
+    var moduleAvgAttendance = mCnt > 0 ? (mAttd / mCnt) : teamAvg.attendance;
+    var moduleAvgConnectRate = mCnt > 0 ? (mConn / mCnt) : teamAvg.connectRate;
+    var moduleAvgCallLossRate = mCnt > 0 ? (mLoss / mCnt) : teamAvg.callLossRate;
+
+    var ATTENDANCE_TOLERANCE = 2.0;
+    var CONNECT_TOLERANCE = 5.0;
+    var LOSS_TOLERANCE = 5.0;
+    var DIAL_TOLERANCE = 0.10;
+
+    var laggingAgents = agents.map(function(a) {
+        return {
+            name: a.name,
+            achievement: getAgentMetric(group, a, 'achievement'),
+            attendance: getAgentMetric(group, a, 'attendance'),
+            connectRate: getAgentMetric(group, a, 'connectRate'),
+            artCallTimes: getAgentMetric(group, a, 'artCallTimes'),
+            gap: (getAgentMetric(group, a, 'target') || 0) - (getAgentMetric(group, a, 'actual') || 0)
+        };
+    }).sort(function(x, y) {
+        var ax = x.achievement !== null && x.achievement !== undefined ? x.achievement : 999;
+        var ay = y.achievement !== null && y.achievement !== undefined ? y.achievement : 999;
+        if (ax !== ay) return ax - ay;
+        return (y.gap || 0) - (x.gap || 0);
+    }).slice(0, 3);
+
+    var breakdownByDate = REAL_DATA.tlBreakdownByDate && REAL_DATA.tlBreakdownByDate[group] ? REAL_DATA.tlBreakdownByDate[group][selectedDate] : null;
+    var pickWeakDims = function(rows) {
+        var valid = (rows || []).filter(function(r) { return r.repayRate !== null && r.repayRate !== undefined; });
+        if (valid.length === 0) return [];
+        var avg = valid.reduce(function(s, r) { return s + Number(r.repayRate); }, 0) / valid.length;
+        return valid.filter(function(r) { return Number(r.repayRate) < avg; })
+            .sort(function(a, b) { return Number(a.repayRate) - Number(b.repayRate); })
+            .slice(0, 2)
+            .map(function(r) { return r.dimensionValue + '(' + fmt(r.repayRate, 1, '%') + ')'; });
+    };
+    var weakCaseStages = pickWeakDims(breakdownByDate ? breakdownByDate.caseStage : []);
+    var weakPrincipalStages = pickWeakDims(breakdownByDate ? breakdownByDate.principalStage : []);
+
+    var peopleSummary = (teamAvg.attendance < moduleAvgAttendance - ATTENDANCE_TOLERANCE || teamAvg.artCallTimes < moduleAvgDial * (1 - DIAL_TOLERANCE))
+        ? 'People factor risk: attendance ' + fmt(teamAvg.attendance, 1, '%') + ' (module avg ' + fmt(moduleAvgAttendance, 1, '%') + '), dial ' + fmt(teamAvg.artCallTimes, 0) + ' (module avg ' + fmt(moduleAvgDial, 0) + ').'
+        : 'People factors are stable on selected date.';
+    var strategySummary = (weakCaseStages.length > 0 || weakPrincipalStages.length > 0)
+        ? 'Stage preference imbalance (strategy): some agents/groups show declining contribution in overdue or amount stages. Action: adjust follow-up strategy and prioritize these stages.'
+        : 'No clear stage preference imbalance detected from current breakdown data.';
+    var toolSummary = (teamAvg.connectRate < moduleAvgConnectRate - CONNECT_TOLERANCE || teamAvg.callLossRate > moduleAvgCallLossRate + LOSS_TOLERANCE)
+        ? 'Tool usage risk: connect ' + fmt(teamAvg.connectRate, 1, '%') + ' (module avg ' + fmt(moduleAvgConnectRate, 1, '%') + '), call loss ' + fmt(teamAvg.callLossRate, 1, '%') + ' (module avg ' + fmt(moduleAvgCallLossRate, 1, '%') + '); check phone channel quality and outreach time window.'
+        : 'Tool usage appears stable (phone channel metrics in normal range).';
+
+    var peopleAction = '';
+    var attdLow = teamAvg.attendance < moduleAvgAttendance - ATTENDANCE_TOLERANCE;
+    var dialLow = teamAvg.artCallTimes < moduleAvgDial * (1 - DIAL_TOLERANCE);
+    if (attdLow && dialLow) {
+        peopleAction = 'Attendance & dial below module average. Check absenteeism and reallocate staff if needed; review low-productivity agents for system issues or idle time.';
+    } else if (attdLow) {
+        peopleAction = 'Attendance below module average. Check absenteeism and consider temporary shift adjustments or cross-group support.';
+    } else if (dialLow) {
+        peopleAction = 'Dial volume below module average. Follow up with low-productivity agents and review system allocation and online hours.';
+    } else {
+        peopleAction = 'People metrics stable. Maintain current scheduling and productivity monitoring.';
+    }
+
+    var strategyAction = '';
+    if (weakCaseStages.length > 0 && weakPrincipalStages.length > 0) {
+        strategyAction = 'Reprioritize follow-up on stages ' + weakCaseStages.join(', ') + ' and increase weight for principal stages ' + weakPrincipalStages.join(', ') + '.';
+    } else if (weakCaseStages.length > 0) {
+        strategyAction = 'Reprioritize follow-up on stages ' + weakCaseStages.join(', ') + ' and verify script coverage and training.';
+    } else if (weakPrincipalStages.length > 0) {
+        strategyAction = 'Increase allocation weight or customize collection strategy for principal stages ' + weakPrincipalStages.join(', ') + '.';
+    } else {
+        strategyAction = 'Stage distribution normal. Maintain current strategy.';
+    }
+
+    var toolAction = '';
+    var connLow = teamAvg.connectRate < moduleAvgConnectRate - CONNECT_TOLERANCE;
+    var lossHigh = teamAvg.callLossRate > moduleAvgCallLossRate + LOSS_TOLERANCE;
+    if (connLow && lossHigh) {
+        toolAction = 'Channel quality check: verify number quality and line stability; adjust dialing hours. Also investigate drop-off causes (line/network/script) to improve first-call retention.';
+    } else if (connLow) {
+        toolAction = 'Channel quality check: verify number quality and line stability; try adjusting dialing hours (e.g. avoid local rush hours).';
+    } else if (lossHigh) {
+        toolAction = 'Drop-off root cause: investigate post-connection drops (line/network/script) and optimize opening lines.';
+    } else {
+        toolAction = 'Outbound channel stable. Maintain current line configuration.';
+    }
+
+    var environmentAction = 'If confirmed, document impact in improvement plan and adjust priority accordingly.';
+
+    var laggingAction = laggingAgents.length === 0
+        ? 'No lagging agents today. Maintain current management rhythm.'
+        : 'One-on-one follow-up with lagging agents: ' + laggingAgents.map(function(a) { return a.name; }).join(', ') + '. Set 3-5 day improvement plan with daily check-ins.';
+
+    var laggingHtml = laggingAgents.length === 0
+        ? '<div style="color:#6b7280;">No lagging agent identified for selected date.</div>'
+        : laggingAgents.map(function(a, idx) {
+            return '<div style="padding:6px 8px; border:1px solid #e5e7eb; border-radius:6px; margin-bottom:6px;">' +
+                '<b>#' + (idx + 1) + ' ' + a.name + '</b> | ' +
+                'Achv ' + fmt(a.achievement, 1, '%') + ' | ' +
+                'Attendance ' + fmt(a.attendance, 1, '%') + ' | ' +
+                'Dial ' + fmt(a.artCallTimes, 0) + ' | ' +
+                'Connect ' + fmt(a.connectRate, 1, '%') + ' | ' +
+                'Gap ' + fmt(a.gap, 0) +
+            '</div>';
+        }).join('');
+
+    var tableHtml = '<div style="font-size:12px; color:#111827; line-height:1.5;">' +
+        '<div style="font-weight:700; margin-bottom:8px;">TL conclusion = group-level overview + lagging agents</div>' +
+        '<table style="width:100%; border-collapse:collapse; font-size:12px;">' +
+        '<tr style="background:#f8fafc;">' +
+        '<td style="border:1px solid #d1d5db; padding:8px; width:140px; font-weight:700;">Dimension</td>' +
+        '<td style="border:1px solid #d1d5db; padding:8px; font-weight:700;">Diagnosis</td>' +
+        '<td style="border:1px solid #d1d5db; padding:8px; font-weight:700; width:280px;">Suggested Action</td>' +
+        '</tr>' +
+        '<tr style="background:#f8fafc;">' +
+        '<td style="border:1px solid #d1d5db; padding:8px; font-weight:700;">Group overview</td>' +
+        '<td style="border:1px solid #d1d5db; padding:8px;">' +
+        'Group: <b>' + group + '</b> (' + (moduleKey || '--') + ') @ ' + selectedDate + '<br>' +
+        'Achievement: <b>' + fmt(teamAvg.achievement, 1, '%') + '</b> | ' +
+        'Attendance: <b>' + fmt(teamAvg.attendance, 1, '%') + '</b> | ' +
+        'Dial: <b>' + fmt(teamAvg.artCallTimes, 0) + '</b>' +
+        '</td>' +
+        '<td style="border:1px solid #d1d5db; padding:8px; color:#065f46; background:#f0fdf4;">Continue monitoring core group metrics and watch gaps vs module average.</td>' +
+        '</tr>' +
+        '<tr>' +
+        '<td style="border:1px solid #d1d5db; padding:8px; font-weight:700;">People factors</td>' +
+        '<td style="border:1px solid #d1d5db; padding:8px;">' + peopleSummary + '</td>' +
+        '<td style="border:1px solid #d1d5db; padding:8px; color:#065f46; background:#f0fdf4;">' + peopleAction + '</td>' +
+        '</tr>' +
+        '<tr>' +
+        '<td style="border:1px solid #d1d5db; padding:8px; font-weight:700;">Strategy factors</td>' +
+        '<td style="border:1px solid #d1d5db; padding:8px;">' +
+        strategySummary + '<br>' +
+        'Overdue stages with weak contribution: ' + (weakCaseStages.length ? weakCaseStages.join(', ') : '--') + '<br>' +
+        'Amount stages with weak contribution: ' + (weakPrincipalStages.length ? weakPrincipalStages.join(', ') : '--') +
+        '</td>' +
+        '<td style="border:1px solid #d1d5db; padding:8px; color:#065f46; background:#f0fdf4;">' + strategyAction + '</td>' +
+        '</tr>' +
+        '<tr>' +
+        '<td style="border:1px solid #d1d5db; padding:8px; font-weight:700;">Tool factors</td>' +
+        '<td style="border:1px solid #d1d5db; padding:8px;">' + toolSummary + '</td>' +
+        '<td style="border:1px solid #d1d5db; padding:8px; color:#065f46; background:#f0fdf4;">' + toolAction + '</td>' +
+        '</tr>' +
+        '<tr>' +
+        '<td style="border:1px solid #d1d5db; padding:8px; font-weight:700;">Environment/other</td>' +
+        '<td style="border:1px solid #d1d5db; padding:8px;">If holiday/policy/system events occurred, use manual override for action priority.</td>' +
+        '<td style="border:1px solid #d1d5db; padding:8px; color:#065f46; background:#f0fdf4;">' + environmentAction + '</td>' +
+        '</tr>' +
+        '<tr>' +
+        '<td style="border:1px solid #d1d5db; padding:8px; font-weight:700;">Lagging agents</td>' +
+        '<td style="border:1px solid #d1d5db; padding:8px;">' + laggingHtml + '</td>' +
+        '<td style="border:1px solid #d1d5db; padding:8px; color:#065f46; background:#f0fdf4;">' + laggingAction + '</td>' +
+        '</tr>' +
+        '</table>' + improvementPlanBlock + '</div>';
+
+    document.getElementById('tl-conclusions').innerHTML = tableHtml;
+}
+</script>

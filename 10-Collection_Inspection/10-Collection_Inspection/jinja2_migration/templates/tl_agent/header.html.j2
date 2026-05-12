@@ -1,0 +1,29 @@
+{# header.html.j2 — TL Header: Group + Date selectors #}
+{# Phase 4b.2 #}
+<div class="card">
+    <!-- TL Header: Group + Date selectors -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 style="font-size: 18px; font-weight: 700; color: #1e293b;">TL Daily Review</h2>
+        <div style="display: flex; gap: 12px; align-items: center;">
+            <label style="font-size: 14px; color: #64748b;">Group:</label>
+            <select id="tl-group-select" onchange="loadTLData()">
+                <option value="">-- Select Group --</option>
+            </select>
+            <label style="font-size: 14px; color: #64748b;">Date:</label>
+            <select id="tl-date-select" onchange="loadTLData()">
+            </select>
+        </div>
+    </div>
+    <div id="tl-realtime-report-link-box" style="display:none; margin-bottom:12px; padding:10px; border:1px solid #bfdbfe; border-radius:8px; background:#eff6ff;">
+        <div style="font-size:12px; color:#1d4ed8; margin-bottom:6px;">实时数据的报表连接</div>
+        <div style="font-size:12px; color:#1d4ed8; margin-bottom:6px;">Realtime dashboard report link</div>
+        <input type="text" readonly value="https://bi-ap-southeast-1.alibabacloud.com/product/view.htm?module=dashboard&productId=21a447b0-6f01-4380-90ea-c413fee64107&menuId=16a9204e-b060-4b28-95d6-9539eb2e9d09" style="width:100%; padding:8px 10px; border:1px solid #93c5fd; border-radius:6px; font-size:12px; color:#1e3a8a; background:#ffffff;" />
+    </div>
+
+    <!-- TL Empty State -->
+    <div id="tl-empty-state" class="empty-state">
+        <div class="empty-state-icon">&#9654;</div>
+        <div class="empty-state-title">Select a group to view daily performance</div>
+        <div class="empty-state-sub">Use the Group selector above to get started</div>
+    </div>
+</div>
