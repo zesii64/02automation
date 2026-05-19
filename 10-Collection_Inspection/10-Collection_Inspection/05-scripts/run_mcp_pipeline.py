@@ -94,7 +94,7 @@ def _latest_report():
 
 
 # ---- QYWX Robot Config ----
-QYWX_WEBHOOK = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=b8b153b3-7155-4e4e-a8e6-971354ea2731"
+QYWX_WEBHOOK = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=d00d97aa-962d-4e9b-918b-3a144e528166"
 
 
 def _qywx_upload_file(filepath):
