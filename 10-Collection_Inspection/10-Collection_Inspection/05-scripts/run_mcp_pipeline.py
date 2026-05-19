@@ -106,7 +106,7 @@ def main():
     print("=" * 60)
     print("  All phases completed successfully!")
     print("  Report: %s" % (
-        os.path.join(PROJECT_ROOT, "reports",
+        os.path.join(PROJECT_ROOT, "generate_v2_7_package", "reports",
                      "Collection_Operations_Report_v3_6_%s.html" % REPORT_DATE)
     ))
     print("=" * 60)

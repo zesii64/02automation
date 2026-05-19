@@ -5,7 +5,7 @@ REM ==============================================================
 
 set PYTHON=C:\Users\zhangyuntian\AppData\Local\Programs\Python\Python313\python.exe
 set SCRIPT=D:\11automation\02automation\10-Collection_Inspection\10-Collection_Inspection\05-scripts\run_mcp_pipeline.py
-set LOG=D:\11automation\02automation\10-Collection_Inspection\10-Collection_Inspection\reports\pipeline_diag.log
+set LOG=D:\11automation\02automation\10-Collection_Inspection\10-Collection_Inspection\generate_v2_7_package\reports\pipeline_diag.log
 
 REM 先写日志头（证明 bat 本身被执行到了）
 echo ===== DIAG START: %DATE% %TIME% ===== > "%LOG%"
