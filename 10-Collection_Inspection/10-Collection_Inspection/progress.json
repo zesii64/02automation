@@ -2,15 +2,15 @@
   "last_updated": "2026-05-19",
   "active_task": "task_2026-05-13_mcp_http_pipeline.md",
   "owner": "elena",
-  "status": "in_progress",
-  "dual_review_gate": "pending",
+  "status": "completed",
+  "dual_review_gate": "passed",
   "current_focus": [
-    "MCP HTTP 直调流水线已跑通，剩余 PTP 权限申请"
+    "MCP HTTP 直调流水线全链路已跑通（抽取→报告→企微推送），剩余 PTP 权限申请"
   ],
   "recent_completed": [
-    "MCP 流水线新增：DT_END 改为当月最后一天；query_all() 实现方案 A2（today~月底合并为单 chunk）",
-    "修复 bat 编码/换行符/路径转义问题，本地双击验证 16/16 查询 + HTML 报告通过",
-    "run_mcp_pipeline.py 中文→英文 全量翻译"
+    "新增 QYWX 企微群机器人推送（requests_toolbelt 安装，HTML 报告自动发送验证通过）",
+    "MCP 流水线日期逻辑改造：DT_END 改为当月最后一天；query_all() A2 方案（today~月底合并单 chunk）",
+    "修复 bat 编码/换行符/路径转义问题，本地双击验证 16/16 查询 + HTML 报告通过"
   ],
   "next_actions": [
     "1) 申请 PTP 表权限（phl_anls.tmp_zyt_agent_ptp → odps:Select）",
