@@ -1,33 +1,31 @@
 {
-  "last_updated": "2026-05-07",
-  "active_task": "task_2026-04-13_v3_3_logic_and_data_view_alignment.md",
-  "owner": "未分配",
+  "last_updated": "2026-05-19",
+  "active_task": "task_2026-05-13_mcp_http_pipeline.md",
+  "owner": "elena",
   "status": "in_progress",
-  "dual_review_gate": "passed_warning",
+  "dual_review_gate": "pending",
   "current_focus": [
-    "Phase 3 Snapshot 基建完成（85 tests 全绿），pending Phase 4a 启动审批",
-    "Phase 4a Data View Tab 模板转换：4 张卡片 + 1380 行 JS 迁移（24 补丁，约 14h）"
+    "MCP HTTP 直调流水线已跑通，剩余 PTP 权限申请"
   ],
   "recent_completed": [
-    "Phase 3 Snapshot 基建完成 — tests/helpers/conftest/dump_full_snapshot/data_contract扩展, 85 tests全绿",
-    "Phase 2.5 Pilot 完成 — Jinja2 渲染与 JSON 等价，用户 GO",
-    "Phase 2 主逻辑：实现 data_prep.py (1290行) + data_prep_payloads.py (290行)，build_context() 烟雾测试 + 结构交叉验证通过"
+    "MCP 流水线新增：DT_END 改为当月最后一天；query_all() 实现方案 A2（today~月底合并为单 chunk）",
+    "修复 bat 编码/换行符/路径转义问题，本地双击验证 16/16 查询 + HTML 报告通过",
+    "run_mcp_pipeline.py 中文→英文 全量翻译"
   ],
   "next_actions": [
-    "【P0】Phase 4a Data View Tab 模板转换（24 补丁/4 卡片/1380 行 JS，约 14h）",
-    "【P1】用户浏览器抽检 Phase 4a 输出",
-    "【P2】实现 get_write_data_from_dataworks.py（自动化 pipeline 取数）"
+    "1) 申请 PTP 表权限（phl_anls.tmp_zyt_agent_ptp → odps:Select）",
+    "2) jinja2 迁移 phase 4c：STL Group Tab 收尾"
   ],
   "task_queue": [
-    "【长期】Jinja2 模板迁移全面推进 — 依赖：Pilot GO → Phase 3-8 完整模板转换",
-    "【长期】Agent 级精准诊断 — 从 group/module 级结论下沉到 agent 级，短板归因 People/Strategy/Tool，依赖：方案一（规则映射）稳定运行 + 业务确认归因逻辑",
-    "【长期】Function Compute API 调通后自动化 pipeline 全链路打通"
+    "【长期】jinja2 迁移 phase 4c：STL Group Tab 抽检通过后合并至管线",
+    "【长期】数据验证链路打通（抽取 → Excel → HTML 报告）",
+    "【长期】943 流水线部署：extract_data.py + generate_v2_7_py36.py"
   ],
   "blockers": [
-    "Function Compute HTTP API 认证方式未确认（需 AccessKey + Bearer Token 测试）"
+    "PTP 表 phl_anls.tmp_zyt_agent_ptp 无 SELECT 权限，需找管理员开通"
   ],
   "open_questions": [
-    "容忍带数值（attendance 2pp / connect 5pp / loss 5pp / dial 10%）是否需要根据实际数据调参？",
+    "容忍带配置（attendance 2pp / connect 5pp / loss 5pp / dial 10%）是否需要根据实际数据调参？",
     "自动化产物分发方式：企微 / 邮件 / 云盘？"
   ]
 }
